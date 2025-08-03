@@ -4,12 +4,13 @@ import { browser, dev } from '$app/environment';
 import type { LayoutLoad } from "./$types";
 import { trpcClient } from "$lib/trpc";
 import { isTRPCClientError } from '@trpc/client';
+import { flags } from '$lib/flags';
 
 // export const ssr = false;
 // export const prerender = true;
 
 export const load: LayoutLoad = async ({ fetch, depends }) => {
-  if (browser && !dev) {
+  if (browser && !dev && flags.isEnabled("login")) {
     posthog.init(
       "phc_bqj7hpCaSlG95HYriP1UoqIMBPMu3LqOoFvPD1My4xn",
       {
