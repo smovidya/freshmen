@@ -27,13 +27,11 @@
     },
     "dev": {
       "dependsOn": [
-        "db:start",
         "^dev"
       ],
       "cache": false,
       "persistent": true,
       "env": [
-        "DATABASE_URL",
         "PUBLIC_BETTER_AUTH_URL",
         "GOOGLE_CLIENT_ID",
         "GOOGLE_CLIENT_SECRET",
@@ -41,21 +39,21 @@
         "BETTER_AUTH_SECRET"
       ]
     },
-    "db:start": {
+    "db:migrate:local": {
       "cache": false
     },
-    "db:stop": {
+    "db:migrate:remote": {
       "cache": false
     },
-    "db:push": {
+    "db:seed:local": {
       "dependsOn": [
-        "db:start"
+        "db:migrate:local"
       ],
       "cache": false
     },
-    "db:migrate": {
+    "db:seed:remote": {
       "dependsOn": [
-        "db:start"
+        "db:migrate:remote"
       ],
       "cache": false
     },

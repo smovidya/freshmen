@@ -66,7 +66,7 @@ export class GameAPIClient {
       credentials: "include"
     });
 
-    this.#token = (await res.json()).token as string;
+    this.#token = ((await res.json()) as { token: string }).token;
   }
 
   ready = $derived(!!this.#token);

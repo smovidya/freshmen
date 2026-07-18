@@ -18,7 +18,9 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
-    "deploy": "turbo run deploy --parallel"
+    "deploy": "turbo run deploy --parallel",
+    "check-types": "turbo run check-types",
+    "lint": "turbo run lint"
   },
   "type": "module",
   "workspaces": [
