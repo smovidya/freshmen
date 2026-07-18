@@ -19,6 +19,7 @@
 		SelectTrigger
 	} from '$lib/components/ui/select/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
+	import TagChecklist from '$lib/components/tag-checklist.svelte';
 	import { departmentIds, departmentLabels } from '$lib/departments';
 	import { trpcClient } from '$lib/trpc';
 	import { registrationSchema } from '@vidyafreshmen/dto';
@@ -83,6 +84,18 @@
 		value: id,
 		label: departmentLabels[id]
 	}));
+
+	const foodAllergyOptions = ['อาหารทะเล', 'นม/แลกโตส', 'แป้งสาลี', 'ไข่', 'ถั่ว', 'ผงชูรส'];
+	const foodLimitationOptions = [
+		'ฮาลาล',
+		'มังสวิรัติ',
+		'ไม่ทานเนื้อสัตว์',
+		'ไม่ทานเนื้อวัว',
+		'ไม่ทานเนื้อหมู',
+		'ไม่ทานไก่',
+		'ไม่ทานเผ็ด',
+		'ไม่ทานผัก'
+	];
 
 	export const snapshot: Snapshot = {
 		capture() {
@@ -305,13 +318,12 @@
 
 			<FormField {form} name="foodAllergies">
 				<FormControl>
-					{#snippet children({ props })}
+					{#snippet children()}
 						<FormLabel>แพ้อาหาร</FormLabel>
-						<Textarea
-							{...props}
+						<TagChecklist
+							title="อาหารที่แพ้"
+							options={foodAllergyOptions}
 							bind:value={$formData.foodAllergies}
-							placeholder="กุ้ง, ปู, หอย"
-							rows={2}
 						/>
 					{/snippet}
 				</FormControl>
@@ -320,13 +332,12 @@
 
 			<FormField {form} name="foodLimitations">
 				<FormControl>
-					{#snippet children({ props })}
+					{#snippet children()}
 						<FormLabel>ข้อจำกัดด้านอาหาร</FormLabel>
-						<Textarea
-							{...props}
+						<TagChecklist
+							title="ข้อจำกัดด้านอาหาร"
+							options={foodLimitationOptions}
 							bind:value={$formData.foodLimitations}
-							placeholder="เช่น มังสวิรัติ, เจ, ฮาลาล, โคเชอร์ เป็นต้น"
-							rows={2}
 						/>
 					{/snippet}
 				</FormControl>
