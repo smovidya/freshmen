@@ -1,6 +1,6 @@
 import { flashParams } from "$lib/flash.svelte";
 import { trpcClient } from "$lib/trpc";
-import { registrationSchema } from "@freshmen68/dto";
+import { registrationSchema } from "@vidyafreshmen/dto";
 import { redirect } from "@sveltejs/kit";
 import { superValidate } from "sveltekit-superforms";
 import { zod4 } from "sveltekit-superforms/adapters";

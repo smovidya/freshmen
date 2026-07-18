@@ -1,5 +1,5 @@
 // import { dev } from '$app/environment'
-import { FeatureFlags } from "@freshmen68/flags"
+import { FeatureFlags } from "@vidyafreshmen/flags"
 
 export const flags = new FeatureFlags({
   // enabledAll: dev,

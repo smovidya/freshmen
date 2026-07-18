@@ -1,8 +1,8 @@
-# freshmen68
-![freshmen68](./apps/web/src/lib/assets/elements/18.png)
+# vidyafreshmen
+![vidyafreshmen](./apps/web/src/lib/assets/elements/18.png)
 
 
-A monorepo for the freshmen68 project that includes various components and services.
+A monorepo for the vidyafreshmen project that includes various components and services.
 
 ## Project Structure
 - `apps/`: Contains the main applications.

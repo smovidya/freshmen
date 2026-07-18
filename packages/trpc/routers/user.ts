@@ -1,4 +1,4 @@
-import { registrationSchema, updateUserGroupSchema } from '@freshmen68/dto';
+import { registrationSchema, updateUserGroupSchema } from '@vidyafreshmen/dto';
 import { publicProcedure, router, signedInProcedure } from '../core';
 import { createStudentWithTeam, getStudentByEmail, isRegistered, updateStudentInfo } from '../services/students.service';
 import { TRPCError } from '@trpc/server';

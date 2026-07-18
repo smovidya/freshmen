@@ -1,5 +1,5 @@
 {
-  "name": "@freshmen68/flags",
+  "name": "@vidyafreshmen/flags",
   "version": "1.0.0",
   "description": "Feature flags for Freshmen68 project",
   "main": "index.js",

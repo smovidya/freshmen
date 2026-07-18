@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { publicProcedure, router, signedInProcedure } from '../core';
 import { teamRouter } from './team';
 import { userRouter } from './user';
-import { tables } from '@freshmen68/db';
+import { tables } from '@vidyafreshmen/db';
 import { eq } from 'drizzle-orm';
 
 export const appRouter = router({

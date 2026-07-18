@@ -1,5 +1,5 @@
 {
-  "name": "@freshmen68/trpc",
+  "name": "@vidyafreshmen/trpc",
   "module": "index.ts",
   "type": "module",
   "version": "0.0.1",
@@ -10,9 +10,9 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@freshmen68/db": "workspace:*",
-    "@freshmen68/dto": "workspace:*",
-    "@freshmen68/flags": "workspace:*",
+    "@vidyafreshmen/db": "workspace:*",
+    "@vidyafreshmen/dto": "workspace:*",
+    "@vidyafreshmen/flags": "workspace:*",
     "@trpc/server": "^11.4.3",
     "drizzle-orm": "^0.40.0",
     "zod": "^4.0.5"

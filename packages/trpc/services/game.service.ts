@@ -1,8 +1,8 @@
 import { eq, and } from "drizzle-orm";
-import { tables, type Db, type Tx } from "@freshmen68/db";
-import type { groupPreferenceSchema } from "@freshmen68/dto";
+import { tables, type Db, type Tx } from "@vidyafreshmen/db";
+import type { groupPreferenceSchema } from "@vidyafreshmen/dto";
 import type z from "zod/v4";
-import { availableGroups, user } from '@freshmen68/db/schemas';
+import { availableGroups, user } from '@vidyafreshmen/db/schemas';
 
 export async function updateUserGroup(email: string, groupCode: string, db: Db | Tx) {
   const studentUser = await db.query.user.findFirst({

@@ -4,7 +4,7 @@
  */
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "freshmen68",
+  "name": "vidyafreshmen",
   "main": "./.cloudflare/worker.js",
   "compatibility_date": "2025-07-11",
   "site": {
@@ -21,7 +21,7 @@
   ],
   "routes": [
     {
-      "pattern": "freshmen68.vidyachula.org",
+      "pattern": "vidyafreshmen.vidyachula.org",
       "custom_domain": true
     }
   ]

@@ -1,4 +1,4 @@
-import type { AppRouter } from "@freshmen68/trpc";
+import type { AppRouter } from "@vidyafreshmen/trpc";
 
 export type Student = NonNullable<Awaited<ReturnType<AppRouter["user"]["getStudentInfo"]>>>;
 export type OwnedTeam = NonNullable<Awaited<ReturnType<AppRouter["team"]["getOwnedTeam"]>>>;

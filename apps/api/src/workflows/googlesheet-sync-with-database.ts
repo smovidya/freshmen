@@ -1,5 +1,5 @@
-import { createDatabaseConnection } from '@freshmen68/db';
-import { students, teams } from '@freshmen68/db/schemas';
+import { createDatabaseConnection } from '@vidyafreshmen/db';
+import { students, teams } from '@vidyafreshmen/db/schemas';
 import { WorkflowEntrypoint, WorkflowStep, WorkflowEvent, env } from 'cloudflare:workers';
 import { JWT } from 'google-auth-library';
 import { GoogleSpreadsheet } from 'google-spreadsheet';

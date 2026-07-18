@@ -1,6 +1,6 @@
 {
 	"extends": [
-		"@freshmen68/typescript-config/svelte.json",
+		"@vidyafreshmen/typescript-config/svelte.json",
 		"./.svelte-kit/tsconfig.json"
 	]
 }

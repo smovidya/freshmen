@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/public';
-import type { AppRouter } from '@freshmen68/trpc';
+import type { AppRouter } from '@vidyafreshmen/trpc';
 import { createTRPCClient, httpBatchLink, loggerLink } from '@trpc/client';
 import { dev } from '$app/environment';
 

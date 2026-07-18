@@ -1,5 +1,5 @@
-import { schema, tables } from '@freshmen68/db';
-import { FeatureFlags } from '@freshmen68/flags';
+import { schema, tables } from '@vidyafreshmen/db';
+import { FeatureFlags } from '@vidyafreshmen/flags';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { jwt } from 'better-auth/plugins/jwt';
@@ -148,9 +148,9 @@ export const createAuth = ({
 		advanced: {
 			crossSubDomainCookies: {
 				enabled: env.WORKER_ENV === 'production',
-				domain: "freshmen68.vidyachula.org"
+				domain: "vidyafreshmen.vidyachula.org"
 			},
-			cookiePrefix: "freshmen68",
+			cookiePrefix: "vidyafreshmen",
 			// defaultCookieAttributes: {
 			// 	sameSite: "none",
 			// 	secure: true,

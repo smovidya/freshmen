@@ -1,4 +1,4 @@
-import { groupPreferenceSchema } from "@freshmen68/dto";
+import { groupPreferenceSchema } from "@vidyafreshmen/dto";
 import { TRPCError } from "@trpc/server";
 import z from "zod/v4";
 import { router, signedInProcedure } from "../core";

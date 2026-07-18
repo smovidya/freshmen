@@ -1,7 +1,7 @@
-import { auth, createAuth } from '@freshmen68/auth';
-import { createDatabaseConnection } from '@freshmen68/db';
-import { FeatureFlags } from '@freshmen68/flags';
-import { appRouter } from '@freshmen68/trpc';
+import { auth, createAuth } from '@vidyafreshmen/auth';
+import { createDatabaseConnection } from '@vidyafreshmen/db';
+import { FeatureFlags } from '@vidyafreshmen/flags';
+import { appRouter } from '@vidyafreshmen/trpc';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { env, WorkerEntrypoint } from 'cloudflare:workers';
 import { Hono } from 'hono';

@@ -449,6 +449,6 @@ async function quickTest(implementation: 'queue' | 'durable', users: number = 10
 export { runFullTest, quickTest, LoadTester };
 
 // const domain = "http://localhost:8787/";
-const domain = "https://game.freshmen68.ongsa.lt/";
+const domain = "https://game.vidyafreshmen.ongsa.lt/";
 
 await quickTest("durable", 1200, 120000, domain);

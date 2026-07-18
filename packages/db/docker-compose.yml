@@ -1,4 +1,4 @@
-name: freshmen68
+name: vidyafreshmen
 services:
   db:
     image: postgres

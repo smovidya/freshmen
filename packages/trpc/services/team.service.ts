@@ -1,5 +1,5 @@
 import { eq, count } from "drizzle-orm";
-import { tables, type Db, type Tx } from "@freshmen68/db";
+import { tables, type Db, type Tx } from "@vidyafreshmen/db";
 import { createRandomGroupNumberPreferenceOrder } from "./group.service";
 
 export async function joinTeam(email: string, teamCode: string, db: Db | Tx) {

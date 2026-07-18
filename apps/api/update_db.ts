@@ -1,5 +1,5 @@
-import { createDatabaseConnection } from '@freshmen68/db'
-import { teams } from "@freshmen68/db/schemas"
+import { createDatabaseConnection } from '@vidyafreshmen/db'
+import { teams } from "@vidyafreshmen/db/schemas"
 import parse from "csv-simple-parser";
 import { eq, ne, gt, gte } from "drizzle-orm";
 

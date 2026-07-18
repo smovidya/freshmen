@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
-import { tables, type Db, type Tx } from "@freshmen68/db";
-import type { groupPreferenceSchema } from "@freshmen68/dto";
+import { tables, type Db, type Tx } from "@vidyafreshmen/db";
+import type { groupPreferenceSchema } from "@vidyafreshmen/dto";
 import type z from "zod/v4";
 
 export async function updateGroupPreference(email: string, preference: z.infer<typeof groupPreferenceSchema>, db: Db | Tx) {

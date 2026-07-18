@@ -1,5 +1,5 @@
 {
-  "name": "@freshmen68/db",
+  "name": "@vidyafreshmen/db",
   "module": "index.ts",
   "type": "module",
   "scripts": {

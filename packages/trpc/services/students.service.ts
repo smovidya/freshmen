@@ -1,5 +1,5 @@
-import { tables, type Db, type Tx } from "@freshmen68/db";
-import type { registrationSchema } from "@freshmen68/dto";
+import { tables, type Db, type Tx } from "@vidyafreshmen/db";
+import type { registrationSchema } from "@vidyafreshmen/dto";
 import { eq } from "drizzle-orm";
 import z from "zod/v4";
 import { createRandomGroupNumberPreferenceOrder } from "./group.service";

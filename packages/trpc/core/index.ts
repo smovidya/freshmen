@@ -1,6 +1,6 @@
-import type { auth } from '@freshmen68/auth';
-import type { Db } from '@freshmen68/db';
-import type { FeatureFlags } from '@freshmen68/flags';
+import type { auth } from '@vidyafreshmen/auth';
+import type { Db } from '@vidyafreshmen/db';
+import type { FeatureFlags } from '@vidyafreshmen/flags';
 import { initTRPC, TRPCError } from '@trpc/server';
 
 export type Context = {

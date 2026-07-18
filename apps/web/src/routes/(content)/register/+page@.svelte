@@ -21,7 +21,7 @@
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { departmentIds, departmentLabels } from '$lib/departments';
 	import { trpcClient } from '$lib/trpc';
-	import { registrationSchema } from '@freshmen68/dto';
+	import { registrationSchema } from '@vidyafreshmen/dto';
 	import { toast } from 'svelte-sonner';
 	import { fromStore } from 'svelte/store';
 	import { superForm } from 'sveltekit-superforms';

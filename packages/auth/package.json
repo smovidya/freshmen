@@ -1,5 +1,5 @@
 {
-  "name": "@freshmen68/auth",
+  "name": "@vidyafreshmen/auth",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
@@ -8,10 +8,10 @@
     "wrangler": "^4.24.3"
   },
   "dependencies": {
-    "@freshmen68/db": "workspace:*",
+    "@vidyafreshmen/db": "workspace:*",
     "dotenv": "^17.2.0",
     "postgres": "^3.4.7",
-    "@freshmen68/flags": "workspace:*"
+    "@vidyafreshmen/flags": "workspace:*"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"

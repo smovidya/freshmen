@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "../../node_modules/wrangler/config-schema.json",
-	"name": "freshmen68-api",
+	"name": "vidyafreshmen-api",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-07-11",
 	"observability": {
@@ -18,7 +18,7 @@
 	},
 	"routes": [
 		{
-			"pattern": "api.freshmen68.vidyachula.org",
+			"pattern": "api.vidyafreshmen.vidyachula.org",
 			"custom_domain": true
 		}
 	],
@@ -53,13 +53,13 @@
 	"d1_databases": [
 		{
 			"binding": "GAME_STATS_DB",
-			"database_name": "freshmen68-game-stats",
+			"database_name": "vidyafreshmen-game-stats",
 			"database_id": "6bdef66d-a0e6-415f-9534-7b7c43f1d154"
 		},
 		{
 			"binding": "DB",
 			"database_id": "9c88c4ce-84c3-4267-b7be-a06545032d81",
-			"database_name": "freshmen68",
+			"database_name": "vidyafreshmen",
 		}
 	],
 	/**
