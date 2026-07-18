@@ -1,6 +1,4 @@
 <script lang="ts">
-	import DevLoginBox from './dev-login-box.svelte';
-	import { dev } from '$app/environment';
 	import LoginWithGoogle from './login-with-google.svelte';
 	import ProjectLogo from '$lib/assets/logo.webp';
 	import { fly } from 'svelte/transition';
@@ -54,9 +52,6 @@
 						class="mt-4 w-full cursor-pointer">ไปยังเมนู</Button
 					>
 				{:else}
-					{#if dev}
-						<DevLoginBox />
-					{/if}
 					<LoginWithGoogle class="mt-4 w-full" />
 				{/if}
 				<span
