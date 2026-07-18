@@ -1,7 +1,7 @@
 import { relations } from 'drizzle-orm';
-import { boolean, index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-export const students = pgTable('students', {
+export const students = sqliteTable('students', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   title: text('title').notNull(),
   firstName: text('first_name').notNull(),
@@ -23,10 +23,10 @@ export const students = pgTable('students', {
     .references(() => teams.id, { onDelete: 'restrict' }),
   teamId: text('team_id')
     .references(() => teams.id, { onDelete: 'set null' }),
-  createdAt: timestamp('created_at')
+  createdAt: integer('created_at', { mode: 'timestamp' })
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
-  updatedAt: timestamp('updated_at')
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .$onUpdateFn(() => /* @__PURE__ */ new Date())
     .notNull(),
@@ -48,7 +48,7 @@ export const studentsRelations = relations(students, ({ one }) => ({
   }),
 }));
 
-export const availableGroups = pgTable('available_groups', {
+export const availableGroups = sqliteTable('available_groups', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   number: text('number').notNull().unique(),
   name: text('name').notNull(),
@@ -56,10 +56,10 @@ export const availableGroups = pgTable('available_groups', {
   groupMetadata: text('group_metadata'),
   maxMembers: integer('max_members').notNull(),
   joinGroupPassword: text('join_group_password'),
-  createdAt: timestamp('created_at')
+  createdAt: integer('created_at', { mode: 'timestamp' })
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
-  updatedAt: timestamp('updated_at')
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .$onUpdateFn(() => /* @__PURE__ */ new Date())
     .notNull(),
@@ -73,21 +73,21 @@ export const availableGroupsRelations = relations(availableGroups, ({ many }) =>
   }),
 }));
 
-export const teams = pgTable('teams', {
+export const teams = sqliteTable('teams', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   creatorId: text('creator_id')
     .notNull(),
   groupNumberPreferenceOrder: text('group_number_preference_order'),
-  isSubmitted: boolean('is_submitted')
+  isSubmitted: integer('is_submitted', { mode: 'boolean' })
     .$defaultFn(() => false)
     .notNull(),
   resultGroupNumber: text('result_group_number')
     .references(() => availableGroups.id, { onDelete: 'cascade' }),
   teamCodes: text('team_codes').unique().notNull(),
-  createdAt: timestamp('created_at')
+  createdAt: integer('created_at', { mode: 'timestamp' })
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
-  updatedAt: timestamp('updated_at')
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .$onUpdateFn(() => /* @__PURE__ */ new Date())
     .notNull(),

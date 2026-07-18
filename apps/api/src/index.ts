@@ -72,7 +72,7 @@ app.on(['POST', 'GET'], '/trpc/*', (c) => {
 		createContext: () => ({
 			user: c.get('user'),
 			session: c.get('session'),
-			db: createDatabaseConnection(env.DATABASE_URL),
+			db: createDatabaseConnection(env.DB),
 			flags: new FeatureFlags({
 				enabledAll: env.WORKER_ENV !== 'production'
 			}),

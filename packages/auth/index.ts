@@ -5,16 +5,14 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { jwt } from 'better-auth/plugins/jwt';
 import { env } from 'cloudflare:workers';
 import { eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/d1';
 
 export const createAuth = ({
 	env,
 }: {
 	env: any;
 }) => {
-	const client = postgres(env.DATABASE_URL);
-	const db = drizzle(client, {
+	const db = drizzle(env.DB, {
 		schema: schema
 	});
 
@@ -27,7 +25,7 @@ export const createAuth = ({
 
 	return betterAuth({
 		database: drizzleAdapter(db, {
-			provider: 'pg'
+			provider: 'sqlite'
 		}),
 		logger: {
 			level: 'info',
@@ -136,6 +134,9 @@ export const createAuth = ({
 		plugins: [
 			jwt()
 		],
+		rateLimit: {
+			storage: "database",
+		},
 		onAPIError: {
 			errorURL: `/auth/error`, // wtf why dont this work 
 		},

@@ -8,13 +8,13 @@ declare namespace Cloudflare {
 		GOOGLE_CLIENT_ID: string;
 		GOOGLE_CLIENT_SECRET: string;
 		FRONTEND_URL: string;
-		DATABASE_URL: string;
 		WORKER_ENV: string;
 		GOOGLE_SERVICE_ACCOUNT_EMAIL: string;
 		GOOGLE_PRIVATE_KEY: string;
 		ELEVATED_OUID_LIST: string;
 		GAME_REGION_HANDLER: DurableObjectNamespace<import("./src/index").GameRegionHandler>;
 		GAME_STATS_DB: D1Database;
+		DB: D1Database;
 		GAME_RATE_LIMITER: RateLimit;
 		SyncGoogleSheetWithDatabase: Workflow;
 	}
@@ -24,7 +24,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "BETTER_AUTH_SECRET" | "PUBLIC_BETTER_AUTH_URL" | "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "FRONTEND_URL" | "DATABASE_URL" | "WORKER_ENV" | "GOOGLE_SERVICE_ACCOUNT_EMAIL" | "GOOGLE_PRIVATE_KEY" | "ELEVATED_OUID_LIST">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "BETTER_AUTH_SECRET" | "PUBLIC_BETTER_AUTH_URL" | "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "FRONTEND_URL" | "WORKER_ENV" | "GOOGLE_SERVICE_ACCOUNT_EMAIL" | "GOOGLE_PRIVATE_KEY" | "ELEVATED_OUID_LIST">> {}
 }
 
 // Begin runtime types

@@ -2,6 +2,9 @@
   "name": "@vidyafreshmen/auth",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250712.0",
     "@types/bun": "latest",
@@ -9,8 +12,6 @@
   },
   "dependencies": {
     "@vidyafreshmen/db": "workspace:*",
-    "dotenv": "^17.2.0",
-    "postgres": "^3.4.7",
     "@vidyafreshmen/flags": "workspace:*"
   },
   "peerDependencies": {

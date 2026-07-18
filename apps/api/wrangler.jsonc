@@ -58,8 +58,9 @@
 		},
 		{
 			"binding": "DB",
-			"database_id": "9c88c4ce-84c3-4267-b7be-a06545032d81",
+			"database_id": "91370eec-4862-49f1-a28e-def2efe8cde9",
 			"database_name": "vidyafreshmen",
+			"migrations_dir": "../../packages/db/drizzle"
 		}
 	],
 	/**

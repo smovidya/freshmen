@@ -3,12 +3,13 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "db:start": "docker compose up -d",
-    "db:stop": "docker compose stop",
-    "db:push": "DATABASE_URL=postgres://root:mysecretpassword@localhost:5541/local drizzle-kit push",
-    "db:generate": "DATABASE_URL=postgres://root:mysecretpassword@localhost:5541/local drizzle-kit generate",
-    "db:migrate": "DATABASE_URL=postgres://root:mysecretpassword@localhost:5541/local drizzle-kit migrate",
-    "db:studio": "DATABASE_URL=postgres://root:mysecretpassword@localhost:5541/local drizzle-kit studio"
+    "check-types": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local --config ../../apps/api/wrangler.jsonc",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote --config ../../apps/api/wrangler.jsonc",
+    "db:seed:local": "wrangler d1 execute DB --local --file=./seed.sql --config ../../apps/api/wrangler.jsonc",
+    "db:seed:remote": "wrangler d1 execute DB --remote --file=./seed.sql --config ../../apps/api/wrangler.jsonc",
+    "db:studio": "drizzle-kit studio"
   },
   "exports": {
     ".": {

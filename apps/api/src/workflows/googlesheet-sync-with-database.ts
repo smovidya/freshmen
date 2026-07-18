@@ -26,12 +26,12 @@ async function getDoc(env: Env, serviceAccountAuth: JWT) {
 export class syncGoogleSheetWithDatabase extends WorkflowEntrypoint<Env, {}> {
 	async run(event: WorkflowEvent<Params>, step: WorkflowStep) {
 		const studentsData = await step.do('getStudentData', async () => {
-			const db = createDatabaseConnection(env.DATABASE_URL);
+			const db = createDatabaseConnection(env.DB);
 			return await db.select().from(students);
 		});
 
 		const teamsData = await step.do('getTeamData', async () => {
-			const db = createDatabaseConnection(env.DATABASE_URL);
+			const db = createDatabaseConnection(env.DB);
 			return await db.select().from(teams);
 		});
 
