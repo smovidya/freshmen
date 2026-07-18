@@ -39,7 +39,8 @@ export class FeatureFlags {
     }
 
     if ('scheduled' in featureStatus) {
-      return false
+      const scheduled = new Date(featureStatus.scheduled);
+      return now >= scheduled; // Enabled from the scheduled time onward, no end
     }
 
     if ('isEnabled' in featureStatus) {

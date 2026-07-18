@@ -53,6 +53,20 @@ bun run dev
 
 Navigate to `http://localhost:5173` to see the web application and `http://localhost:3000` for the API.
 
+## Festival schedule
+
+Time-gated features are controlled by `packages/flags/config.ts` (all times Asia/Bangkok, +07:00). This is the only place feature availability is date-gated — everything else reads through `FeatureFlags.isEnabled(...)`.
+
+| Flag | Window |
+| --- | --- |
+| `registering` | 2026-07-19 18:00 → 2026-07-21 23:59 |
+| `team-joining` | 2026-07-19 18:00 → 2026-07-21 23:59 |
+| `group-choosing` (group preference ordering) | 2026-07-19 18:00 → 2026-07-21 23:59 |
+| `group-announcement` | opens 2026-07-23 18:00 (no end) |
+| `game-playing` (d-day) | 2026-07-25 00:00 → 2026-07-27 23:59 |
+
+In dev, use the floating dev toolbar (bottom of the screen, dev-only) to force any of these flags on/off regardless of the actual date/time, and to mock-login as a test student without going through Google SSO.
+
 ## Deployment
 
 For deployment, we use Cloudflare Workers for both the API and web applications. If you are the maintainer, you can deploy using the following commands:

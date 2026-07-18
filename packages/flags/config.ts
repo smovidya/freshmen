@@ -1,19 +1,24 @@
 export const features = {
   "login": false,
   "registering": {
-    start: "2025-07-19T12:00:00+07:00",
-    end: "2025-07-21T23:59:59+07:00",
+    start: "2026-07-19T18:00:00+07:00",
+    end: "2026-07-21T23:59:59+07:00",
   },
   "team-joining": {
-    start: "2025-07-19T12:00:00+07:00",
-    end: "2025-07-21T23:59:59+07:00",
+    start: "2026-07-19T18:00:00+07:00",
+    end: "2026-07-21T23:59:59+07:00",
   },
   "group-choosing": {
-    start: "2025-07-19T12:00:00+07:00",
-    end: "2025-07-21T23:59:59+07:00",
+    start: "2026-07-19T18:00:00+07:00",
+    end: "2026-07-21T23:59:59+07:00",
   },
-  "group-announcement": true,
-  "game-playing": false,
+  "group-announcement": {
+    scheduled: "2026-07-23T18:00:00+07:00",
+  },
+  "game-playing": {
+    start: "2026-07-25T00:00:00+07:00",
+    end: "2026-07-27T23:59:59+07:00",
+  },
   "game-allow-non-freshmen": false
 } satisfies Record<string, EventAvailability>;
 
