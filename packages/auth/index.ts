@@ -32,7 +32,7 @@ export const createAuth = ({
 		},
 		appName: 'Science Freshmen Fest 68',
 		secret: env.BETTER_AUTH_SECRET,
-		baseURL: env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:8787',
+		baseURL: env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:3000',
 		databaseHooks: {
 			user: {
 				create: {
@@ -143,7 +143,7 @@ export const createAuth = ({
 		trustedOrigins(request) {
 			return [
 				env.FRONTEND_URL || 'http://localhost:5173',
-				env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:8787',
+				env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:3000',
 			];
 		},
 		advanced: {

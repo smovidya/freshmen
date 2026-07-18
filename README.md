@@ -51,7 +51,7 @@ Then start the development server:
 bun run dev
 ```
 
-Navigate to `http://localhost:5173` to see the web application and `http://localhost:8787` for the API.
+Navigate to `http://localhost:5173` to see the web application and `http://localhost:3000` for the API.
 
 ## Deployment
 

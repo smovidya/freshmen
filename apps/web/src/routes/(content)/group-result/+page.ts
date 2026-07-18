@@ -39,7 +39,7 @@ export const load: PageLoad = async ({ parent }) => {
     };
   }
 
-  const groupResult = parseInt(row[row.length - 1]);
+  const groupResult = Number(row[row.length - 1]);
 
   return {
     ownedTeam,

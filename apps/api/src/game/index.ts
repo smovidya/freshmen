@@ -47,7 +47,7 @@ function getJwks() {
 		return jose.createLocalJWKSet({ "keys": [{ "kty": "OKP", "crv": "Ed25519", "x": "5s1FFUB8l54bIi7OtakDKwQmEe2Krf1PaWTMycL9yCU", "kid": "POMpwv8go7MUWBLO11LcgeygdZ8KFgyH" }] });
 	}
 
-	const jwksUrl = `${env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:8787'}/api/auth/jwks`;
+	const jwksUrl = `${env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:3000'}/api/auth/jwks`;
 	return jose.createRemoteJWKSet(new URL(jwksUrl));
 }
 
@@ -78,8 +78,8 @@ const withAuth = createMiddleware(async (c, next) => {
 
 	try {
 		const { payload } = await jose.jwtVerify(token, JWKS, {
-			issuer: env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:8787',
-			audience: env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:8787',
+			issuer: env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:3000',
+			audience: env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:3000',
 		});
 
 		const { group, ouid } = payload;

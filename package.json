@@ -17,7 +17,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev --parallel",
+    "dev": "turbo run dev --parallel --continue=always",
     "deploy": "turbo run deploy --parallel",
     "check-types": "turbo run check-types",
     "lint": "turbo run lint"

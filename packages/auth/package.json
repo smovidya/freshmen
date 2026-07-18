@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@vidyafreshmen/db": "workspace:*",
-    "@vidyafreshmen/flags": "workspace:*"
+    "@vidyafreshmen/flags": "workspace:*",
+    "better-auth": "^1.6.23"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"

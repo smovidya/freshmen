@@ -15,7 +15,7 @@ export const trpcClient = ({ fetch = globalThis.fetch }: Options = {}) => create
         ...options,
         credentials: "include"
       }),
-      url: env.PUBLIC_TRPC_URL || 'http://localhost:8787/trpc',
+      url: env.PUBLIC_TRPC_URL || 'http://localhost:3000/trpc',
     })
   ].filter((op) => {
     return op !== null && op !== undefined;

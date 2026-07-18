@@ -7,6 +7,7 @@ import { env, WorkerEntrypoint } from 'cloudflare:workers';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import * as jose from 'jose';
+import { devLoginRouter } from './dev-login';
 import { gameRouter } from './game';
 import { getPopByGroups } from './game/coordinator';
 
@@ -21,7 +22,7 @@ const app = new Hono<{
 app.use(
 	'*', // or replace with "*" to enable cors for all routes
 	cors({
-		origin: [env.FRONTEND_URL || 'http://localhost:5173', env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:8787'],
+		origin: [env.FRONTEND_URL || 'http://localhost:5173', env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:3000'],
 		allowHeaders: ['Content-Type', 'Authorization'],
 		allowMethods: ['POST', 'GET', 'OPTIONS'],
 		exposeHeaders: ['Content-Length'],
@@ -35,6 +36,8 @@ app.get('/game', (c) => {
 });
 
 app.route("/game", gameRouter);
+
+app.route('/dev-login', devLoginRouter);
 
 app.on(['POST', 'GET'], '/api/auth/*', (c) => {
 	const auth = createAuth({

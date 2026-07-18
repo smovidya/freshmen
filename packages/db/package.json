@@ -24,12 +24,14 @@
   "types": "index.d.ts",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250712.0",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "drizzle-kit": "^0.31.10"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "dotenv": "^17.2.0"
+    "dotenv": "^17.2.0",
+    "drizzle-orm": "^0.45.2"
   }
 }

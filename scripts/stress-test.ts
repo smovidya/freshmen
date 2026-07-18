@@ -27,7 +27,7 @@ class LoadTester {
 	private isRunning = false;
 	private domain: string;
 
-	constructor(domain: string = "http://localhost:8787/") {
+	constructor(domain: string = "http://localhost:3000/") {
 		this.domain = domain;
 	}
 
@@ -409,7 +409,7 @@ const testConfigs = [
 	{ users: 1400, duration: 90000 },  // 1400 users for 1.5 min
 ];
 
-async function runFullTest(domain: string = "http://localhost:8787/") {
+async function runFullTest(domain: string = "http://localhost:3000/") {
 	const tester = new LoadTester(domain);
 
 	console.log("🎯 Starting comprehensive load test...\n");
@@ -439,7 +439,7 @@ async function runFullTest(domain: string = "http://localhost:8787/") {
 }
 
 // Quick test function for single implementation
-async function quickTest(implementation: 'queue' | 'durable', users: number = 100, duration: number = 30000, domain: string = "http://localhost:8787/") {
+async function quickTest(implementation: 'queue' | 'durable', users: number = 100, duration: number = 30000, domain: string = "http://localhost:3000/") {
 	const tester = new LoadTester(domain);
 	await tester.runTest(implementation, users, duration);
 	return tester.getResults()[0];
@@ -448,7 +448,7 @@ async function quickTest(implementation: 'queue' | 'durable', users: number = 10
 // Export functions for use
 export { runFullTest, quickTest, LoadTester };
 
-// const domain = "http://localhost:8787/";
+// const domain = "http://localhost:3000/";
 const domain = "https://game.vidyafreshmen.ongsa.lt/";
 
 await quickTest("durable", 1200, 120000, domain);
