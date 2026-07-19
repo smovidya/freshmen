@@ -3,62 +3,61 @@ import { tables, type Db, type Tx } from "@vidyafreshmen/db";
 import { createRandomGroupNumberPreferenceOrder } from "./group.service";
 
 export async function joinTeam(email: string, teamCode: string, db: Db | Tx) {
-  return await db.transaction(async (tx) => {
-    // Check if user is already in a team or owns a team
-    const [student] = await tx
-      .select({
-        teamId: tables.students.teamId,
-        teamOwnedId: tables.students.teamOwnedId
-      })
-      .from(tables.students)
-      .where(eq(tables.students.email, email))
-      .limit(1);
+  // D1 does not support the BEGIN/COMMIT statements used by Drizzle's
+  // transaction() implementation, so this runs as plain sequential queries.
+  const [student] = await db
+    .select({
+      teamId: tables.students.teamId,
+      teamOwnedId: tables.students.teamOwnedId
+    })
+    .from(tables.students)
+    .where(eq(tables.students.email, email))
+    .limit(1);
 
-    if (!student) {
-      return "user-not-found";
-    }
+  if (!student) {
+    return "user-not-found";
+  }
 
-    if (student.teamId) {
-      return "already-in-team";
-    }
+  if (student.teamId) {
+    return "already-in-team";
+  }
 
-    const teams = await tx
-      .select({
-        id: tables.teams.id,
-      })
-      .from(tables.teams)
-      .where(eq(tables.teams.teamCodes, teamCode))
-      .limit(1);
+  const teams = await db
+    .select({
+      id: tables.teams.id,
+    })
+    .from(tables.teams)
+    .where(eq(tables.teams.teamCodes, teamCode))
+    .limit(1);
 
-    if (teams.length === 0) {
-      return "team-not-founded";
-    }
+  if (teams.length === 0) {
+    return "team-not-founded";
+  }
 
-    const team = teams[0]!;
+  const team = teams[0]!;
 
-    if (student.teamOwnedId === team.id) {
-      return "is-owner";
-    }
+  if (student.teamOwnedId === team.id) {
+    return "is-owner";
+  }
 
-    const ret = await tx
-      .select({ count: count() })
-      .from(tables.students)
-      .where(eq(tables.students.teamId, team.id));
+  const ret = await db
+    .select({ count: count() })
+    .from(tables.students)
+    .where(eq(tables.students.teamId, team.id));
 
-    const currentMemberCount = ret[0]!.count;
+  const currentMemberCount = ret[0]!.count;
 
-    if (currentMemberCount >= 2) {
-      return "team-full";
-    }
+  if (currentMemberCount >= 2) {
+    return "team-full";
+  }
 
-    // Update the user's teamId
-    await tx
-      .update(tables.students)
-      .set({ teamId: team.id })
-      .where(eq(tables.students.email, email));
+  // Update the user's teamId
+  await db
+    .update(tables.students)
+    .set({ teamId: team.id })
+    .where(eq(tables.students.email, email));
 
-    return "ok";
-  });
+  return "ok";
 }
 
 export async function regenerateTeamCode(ownerEmail: string, db: Db | Tx) {
@@ -209,70 +208,66 @@ export async function getJoinedTeam(email: string, db: Db | Tx) {
 }
 
 export async function leaveJoinedTeam(email: string, db: Db | Tx) {
-  return await db.transaction(async (tx) => {
-    // Check if user is actually in a team
-    const [student] = await tx
-      .select({
-        teamId: tables.students.teamId,
-        teamOwnedId: tables.students.teamOwnedId
-      })
-      .from(tables.students)
-      .where(eq(tables.students.email, email))
-      .limit(1);
+  // Check if user is actually in a team
+  const [student] = await db
+    .select({
+      teamId: tables.students.teamId,
+      teamOwnedId: tables.students.teamOwnedId
+    })
+    .from(tables.students)
+    .where(eq(tables.students.email, email))
+    .limit(1);
 
-    if (!student || !student.teamId) {
-      return "not-in-team";
-    }
+  if (!student || !student.teamId) {
+    return "not-in-team";
+  }
 
-    // Remove user from team
-    await tx
-      .update(tables.students)
-      .set({ teamId: null })
-      .where(eq(tables.students.email, email));
+  // Remove user from team
+  await db
+    .update(tables.students)
+    .set({ teamId: null })
+    .where(eq(tables.students.email, email));
 
-    return "ok";
-  });
+  return "ok";
 }
 
 export async function kickOwnedTeamMemeber(ownerEmail: string, targetEmail: string, db: Db | Tx) {
-  return await db.transaction(async (tx) => {
-    // Get owner's team
-    const [owner] = await tx
-      .select({
-        teamOwnedId: tables.students.teamOwnedId
-      })
-      .from(tables.students)
-      .where(eq(tables.students.email, ownerEmail))
-      .limit(1);
+  // Get owner's team
+  const [owner] = await db
+    .select({
+      teamOwnedId: tables.students.teamOwnedId
+    })
+    .from(tables.students)
+    .where(eq(tables.students.email, ownerEmail))
+    .limit(1);
 
-    if (!owner || !owner.teamOwnedId) {
-      return "not-team-owner";
-    }
+  if (!owner || !owner.teamOwnedId) {
+    return "not-team-owner";
+  }
 
-    // Check if target is in the owner's team
-    const [target] = await tx
-      .select({
-        teamId: tables.students.teamId,
-        teamOwnedId: tables.students.teamOwnedId
-      })
-      .from(tables.students)
-      .where(eq(tables.students.email, targetEmail))
-      .limit(1);
+  // Check if target is in the owner's team
+  const [target] = await db
+    .select({
+      teamId: tables.students.teamId,
+      teamOwnedId: tables.students.teamOwnedId
+    })
+    .from(tables.students)
+    .where(eq(tables.students.email, targetEmail))
+    .limit(1);
 
-    if (!target) {
-      return "target-not-found";
-    }
+  if (!target) {
+    return "target-not-found";
+  }
 
-    if (target.teamId !== owner.teamOwnedId) {
-      return "target-not-in-team";
-    }
+  if (target.teamId !== owner.teamOwnedId) {
+    return "target-not-in-team";
+  }
 
-    // Remove target from team
-    await tx
-      .update(tables.students)
-      .set({ teamId: null })
-      .where(eq(tables.students.email, targetEmail));
+  // Remove target from team
+  await db
+    .update(tables.students)
+    .set({ teamId: null })
+    .where(eq(tables.students.email, targetEmail));
 
-    return "ok";
-  });
+  return "ok";
 }
