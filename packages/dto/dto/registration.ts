@@ -13,6 +13,6 @@ export const registrationSchema = z.object({
   emergencyContactRelationship: z.string().min(1, 'กรุณาเลือกความสัมพันธ์'),
   medicalConditions: z.string().optional(),
   drugAllergies: z.string().optional(),
-  foodAllergies: z.string().optional(),
-  foodLimitations: z.string().optional()
+  foodAllergies: z.string().optional().default(''),
+  foodLimitations: z.string().optional().default('')
 });

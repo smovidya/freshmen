@@ -12,7 +12,10 @@
 	onclick={() => {
 		authClient.signIn.social({
 			provider: 'google',
-			callbackURL: flags.isEnabled('game-playing') ? '/game' : '/menu'
+			additionalData: {
+				hd: 'student.chula.ac.th'
+			},
+			callbackURL: '/menu'
 		});
 	}}
 	class={cn(
