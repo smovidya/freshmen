@@ -15,6 +15,13 @@
       "when": 1784406457997,
       "tag": "0001_boring_zarda",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784486798986,
+      "tag": "0002_military_crusher_hogan",
+      "breakpoints": true
     }
   ]
 }
