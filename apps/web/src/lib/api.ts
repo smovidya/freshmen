@@ -7,7 +7,7 @@ interface Options {
 }
 
 export const apiClient = ({ fetch = globalThis.fetch }: Options = {}) =>
-	hc<ApiRouter>(env.PUBLIC_API_URL || 'http://localhost:3000/api', {
+	hc<ApiRouter>(env.PUBLIC_API_URL || '/api', {
 		fetch: (input: RequestInfo | URL, init?: RequestInit) =>
 			fetch(input as Parameters<typeof fetch>[0], { ...init, credentials: 'include' })
 	});

@@ -18,7 +18,7 @@
 	// can show "this is really open/closed right now" next to the override control
 	const naturalFlags = new FeatureFlags({});
 
-	const authBaseUrl = env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:3000';
+	const authBaseUrl = env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:8787';
 
 	function loginAs(ouid: string) {
 		if (!/^\d{10}$/.test(ouid) || !ouid.endsWith('23')) {

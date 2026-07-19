@@ -4,7 +4,7 @@ import { dev } from "$app/environment";
 import { untrack } from "svelte";
 import { toast } from 'svelte-sonner';
 
-export const gameApiPrefix = `${env.PUBLIC_BETTER_AUTH_URL || "http:;//localhost:3000"}/game`;
+export const gameApiPrefix = `${env.PUBLIC_BETTER_AUTH_URL || "http://localhost:8787"}/game`;
 
 export type LeaderboardEntry = {
   playerId: string;

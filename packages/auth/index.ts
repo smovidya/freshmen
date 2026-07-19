@@ -12,8 +12,6 @@ export const createAuth = ({ env }: { env: any }) => {
     schema: schema,
   });
 
-  const isDev = env.WORKER_ENV !== "production";
-
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "sqlite",
@@ -118,20 +116,7 @@ export const createAuth = ({ env }: { env: any }) => {
       ];
     },
     advanced: {
-      ...(!isDev
-        ? {
-            crossSubDomainCookies: {
-              enabled: true,
-              domain: "vidyachula.org",
-            },
-          }
-        : {}),
       cookiePrefix: "vidyafreshmen",
-      // defaultCookieAttributes: {
-      // 	sameSite: "none",
-      // 	secure: true,
-      // 	// partitioned: true // New browser standards will mandate this for foreign cookies
-      // }
     },
   });
 };

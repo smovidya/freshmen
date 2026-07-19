@@ -5,10 +5,10 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 migrations apply DB --local --config ../../apps/api/wrangler.jsonc",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote --config ../../apps/api/wrangler.jsonc",
-    "db:seed:local": "wrangler d1 execute DB --local --file=./seed.sql --config ../../apps/api/wrangler.jsonc",
-    "db:seed:remote": "wrangler d1 execute DB --remote --file=./seed.sql --config ../../apps/api/wrangler.jsonc",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local --config ../../apps/web/wrangler.jsonc",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote --config ../../apps/web/wrangler.jsonc",
+    "db:seed:local": "wrangler d1 execute DB --local --file=./seed.sql --config ../../apps/web/wrangler.jsonc",
+    "db:seed:remote": "wrangler d1 execute DB --remote --file=./seed.sql --config ../../apps/web/wrangler.jsonc",
     "db:studio": "drizzle-kit studio"
   },
   "exports": {
