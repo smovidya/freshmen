@@ -122,7 +122,7 @@ export const createAuth = ({ env }: { env: any }) => {
         ? {
             crossSubDomainCookies: {
               enabled: true,
-              domain: "freshmen.vidyachula.org",
+              domain: "vidyachula.org",
             },
           }
         : {}),

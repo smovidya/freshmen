@@ -5,6 +5,7 @@
 {
 	"$schema": "../../node_modules/wrangler/config-schema.json",
 	"name": "vidyafreshmen-api",
+	"account_id": "e2069f9cc14d2fe64afc9d04ed6576bd",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-07-11",
 	"observability": {
@@ -18,7 +19,7 @@
 	},
 	"routes": [
 		{
-			"pattern": "api.vidyafreshmen.vidyachula.org",
+			"pattern": "freshmen-api.vidyachula.org",
 			"custom_domain": true
 		}
 	],
@@ -54,7 +55,7 @@
 		{
 			"binding": "GAME_STATS_DB",
 			"database_name": "vidyafreshmen-game-stats",
-			"database_id": "6bdef66d-a0e6-415f-9534-7b7c43f1d154"
+			"database_id": "f43249c6-11d5-4490-a786-8fea3bc7c1d0"
 		},
 		{
 			"binding": "DB",
@@ -88,12 +89,17 @@
 				}
 			}
 		]
-	}
+	},
 	/**
 	 * Environment Variables
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
 	 */
-	// "vars": { "MY_VARIABLE": "production_value" },
+	"vars": {
+		"WORKER_ENV": "production",
+		"FRONTEND_URL": "https://freshmen.vidyachula.org",
+		"PUBLIC_BETTER_AUTH_URL": "https://freshmen-api.vidyachula.org",
+		"GOOGLE_SERVICE_ACCOUNT_EMAIL": "vidyfreshmen2026@smo-vidya-it.iam.gserviceaccount.com"
+	},
 	/**
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
