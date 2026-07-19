@@ -7,9 +7,9 @@ import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({ depends, parent, fetch }) => {
   const { whoami } = await parent();
-  if (!whoami) {
-    redirect(307, `/?${flashParams("please-login")}`);
-  }
+  // if (!whoami) {
+  //   redirect(307, `/?${flashParams("please-login")}`);
+  // }
   
   if (!flags.isEnabled('group-choosing')) {    
     redirect(307, `/menu?${flashParams("not-yet-start")}`);

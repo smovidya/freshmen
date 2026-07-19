@@ -3,7 +3,6 @@
 	import { LogOutIcon } from 'lucide-svelte';
 	import Button from '../ui/button/button.svelte';
 	import { goto } from '$app/navigation';
-	import posthog from 'posthog-js';
 
 	const session = authClient.useSession();
 </script>
@@ -19,7 +18,6 @@
 				variant="ghost"
 				onclick={async () => {
 					await authClient.signOut();
-					posthog.reset()
 					await goto('/');
 				}}
 			>
