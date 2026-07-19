@@ -84,7 +84,7 @@
 </AlertDialog.Root>
 
 <div
-	class="flex w-full max-w-full flex-col items-center justify-between gap-3 rounded-2xl bg-white p-5 shadow-md md:h-72 md:flex-row md:gap-0"
+	class="flex w-full max-w-full flex-col items-center justify-between gap-3 rounded-2xl bg-[#ffffed] p-5 shadow-md md:h-72 md:flex-row md:gap-0"
 >
 	<div class="flex flex-col self-stretch md:max-w-64 lg:max-w-72">
 		<h3 class="text-2xl font-semibold">สร้างก๊วนมาอยู่ด้วยกัน</h3>

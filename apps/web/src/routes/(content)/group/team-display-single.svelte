@@ -71,8 +71,8 @@
 	}
 </script>
 
-<div class="mt-4 flex flex-col items-center gap-3 md:flex-row">
-	<div class="flex w-full flex-col rounded-2xl bg-white p-6 shadow-md md:h-72 md:max-w-84">
+<div class="mt-4 flex flex-col justify-center items-center gap-3 md:flex-row">
+	<div class="flex w-full flex-col rounded-2xl bg-[#ffffed] p-6 shadow-md md:h-72 md:max-w-84">
 		<h3 class="text-2xl font-semibold">สร้างก๊วนมาอยู่ด้วยกัน</h3>
 		<p class="mt-2 h-12 leading-5">
 			ใคร ๆ ก็อยากเป็นหัวแถว ส่งโค้ดนี้ให้เพื่อนเพื่อเชิญเพื่อนเข้าทีมเลย!
@@ -91,8 +91,8 @@
 		<div class="min-h-8 flex-1"></div>
 		<p class="mb-1">หรือถ้าน้องอินโทรเวิร์ด ไม่ต้องส่งให้ใครก็ได้นะ</p>
 	</div>
-	<span class="text-lg">หรือ</span>
-	<div class="flex w-full flex-col rounded-2xl bg-white p-6 shadow-md md:h-72 md:max-w-84">
+	<span class="text-lg bg-accent text-accent-foreground px-1 rounded-md">หรือ</span>
+	<div class="flex w-full flex-col rounded-2xl bg-[#ffffed] p-6 shadow-md md:h-72 md:max-w-84">
 		<h3 class="text-2xl font-semibold">เข้าร่วมก๊วนกับเพื่อน</h3>
 		<p class="mt-2 h-12 leading-5">ใส่โค้ดที่ได้จากเพื่อนเพื่อไปอยู่ด้วนกันเล้ย</p>
 		<div class="mt-4" style="translate: {offset.current}px 0;">
@@ -118,7 +118,7 @@
 			</InputOTP.Root>
 		</div>
 		<div class="min-h-8 flex-1"></div>
-		<Button variant="secondary" class="bg-primary hover:bg-primary/90" disabled={loading} onclick={onJoinTeamClick}>
+		<Button variant="default" disabled={loading} onclick={onJoinTeamClick}>
 			เข้าร่วม
 			{#if loading}
 				<LoaderIcon class="animate-spin" />

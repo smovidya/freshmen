@@ -64,8 +64,10 @@
 </nav>
 
 <section class="mt-12">
-	<h2 class="text-xl font-semibold">พาเพื่อนเข้ากลุ่มด้วยกัน</h2>
-	<p>น้อง ๆ สามารถเชิญเพื่อนอีก 2 คน (รวมน้องเป็น 3) โดยจะโดนจัดให้อยู่กรุ๊ปเดียวกัน</p>
+	<div class="items-center gap-3 rounded-2xl bg-[#ffffed] p-6 shadow-md md:flex-row md:gap-6">
+		<h2 class="text-xl font-semibold">พาเพื่อนเข้ากลุ่มด้วยกัน</h2>
+		<p>น้อง ๆ สามารถเชิญเพื่อนอีก 2 คน (รวมน้องเป็น 3) โดยจะโดนจัดให้อยู่กรุ๊ปเดียวกัน</p>
+	</div>
 
 	<!-- <TeamDisplayMember {leaveTeam} team={data.ownedTeam} /> -->
 	<!-- <TeamDisplayHead {regenerateTeamCodes} {kickMember} team={data.ownedTeam} /> -->
@@ -79,13 +81,17 @@
 </section>
 
 {#if !data.joinedTeam}
-	<section class="mt-12">
+	<section class="bg-accent text-accent-foreground mt-12 p-4">
 		<h2 class="text-xl font-semibold">เรียงลำดับ</h2>
 		<p>
 			ลากแต่ละกล่องตามลำดับที่ต้องการ หากน้องเข้ากลุ่มกับเพื่อน อันดับนี้จะถูกยกเลิก
 			และจะแสดงอันดับที่คนเชิญน้องเลือกไว้แทน
 		</p>
 
-		<GroupSelector preferences={data.ownedTeam.groupPreferenceOrder} save={updateOrdering} groupData={data.groupData} />
+		<GroupSelector
+			preferences={data.ownedTeam.groupPreferenceOrder}
+			save={updateOrdering}
+			groupData={data.groupData}
+		/>
 	</section>
 {/if}

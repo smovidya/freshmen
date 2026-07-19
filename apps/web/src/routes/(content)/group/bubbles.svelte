@@ -1,40 +1,32 @@
 <script lang="ts">
-	import { getAvatarUrl } from '$lib/avartar';
+	import TigerCap from '$lib/assets/ci-2026/tiger-cap.webp';
+	import TigerCheer from '$lib/assets/ci-2026/tiger-cheer.webp';
+	import TigerAir from '$lib/assets/ci-2026/tiger-air.webp';
+	import TigerEmpty from '$lib/assets/ci-2026/tiger-empty.webp';
 	import { getDisplayName } from '$lib/text-shuffle.svelte';
 	import type { TeamMember } from '$lib/type';
-	import { cn } from '$lib/utils';
 
 	interface Props {
 		member: TeamMember[];
 	}
 
 	let { member }: Props = $props();
-
-	const avartars = $derived(member.map((m) => getAvatarUrl(m)));
 </script>
 
-<div class="relative pr-25">
-	<div class={cn('bg-muted size-32 overflow-clip rounded-full')}>
-		<img src={avartars[0]} alt={getDisplayName(member[0])} />
-	</div>
-	<div
-		class={cn(
-			'mt-2 ml-10  size-22 overflow-clip rounded-full',
-			member[1] ? 'bg-muted' : 'border-muted-foreground/60 border-2 border-dashed'
-		)}
-	>
-		{#if avartars[1]}
-			<img src={avartars[1]} alt={getDisplayName(member[1])} />
-		{/if}
-	</div>
-	<div
-		class={cn(
-			'absolute top-0 left-0 mt-16 ml-32 size-25 overflow-clip rounded-full',
-			member[2] ? 'bg-muted' : 'border-muted-foreground/60 border-2 border-dashed'
-		)}
-	>
-		{#if avartars[2]}
-			<img src={avartars[2]} alt={getDisplayName(member[2])} />
-		{/if}
-	</div>
+<div class="relative h-[190px] w-[200px] shrink-0">
+	<img
+		src={TigerCap}
+		alt={getDisplayName(member[0])}
+		class="absolute top-0 left-0 h-[102px] w-[108px] object-contain"
+	/>
+	<img
+		src={member[2] ? TigerAir : TigerEmpty}
+		alt={member[2] ? getDisplayName(member[2]) : ''}
+		class="absolute top-[32px] left-[97px] h-[128px] w-[103px] object-contain"
+	/>
+	<img
+		src={member[1] ? TigerCheer : TigerEmpty}
+		alt={member[1] ? getDisplayName(member[1]) : ''}
+		class="absolute top-[97px] left-0 h-[89px] w-[120px] object-contain"
+	/>
 </div>

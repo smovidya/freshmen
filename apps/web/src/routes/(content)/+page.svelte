@@ -9,7 +9,7 @@
 </script>
 
 <main
-	class="relative flex min-h-screen w-full flex-col items-center justify-end gap-4 px-5 pt-40 pb-16 text-center"
+	class="relative flex min-h-screen w-full flex-col items-center justify-center gap-4 px-5 pb-16 text-center"
 >
 	<AirportBackdrop />
 	<h1 class="text-lg font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] sm:text-xl">

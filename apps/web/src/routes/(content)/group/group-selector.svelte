@@ -72,7 +72,7 @@
 		{#each groups as item, index (item.id)}
 			<div
 				animate:flip={{ duration: flipDurationMs }}
-				class="flex w-full items-center justify-between rounded-md bg-white p-4 shadow-md"
+				class="flex w-full items-center justify-between rounded-md bg-[#f8efc9] p-4 shadow-md"
 			>
 				<div class="ml-1 flex items-center gap-4">
 					<span class="text-nowrap">
@@ -85,7 +85,7 @@
 				<div class="flex items-center gap-2">
 					<Button
 						size="icon"
-						class="bg-chart-1 hover:bg-chart-1/85 text-white"
+						class="bg-black text-white hover:bg-black/85"
 						variant="secondary"
 						disabled={index === groups.length - 1}
 						onclick={() => moveDown(item.id)}
@@ -94,7 +94,7 @@
 					</Button>
 					<Button
 						size="icon"
-						class="bg-chart-2 hover:bg-chart-2/85 text-white"
+						class="bg-black text-white hover:bg-black/85"
 						variant="secondary"
 						disabled={index === 0}
 						onclick={() => moveUp(item.id)}
@@ -107,17 +107,17 @@
 		{/each}
 	</div>
 
-	<p class="mx-4 mt-6 text-center">
-		หลังจากกดบันทึก น้องสามารกกลับมาแก้ไขเพื่อเชิญเพื่อนและแก้อันดับที่เลือกได้ จนถึง 23:59 น.
+	<p class="mx-4 mt-6 text-center bg-accent p-4 text-sm text-accent-foreground">
+		หลังจากกดบันทึก น้องสามารถกลับมาแก้ไขเพื่อเชิญเพื่อนและแก้อันดับที่เลือกได้ จนกว่าจะ 24:00 น.
 		ของวันที่ 21 กรกฎาคม เมื่อพ้นไปแล้วจะบันทึกตามข้อมูลปัจจุบันอัตโนมัติ
 	</p>
 	<Button
 		disabled={saving}
 		onclick={onSaveClicked}
 		size="lg"
-		class="text-md bg-chart-2 hover:bg-chart-2/85 mt-6 h-12 w-full text-white"
+		class="mt-6 h-12 w-full rounded-[10px] text-lg"
 	>
-		<span> บันทึกลำดับ </span>
+		<span> บันทึก </span>
 		{#if saving}
 			<LoaderIcon class="animate-spin" />
 		{/if}

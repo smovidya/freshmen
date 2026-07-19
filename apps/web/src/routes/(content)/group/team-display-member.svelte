@@ -33,7 +33,7 @@
 </script>
 
 <div
-	class="mt-3 flex w-full flex-col items-center justify-between gap-12 rounded-2xl bg-white p-5 shadow-md backdrop-blur-lg md:h-80 md:flex-row md:gap-3"
+	class="mt-3 flex w-full flex-col items-center justify-between gap-12 rounded-2xl bg-[#ffffed] p-5 shadow-md backdrop-blur-lg md:h-80 md:flex-row md:gap-3"
 >
 	<div class="flex flex-col self-stretch md:max-w-64 lg:max-w-72">
 		<h3 class="text-xl font-semibold">คุณอยู่กับ {getDisplayName(team.owner)}!</h3>
@@ -67,7 +67,7 @@
 	<h2 class="text-2xl font-semibold">ที่{getDisplayName(team.owner)} เรียงไว้ตอนนี้</h2>
 	<div class="mt-2 flex flex-col gap-1.5">
 		{#each groups as group (group.number)}
-			<div class="flex w-full items-center justify-between rounded-md bg-white p-4 shadow-md">
+			<div class="flex w-full items-center justify-between rounded-md bg-[#f8efc9] p-4 shadow-md">
 				<div class="ml-1 flex items-center gap-4">
 					<span>
 						กรุ๊ป {group.id}
