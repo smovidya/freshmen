@@ -1,0 +1,26 @@
+{
+  "name": "@vidyafreshmen/workers",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "check-types": "tsc --noEmit",
+    "cf-typegen": "wrangler types worker-configuration.d.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250712.0",
+    "@types/bun": "latest",
+    "wrangler": "4.25.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@vidyafreshmen/db": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "google-auth-library": "^10.1.0",
+    "google-spreadsheet": "^4.1.5"
+  }
+}

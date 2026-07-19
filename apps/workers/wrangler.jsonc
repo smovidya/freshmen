@@ -4,9 +4,9 @@
  */
 {
 	"$schema": "../../node_modules/wrangler/config-schema.json",
-	"name": "vidyafreshmen",
+	"name": "vidyafreshmen-workers",
 	"account_id": "e2069f9cc14d2fe64afc9d04ed6576bd",
-	"main": "./.cloudflare/worker.js",
+	"main": "./src/index.ts",
 	"compatibility_date": "2025-07-11",
 	"compatibility_flags": [
 		"nodejs_compat"
@@ -14,21 +14,17 @@
 	"observability": {
 		"enabled": true
 	},
-	"build": {
-		"command": "bun run build"
-	},
-	"limits": {
-		"cpu_ms": 5000
-	},
-	"routes": [
+	"workflows": [
 		{
-			"pattern": "freshmen.vidyachula.org",
-			"custom_domain": true
+			"name": "sync-to-google-sheet",
+			"binding": "SYNC_TO_GOOGLE_SHEET",
+			"class_name": "SyncToGoogleSheetWorkflow"
 		}
 	],
-	"assets": {
-		"directory": "./.cloudflare/public",
-		"binding": "ASSETS"
+	"triggers": {
+		"crons": [
+			"*/2 * * * *"
+		]
 	},
 	"d1_databases": [
 		{
@@ -44,12 +40,10 @@
 	 */
 	"vars": {
 		"WORKER_ENV": "production",
-		"FRONTEND_URL": "https://freshmen.vidyachula.org",
-		"PUBLIC_BETTER_AUTH_URL": "https://freshmen.vidyachula.org",
 		"GOOGLE_SERVICE_ACCOUNT_EMAIL": "vidyfreshmen2026@smo-vidya-it.iam.gserviceaccount.com"
 	}
 	/**
-	 * Note: Use secrets to store sensitive data.
+	 * Note: Use secrets to store sensitive data (GOOGLE_PRIVATE_KEY).
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
 	 */
 }
