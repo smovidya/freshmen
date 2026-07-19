@@ -43,7 +43,7 @@ export async function updateStudentInfo(input: z.infer<typeof registrationSchema
   return updatedStudent;
 }
 
-export async function createStudentWithTeam(input: z.infer<typeof registrationSchema>, email: string, db: Db | Tx) {
+export async function createStudentWithTeam(input: z.infer<typeof registrationSchema>, email: string, db: Db) {
   const studentId = email.split("@")[0]!;
 
   // Check if student already exists
@@ -51,54 +51,44 @@ export async function createStudentWithTeam(input: z.infer<typeof registrationSc
     throw new Error('Student is already registered');
   }
 
-  return await db.transaction(async (tx) => {
-    // Generate unique team code
-    const teamCode = await generateTeamCode(tx);
+  // D1 does not support the BEGIN/COMMIT statements used by Drizzle's
+  // transaction() implementation. Generate both IDs up front so the related
+  // rows can be written atomically with D1's batch API.
+  const teamId = crypto.randomUUID();
+  const id = crypto.randomUUID();
+  const teamCode = await generateTeamCode(db);
+  const team = {
+    id: teamId,
+    creatorId: id,
+    groupNumberPreferenceOrder: createRandomGroupNumberPreferenceOrder().join(','),
+    teamCodes: teamCode,
+  };
+  const student = {
+    id,
+    department: input.department,
+    email,
+    emergencyContactName: input.emergencyContactName,
+    emergencyContactPhone: input.emergencyContactPhone,
+    emergencyContactRelationship: input.emergencyContactRelationship,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    phone: input.phone,
+    studentId,
+    title: input.title,
+    dragAllergies: input.drugAllergies,
+    foodAllergies: input.foodAllergies,
+    foodLimitations: input.foodLimitations,
+    medicalConditions: input.medicalConditions,
+    nickname: input.nickname,
+    teamOwnedId: teamId,
+  };
 
-    // First, create the team
-    const [team] = await tx
-      .insert(tables.teams)
-      .values({
-        creatorId: '', // We'll update this after creating the student
-        groupNumberPreferenceOrder: createRandomGroupNumberPreferenceOrder().join(','),
-        teamCodes: teamCode,
-      })
-      .returning();
+  await db.batch([
+    db.insert(tables.teams).values(team),
+    db.insert(tables.students).values(student),
+  ]);
 
-    if (!team) {
-      throw new Error('Failed to create team');
-    }
-
-    const [student] = await tx.insert(tables.students).values({
-      department: input.department,
-      email,
-      emergencyContactName: input.emergencyContactName,
-      emergencyContactPhone: input.emergencyContactPhone,
-      emergencyContactRelationship: input.emergencyContactRelationship,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      phone: input.phone,
-      studentId,
-      title: input.title,
-      dragAllergies: input.drugAllergies,
-      foodAllergies: input.foodAllergies,
-      foodLimitations: input.foodLimitations,
-      medicalConditions: input.medicalConditions,
-      nickname: input.nickname,
-      teamOwnedId: team.id,
-    }).returning();
-
-    if (!student) {
-      throw new Error("Cannot create student");
-    }
-
-    await tx
-      .update(tables.teams)
-      .set({ creatorId: student.id })
-      .where(eq(tables.teams.id, team.id));
-
-    return { student, team };
-  });
+  return { student, team };
 }
 
 export async function getStudentByEmail(email: string, db: Db | Tx) {
