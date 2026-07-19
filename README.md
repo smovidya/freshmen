@@ -6,8 +6,7 @@ A monorepo for the vidyafreshmen project that includes various components and se
 
 ## Project Structure
 - `apps/`: Contains the main applications.
-  - `api/`: The backend API service. Handles authentication and REST endpoints, written with Hono.
-  - `web/`: The frontend web application. Built with SvelteKit
+  - `web/`: The SvelteKit frontend and the Hono API/game backend (Durable Objects, Workflows), deployed together as one Cloudflare Worker. See `apps/web/src/worker/`.
 - `packages/`: Contains shared libraries and utilities.
   - `auth/`: BetterAuth configuration for authentication.
   - `server/`: Hono routers and business-logic services shared by the API.
@@ -30,13 +29,13 @@ bun install
 ```
 
 Setting up environment variables:
-- `apps/api/example.dev.vars` rename to `.dev.vars` and fill in the required values. (You mosly need to set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` for Google OAuth)
+- `apps/web/example.dev.vars` rename to `.dev.vars` and fill in the required values. (You mosly need to set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` for Google OAuth)
 - `apps/web/.env.example` rename to `.env` (no need to fill in anything, just rename it).
 
 For sake of simplicity, run the following command to rename the files:
 
 ```bash
-mv apps/api/example.dev.vars apps/api/.dev.vars && mv apps/web/.env.example apps/web/.env
+mv apps/web/example.dev.vars apps/web/.dev.vars && mv apps/web/.env.example apps/web/.env
 ```
 
 Push database schema changes:
@@ -51,7 +50,15 @@ Then start the development server:
 bun run dev
 ```
 
-Navigate to `http://localhost:5173` to see the web application and `http://localhost:3000` for the API.
+Navigate to `http://localhost:5173` for fast SvelteKit page iteration (no API/auth - Cloudflare bindings aren't available under plain `vite dev`).
+
+To run the full stack (pages + Hono API + Durable Objects + Workflows) against real Workers bindings, use:
+
+```bash
+cd apps/web && bun run dev:worker
+```
+
+and navigate to `http://localhost:8787`.
 
 ## Festival schedule
 
