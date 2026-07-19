@@ -5,9 +5,9 @@ import { apiClient, call } from "$lib/api";
 
 export const load: PageLoad = async ({ parent, fetch, depends }) => {
   const { whoami } = await parent();
-  // if (!whoami) {
-  //   redirect(307, `/?${flashParams("please-login")}`);
-  // }
+  if (!whoami) {
+    redirect(307, `/?${flashParams("please-login")}`);
+  }
 
   depends("data:owned-team", "data:joined-team");
   const client = apiClient({ fetch });

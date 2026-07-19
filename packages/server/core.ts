@@ -1,22 +1,21 @@
-import type { auth } from '@vidyafreshmen/auth';
+import type { createAuth } from '@vidyafreshmen/auth';
 import type { Db } from '@vidyafreshmen/db';
 import type { FeatureFlags } from '@vidyafreshmen/flags';
 import { createMiddleware } from 'hono/factory';
 
-// db/flags are built in apps/api (the only place the Cloudflare Worker's
-// ambient `Env`/`cloudflare:workers` types are guaranteed correct) and handed
-// down through context - importing `cloudflare:workers` directly from this
-// shared package would pull in apps/api's ambient Env globally, which then
-// conflicts with apps/web's own (different) Worker env types wherever this
-// package's source is type-checked as a dependency.
+// db/flags are built in the SvelteKit API endpoint and handed down through
+// context. Importing `cloudflare:workers` directly from this shared package
+// would leak the app's ambient Env into every consumer of this package.
+type AuthInstance = ReturnType<typeof createAuth>;
+
 export type Variables = {
-  user: typeof auth.$Infer.Session.user | null;
-  session: typeof auth.$Infer.Session.session | null;
+  user: AuthInstance['$Infer']['Session']['user'] | null;
+  session: AuthInstance['$Infer']['Session']['session'] | null;
   db: Db;
   flags: FeatureFlags;
 };
 
-// Runs after apps/api's global session-extraction middleware has populated
+// Runs after the API endpoint's session-extraction middleware has populated
 // `user`/`session` on the shared Hono context - just gates the route.
 export const requireUser = createMiddleware<{ Variables: Variables }>(async (c, next) => {
   if (!c.get('user')) {

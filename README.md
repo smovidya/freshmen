@@ -6,7 +6,7 @@ A monorepo for the vidyafreshmen project that includes various components and se
 
 ## Project Structure
 - `apps/`: Contains the main applications.
-  - `web/`: The SvelteKit frontend and the Hono API/game backend (Durable Objects, Workflows), deployed together as one Cloudflare Worker. See `apps/web/src/worker/`.
+  - `web/`: The SvelteKit frontend and server routes, including the Hono API, deployed together as one Cloudflare Worker. Workflow entrypoints remain under `apps/web/src/worker/workflows/`.
 - `packages/`: Contains shared libraries and utilities.
   - `auth/`: BetterAuth configuration for authentication.
   - `server/`: Hono routers and business-logic services shared by the API.
@@ -50,7 +50,7 @@ Then start the development server:
 bun run dev
 ```
 
-Navigate to `http://localhost:5173` for fast SvelteKit page iteration (no API/auth - Cloudflare bindings aren't available under plain `vite dev`).
+Navigate to `http://localhost:5173` for SvelteKit page, API, and auth development. The Cloudflare adapter provides local platform bindings to the SvelteKit server routes.
 
 To run the full stack (pages + Hono API + Durable Objects + Workflows) against real Workers bindings, use:
 

@@ -3,7 +3,6 @@ import { FeatureFlags } from "@vidyafreshmen/flags";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { jwt } from "better-auth/plugins/jwt";
-import { env } from "cloudflare:workers";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 
@@ -101,7 +100,3 @@ export const createAuth = ({ env }: { env: any }) => {
     },
   });
 };
-
-export const auth = createAuth({
-  env,
-});
