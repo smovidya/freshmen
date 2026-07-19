@@ -21,8 +21,8 @@
 	const authBaseUrl = env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:8787';
 
 	function loginAs(ouid: string) {
-		if (!/^\d{10}$/.test(ouid) || !ouid.endsWith('23')) {
-			alert('OUID must be 10 digits ending in "23" (science student).');
+		if (!/^\d{10}$/.test(ouid)) {
+			alert('OUID must be 10 digits.');
 			return;
 		}
 		const redirectTo = window.location.href;

@@ -29,25 +29,6 @@ export const createAuth = ({ env }: { env: any }) => {
             if (user.email.endsWith("@student.chula.ac.th")) {
               const ouid = user.email.split("@")[0];
 
-              // Limited to science freshmen only
-              if (!ouid?.endsWith("23")) {
-                console.error(
-                  `[auth] Error: science-students-only ouid:${ouid} ${JSON.stringify(user)}`,
-                );
-                throw context?.error("FORBIDDEN", {
-                  code: "science-students-only",
-                  message: "การลงทะเบียนนี้สำหรับนิสิตคณะวิทยาศาสตร์เท่านั้น",
-                });
-              }
-
-              // if (ouid.startsWith('69')) {
-              // 	console.error(`[auth] Error: freshmen-only ouid:${ouid} ${JSON.stringify(user)}`)
-              // 	throw context?.error("FORBIDDEN", {
-              // 		code: 'freshmen-only',
-              // 		message: 'การลงทะเบียนนี้สำหรับนิสิตชั้นปีที่ 1 เท่านั้น หากคุณเป็นนิสิตชั้นปีที่ 1 โปรดติดต่อ https://www.instagram.com/smovidya_official/',
-              // 	});
-              // }
-
               return {
                 data: {
                   ...user,
