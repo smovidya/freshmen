@@ -52,7 +52,7 @@ bun run dev
 
 Navigate to `http://localhost:5173` for SvelteKit page, API, and auth development. The Cloudflare adapter provides local platform bindings to the SvelteKit server routes.
 
-To run the full stack (pages + Hono API + Durable Objects + Workflows) against real Workers bindings, use:
+To run the full stack (pages + Hono API + Workflows) against real Workers bindings, use:
 
 ```bash
 cd apps/web && bun run dev:worker
