@@ -4,7 +4,7 @@ export const registrationSchema = z.object({
   title: z.string().min(1, 'กรุณาเลือกคำนำหน้า'),
   firstName: z.string().min(1, 'กรุณากรอกชื่อ'),
   lastName: z.string().min(1, 'กรุณากรอกนามสกุล'),
-  nickname: z.string().optional(),
+  nickname: z.string().min(1, 'กรุณากรอกชื่อเล่น'),
   department: z.string().min(1, 'กรุณาเลือกสาขาวิชา'),
   // email: z.email('กรุณากรอกอีเมลให้ถูกต้อง'),
   phone: z.string().regex(/^[0-9]{10}$/, 'กรุณากรอกหมายเลขโทรศัพท์ 10 หลัก'),

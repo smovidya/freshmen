@@ -173,7 +173,7 @@
 				<FormField {form} name="nickname">
 					<FormControl>
 						{#snippet children({ props })}
-							<FormLabel>ชื่อเล่น (ไม่บังคับ)</FormLabel>
+							<FormLabel>ชื่อเล่น</FormLabel>
 							<Input {...props} bind:value={$formData.nickname} placeholder="ชาย" />
 						{/snippet}
 					</FormControl>
