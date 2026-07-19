@@ -30,13 +30,13 @@
 		"directory": "./.cloudflare/public",
 		"binding": "ASSETS"
 	},
-	"workflows": [
-		{
-			"name": "sync-google-sheet-with-database",
-			"binding": "SyncGoogleSheetWithDatabase",
-			"class_name": "syncGoogleSheetWithDatabase"
-		}
-	],
+	// "workflows": [
+	// 	{
+	// 		"name": "sync-google-sheet-with-database",
+	// 		"binding": "SyncGoogleSheetWithDatabase",
+	// 		"class_name": "syncGoogleSheetWithDatabase"
+	// 	}
+	// ],
 	"d1_databases": [
 		{
 			"binding": "DB",

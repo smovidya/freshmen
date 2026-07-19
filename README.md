@@ -58,7 +58,7 @@ To run the full stack (pages + Hono API + Durable Objects + Workflows) against r
 cd apps/web && bun run dev:worker
 ```
 
-and navigate to `http://localhost:8787`.
+and navigate to `http://localhost:5173`.
 
 ## Festival schedule
 

@@ -1,4 +1,4 @@
-import adapter from './adapter.js';
+import adapter from '@sveltejs/adapter-cloudflare';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -15,7 +15,7 @@ const config = {
 		version: {
 			pollInterval: 5000
 		}
-	},
+	}
 };
 
 export default config;
