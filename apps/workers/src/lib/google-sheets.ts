@@ -7,7 +7,9 @@ export function getServiceAccountAuth(env: Env) {
   }
   return new JWT({
     email: env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: env.GOOGLE_PRIVATE_KEY,
+    // env vars store the PEM with literal "\n" escapes (dotenv-style, single-line) -
+    // gtoken/jws sign with this string as-is and need real line breaks to parse it.
+    key: env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 }
