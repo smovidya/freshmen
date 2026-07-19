@@ -3,6 +3,17 @@
 	import DevToolbar from '$lib/dev/DevToolbar.svelte';
 
 	let { children } = $props();
+
+	$effect(() => {
+		if (typeof window !== 'undefined') {
+			const userAgent = navigator.userAgent;
+			if (/Line\//.test(userAgent)) {
+				const url = new URL(location.href);
+				url.searchParams.append('openExternalBrowser', '1');
+				location.href = url.toString();
+			}
+		}
+	});
 </script>
 
 {@render children()}
