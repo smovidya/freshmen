@@ -4,10 +4,7 @@
 	import Bubbles from '../group/bubbles.svelte';
 	import MemberList from '../group/member-list.svelte';
 	import OpenChatIcon from './open-chat-icon.svelte';
-
-	import DesktopBGImage from '$lib/assets/2048x1152px/2048_1152w_bg.png';
-	import MobileBGImage from '$lib/assets/640x1137px/640_1137w_bg.png';
-	import TablateBGImage from '$lib/assets/768x1024px/768_1024w_bg.png';
+	import { AirportBackdrop } from '$lib/components/festival';
 
 	let { data } = $props();
 	const team = $derived(data.joinedTeam ?? data.ownedTeam);
@@ -15,16 +12,7 @@
 </script>
 
 <main class="container mx-auto flex h-full max-w-[60rem] flex-col px-5 py-14">
-	<div
-		class="justify-top fixed inset-0 -z-10 mx-auto h-full w-full items-start overflow-hidden bg-[#F0CE7D]"
-	>
-		<img
-			srcset="{MobileBGImage} 640w, {TablateBGImage} 768w, {DesktopBGImage} 1440w"
-			src={DesktopBGImage}
-			alt=""
-			class="h-full w-full object-cover object-top"
-		/>
-	</div>
+	<AirportBackdrop showCharacter={false} />
 	<nav class="mt-64 flex items-center justify-between gap-4">
 		<BackButton href="/menu" />
 		<div class="text-center">

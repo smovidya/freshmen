@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import BackButton from '$lib/components/back-button.svelte';
-	import { trpcClient } from '$lib/trpc';
+	import { apiClient, call } from '$lib/api';
 	import { toast } from 'svelte-sonner';
 	import type { PageProps } from './$types';
 	import GroupSelector from './group-selector.svelte';
@@ -10,15 +10,15 @@
 	import TeamDisplaySingle from './team-display-single.svelte';
 
 	let { data }: PageProps = $props();
-	const trpc = trpcClient();
+	const client = apiClient();
 
 	async function updateOrdering(preferences: number[]) {
-		await trpc.team.updateGroupPreference.mutate(preferences);
+		await call(client.team['group-preference'].$put({ json: preferences }));
 		await invalidate('data:owned-team');
 	}
 
 	async function joinTeam(teamCodes: string) {
-		const code = await trpc.team.join.mutate(teamCodes);
+		const code = await call(client.team.join.$post({ json: { code: teamCodes } }));
 		if (code === 'ok') {
 			await invalidate('data:joined-team');
 		}
@@ -39,17 +39,17 @@
 	}
 
 	async function regenerateTeamCodes() {
-		await trpc.team.regenerateTeamCode.mutate();
+		await call(client.team['regenerate-code'].$post());
 		await invalidate('data:owned-team');
 	}
 
 	async function kickMember(email: string) {
-		await trpc.team.kickOwnedTeamMemeber.mutate(email);
+		await call(client.team.kick.$post({ json: { email } }));
 		await invalidate('data:owned-team');
 	}
 
 	async function leaveTeam() {
-		await trpc.team.leaveJoinedTeam.mutate();
+		await call(client.team.leave.$post());
 		await invalidate('data:joined-team');
 	}
 </script>

@@ -1,8 +1,7 @@
-import { auth, createAuth } from '@vidyafreshmen/auth';
+import { createAuth } from '@vidyafreshmen/auth';
 import { createDatabaseConnection } from '@vidyafreshmen/db';
 import { FeatureFlags } from '@vidyafreshmen/flags';
-import { appRouter } from '@vidyafreshmen/trpc';
-import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
+import { apiRouter, type Variables as ApiVariables } from '@vidyafreshmen/server';
 import { env, WorkerEntrypoint } from 'cloudflare:workers';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -12,9 +11,7 @@ import { gameRouter } from './game';
 import { getPopByGroups } from './game/coordinator';
 
 const app = new Hono<{
-	Variables: {
-		user: typeof auth.$Infer.Session.user | null;
-		session: typeof auth.$Infer.Session.session | null;
+	Variables: ApiVariables & {
 		gameJWTPayload: jose.JWTPayload | null;
 	};
 }>();
@@ -47,9 +44,9 @@ app.on(['POST', 'GET'], '/api/auth/*', (c) => {
 });
 
 app.use('*', async (c, next) => {
-	// if (env.WORKER_ENV === "dev") {
-	// 	return next();
-	// }
+	c.set('db', createDatabaseConnection(env.DB));
+	c.set('flags', new FeatureFlags({ enabledAll: env.WORKER_ENV !== 'production' }));
+
 	const auth = createAuth({
 		env,
 	});
@@ -67,21 +64,7 @@ app.use('*', async (c, next) => {
 	return next();
 });
 
-app.on(['POST', 'GET'], '/trpc/*', (c) => {
-	return fetchRequestHandler({
-		endpoint: '/trpc',
-		req: c.req.raw,
-		router: appRouter,
-		createContext: () => ({
-			user: c.get('user'),
-			session: c.get('session'),
-			db: createDatabaseConnection(env.DB),
-			flags: new FeatureFlags({
-				enabledAll: env.WORKER_ENV !== 'production'
-			}),
-		}),
-	});
-});
+app.route('/api', apiRouter);
 
 
 app.get("__hono/__version", c => {
@@ -117,7 +100,7 @@ app.all('*', (c) => {
 	return c.redirect(`${env.FRONTEND_URL || 'http://localhost:5173'}${c.req.path}`, 302);
 });
 
-export default class TRPCCloudflareWorkerExample extends WorkerEntrypoint {
+export default class ApiWorker extends WorkerEntrypoint {
 	async fetch(request: Request): Promise<Response> {
 		return app.fetch(request, {}, this.ctx);
 	}

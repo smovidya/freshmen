@@ -1,8 +1,7 @@
-import type { AppRouter } from "@vidyafreshmen/trpc";
+import type { OwnedTeam, StudentInfo, JoinedTeam } from "@vidyafreshmen/server";
 
-export type Student = NonNullable<Awaited<ReturnType<AppRouter["user"]["getStudentInfo"]>>>;
-export type OwnedTeam = NonNullable<Awaited<ReturnType<AppRouter["team"]["getOwnedTeam"]>>>;
-export type JoinedTeam = NonNullable<Awaited<ReturnType<AppRouter["team"]["getJoinedTeam"]>>>;
+export type Student = StudentInfo;
+export type { OwnedTeam, JoinedTeam };
 export type TeamMember = OwnedTeam["members"][number];
 
 export type Group = {

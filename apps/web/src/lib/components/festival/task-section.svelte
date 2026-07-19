@@ -10,9 +10,7 @@
 		>
 	{/if}
 
-	<div
-		class="flex w-full flex-col gap-1 rounded-2xl p-1 shadow-md backdrop-blur-lg sm:bg-yellow-50/70"
-	>
+	<div class="flex w-full flex-col gap-3">
 		{@render children?.()}
 	</div>
 </section>

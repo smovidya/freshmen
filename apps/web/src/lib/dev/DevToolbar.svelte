@@ -94,17 +94,17 @@
 							<div class="flex flex-col gap-1.5 border-t border-zinc-700 pt-2">
 								<p class="text-xs font-medium text-zinc-300">Mock login (mints a real session, no SSO)</p>
 								<div class="flex gap-1.5">
-									<Button size="sm" class="flex-1" onclick={() => loginAs('6812345623')}>
-										Freshman (68)
+									<Button size="sm" class="flex-1" onclick={() => loginAs('6912345623')}>
+										Freshman (69)
 									</Button>
-									<Button size="sm" class="flex-1" onclick={() => loginAs('6512345623')}>
-										Non-freshman (65)
+									<Button size="sm" class="flex-1" onclick={() => loginAs('6812345623')}>
+										Non-freshman (68)
 									</Button>
 								</div>
 								<div class="flex gap-1.5">
 									<Input
 										bind:value={customOuid}
-										placeholder="68xxxxxx23"
+										placeholder="69xxxxxx23"
 										class="h-8 bg-zinc-800 text-zinc-100"
 									/>
 									<Button size="sm" onclick={() => loginAs(customOuid)}>Login</Button>

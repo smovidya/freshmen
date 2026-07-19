@@ -30,7 +30,7 @@ export const createAuth = ({
 		logger: {
 			level: 'info',
 		},
-		appName: 'Science Freshmen Fest 68',
+		appName: 'Science Freshmen Fest 69',
 		secret: env.BETTER_AUTH_SECRET,
 		baseURL: env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:3000',
 		databaseHooks: {
@@ -49,7 +49,7 @@ export const createAuth = ({
 								})
 							}
 
-							// if (ouid.startsWith('68')) {
+							// if (ouid.startsWith('69')) {
 							// 	console.error(`[auth] Error: freshmen-only ouid:${ouid} ${JSON.stringify(user)}`)
 							// 	throw context?.error("FORBIDDEN", {
 							// 		code: 'freshmen-only',
@@ -77,7 +77,7 @@ export const createAuth = ({
 				create: {
 					async before(session, context) {
 						const user = await db.select().from(tables.user).where(eq(tables.user.id, session.userId))
-						if (!user[0]?.group && user[0]?.ouid?.startsWith('68')) {
+						if (!user[0]?.group && user[0]?.ouid?.startsWith('69')) {
 							// user didn't have group assigned, get from team
 							const student = await db.select().from(tables.students).where(eq(tables.students.email, user[0]?.email || ""));
 							if (student[0]?.teamId || student[0]?.teamOwnedId) {

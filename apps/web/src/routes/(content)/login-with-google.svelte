@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth/client';
-	import Button from '$lib/components/ui/button/button.svelte';
+	import TicketButton from '$lib/assets/ci-2026/ticket-button.webp';
 	import { flags } from '$lib/flags';
 	import { cn } from '$lib/utils';
 
 	const { class: className }: { class?: string } = $props();
 </script>
 
-<Button
+<button
+	type="button"
 	onclick={() => {
 		authClient.signIn.social({
 			provider: 'google',
@@ -15,13 +16,15 @@
 		});
 	}}
 	class={cn(
-		'h-16 w-full cursor-pointer text-lg transition-transform hover:scale-105 hover:bg-amber-400 active:scale-100',
+		'relative mx-auto block w-full max-w-[320px] cursor-pointer bg-contain bg-center bg-no-repeat transition-transform hover:scale-105 active:scale-100',
 		className
 	)}
-	size="lg"
+	style="aspect-ratio: 488 / 219; background-image: url({TicketButton});"
 >
-	<div class="flex flex-col items-center justify-center gap-2">
-		<span>เข้าสู่ระบบด้วย Chula SSO</span>
-		<span class="text-xs">เลือก @student.chula.ac.th</span>
-	</div>
-</Button>
+	<span
+		class="absolute inset-y-0 left-[16%] flex w-[54%] flex-col items-center justify-center text-sm leading-tight font-semibold text-black sm:text-base"
+	>
+		<span>เข้าสู่ระบบด้วย</span>
+		<span>Chula SSO</span>
+	</span>
+</button>

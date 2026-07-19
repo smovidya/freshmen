@@ -2,11 +2,11 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { GameAPIClient } from '$lib/game.svelte';
-	import { trpcClient } from '$lib/trpc';
+	import { apiClient, call } from '$lib/api';
 	import { toast } from 'svelte-sonner';
 
 	let { client }: { client: GameAPIClient } = $props();
-	const trpc = trpcClient();
+	const api = apiClient();
 
 	let joinPassword = $state('');
 
@@ -16,9 +16,11 @@
 		}
 
 		try {
-			await trpc.user.updateUserGroup.mutate({
-				groupCode: joinPassword
-			});
+			await call(
+				api.user.group.$post({
+					json: { groupCode: joinPassword }
+				})
+			);
 		} catch (error) {
 			toast.error(
 				'ไม่สามารถเข้าร่วมกรุ๊ปได้' + (error instanceof Error ? `: ${error.message}` : '')

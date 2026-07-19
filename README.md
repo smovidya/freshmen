@@ -6,11 +6,11 @@ A monorepo for the vidyafreshmen project that includes various components and se
 
 ## Project Structure
 - `apps/`: Contains the main applications.
-  - `api/`: The backend API service. Handle Authentication and tRPC Handlers written in TypeScript.
+  - `api/`: The backend API service. Handles authentication and REST endpoints, written with Hono.
   - `web/`: The frontend web application. Built with SvelteKit
 - `packages/`: Contains shared libraries and utilities.
   - `auth/`: BetterAuth configuration for authentication.
-  - `trpc/`: tRPC handlers and utilities.
+  - `server/`: Hono routers and business-logic services shared by the API.
   - `db/`: Database utilities and migrations.
   - `typescript-config/`: Shared TypeScript configuration (seem to be broken).
 - `turbo.json`: Configuration for Turborepo to manage tasks and dependencies across the monorepo.

@@ -1,7 +1,7 @@
 import { flags } from '$lib/flags';
 import { flashParams } from "$lib/flash.svelte";
 import { groupData } from "$lib/groups";
-import { trpcClient } from "$lib/trpc";
+import { apiClient, call } from "$lib/api";
 import { redirect } from "@sveltejs/kit";
 import type { PageLoad } from "./$types";
 
@@ -17,9 +17,10 @@ export const load: PageLoad = async ({ depends, parent, fetch }) => {
 
   depends("data:owned-team", "data:joined-team");
 
+  const client = apiClient({ fetch });
   const [ownedTeam, joinedTeam] = await Promise.all([
-    trpcClient({ fetch }).team.getOwnedTeam.query(),
-    trpcClient({ fetch }).team.getJoinedTeam.query()
+    call(client.team.owned.$get()),
+    call(client.team.joined.$get())
   ]).catch((e) => {
     console.warn(e);
     // actually wtf

@@ -4,7 +4,7 @@ import { env } from 'cloudflare:workers';
 import { Hono } from 'hono';
 import { setCookie } from 'hono/cookie';
 
-// Dev-only: mint a real better-auth session for any 68xx...23 student OUID
+// Dev-only: mint a real better-auth session for any 69xx...23 student OUID
 // without going through Google SSO. Mirrors the app's own signup hook
 // (packages/auth/index.ts) instead of bypassing it, so the resulting user
 // row looks exactly like a real signup.
@@ -15,7 +15,7 @@ devLoginRouter.get('/', async (c) => {
 		return c.notFound();
 	}
 
-	const ouid = c.req.query('ouid') ?? '6812345623';
+	const ouid = c.req.query('ouid') ?? '6912345623';
 	const redirectTo = c.req.query('redirectTo') || env.FRONTEND_URL || 'http://localhost:5173';
 
 	if (!/^\d{10}$/.test(ouid) || !ouid.endsWith('23')) {

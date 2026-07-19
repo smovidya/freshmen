@@ -2,8 +2,7 @@ import posthog from 'posthog-js';
 import { browser, dev } from '$app/environment';
 
 import type { LayoutLoad } from "./$types";
-import { trpcClient } from "$lib/trpc";
-import { isTRPCClientError } from '@trpc/client';
+import { apiClient, call } from "$lib/api";
 import { flags } from '$lib/flags';
 
 // export const ssr = false;
@@ -24,17 +23,13 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 
   try {
     const [whoami] = await Promise.all([
-      trpcClient({ fetch }).user.whoami.query(),
+      call(apiClient({ fetch }).user.whoami.$get()),
     ]);
     return {
       whoami,
     };
   } catch (error) {
-    if (isTRPCClientError(error)) {
-      console.error("TRPC Client Error:", error.message);
-    } else {
-      console.error("Unexpected Error:", error);
-    }
+    console.error("API Client Error:", error);
     return {
       whoami: null
     };

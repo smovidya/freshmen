@@ -21,7 +21,7 @@
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import TagChecklist from '$lib/components/tag-checklist.svelte';
 	import { departmentIds, departmentLabels } from '$lib/departments';
-	import { trpcClient } from '$lib/trpc';
+	import { apiClient, call } from '$lib/api';
 	import { registrationSchema } from '@vidyafreshmen/dto';
 	import { toast } from 'svelte-sonner';
 	import { fromStore } from 'svelte/store';
@@ -51,14 +51,18 @@
 			try {
 				submitting = true;
 				if (isRegistered) {
-					await trpcClient().user.updateStudentInfo.mutate({
-						...form.data
-					});
+					await call(
+						apiClient().user['student-info'].$put({
+							json: { ...form.data }
+						})
+					);
 					toast.success('บันทึกข้อมูลสำเร็จ 🎉');
 				} else {
-					await trpcClient().user.register.mutate({
-						...form.data
-					});
+					await call(
+						apiClient().user.register.$post({
+							json: { ...form.data }
+						})
+					);
 					toast.success('ลงทะเบียนสำเร็จ 🎉');
 				}
 			} catch (error) {

@@ -1,5 +1,5 @@
 import { flashParams } from "$lib/flash.svelte";
-import { trpcClient } from "$lib/trpc";
+import { apiClient, call } from "$lib/api";
 import { registrationSchema } from "@vidyafreshmen/dto";
 import { redirect } from "@sveltejs/kit";
 import { superValidate } from "sveltekit-superforms";
@@ -46,7 +46,7 @@ export const load: PageLoad = async ({ fetch, parent }) => {
   }
 
 
-  const student = await trpcClient({ fetch }).user.getStudentInfo.query();
+  const student = await call(apiClient({ fetch }).user["student-info"].$get());
 
   const form = await superValidate(student ? mapToUndefined(student) : {}, zod4(registrationSchema), {
     errors: false

@@ -1,11 +1,15 @@
 <script lang="ts">
+	import { ArrowRight, Check } from 'lucide-svelte';
+	import { cn } from '$lib/utils';
+
 	const {
 		href,
 		title,
 		description,
 		status = 'ยังไม่ดำเนินการ',
 		icon = 'file-user',
-		disabled = false
+		disabled = false,
+		done = false
 	}: {
 		href: string;
 		title: string;
@@ -13,6 +17,7 @@
 		status?: string;
 		icon?: any;
 		disabled?: boolean;
+		done?: boolean;
 	} = $props();
 
 	const Icon = icon;
@@ -21,31 +26,24 @@
 <a
 	href={disabled ? undefined : href}
 	data-sveltekit-preload-data="tap"
-	class="flex flex-row items-center rounded-lg bg-white/60 sm:bg-white/10 p-4 transition-all hover:bg-white/50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 sm:gap-4"
+	class="flex flex-row items-center gap-3 rounded-3xl bg-gradient-to-b from-[#FFE580] to-[#F7C948] p-4 shadow-md transition-all hover:brightness-105 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 sm:gap-4"
 	aria-disabled={disabled}
 >
 	<div
-		class="mr-2 hidden size-20 shrink-0 flex-row items-center justify-center rounded-full bg-white/60 align-middle shadow-sm sm:flex"
+		class="flex size-16 shrink-0 flex-row items-center justify-center rounded-2xl bg-black align-middle shadow-sm sm:size-20"
 	>
-		<Icon class="size-12 stroke-1 text-red-600" />
+		{#if done}
+			<Check class="size-8 stroke-[3] text-[#FFD447] sm:size-10" />
+		{:else}
+			<Icon class="size-8 stroke-[1.5] text-white sm:size-10" />
+		{/if}
 	</div>
 	<div class="w-full">
-		<h2 class="mb-1 text-xl font-bold">{title}</h2>
-		<p class="w-full text-sm text-gray-700">{description}</p>
-		<span class="text-muted-foreground text-xs">{status}</span>
+		<h2 class="mb-1 text-lg font-bold text-black sm:text-xl">{title}</h2>
+		<p class="w-full text-sm text-black/70">{description}</p>
+		<span class={cn('text-xs font-medium', done ? 'text-[#2f8a7f]' : 'text-[#c74137]')}
+			>{status}</span
+		>
 	</div>
-	<svg
-		xmlns="http://www.w3.org/2000/svg"
-		width="24"
-		height="24"
-		viewBox="0 0 24 24"
-		fill="none"
-		stroke="currentColor"
-		stroke-width="2"
-		stroke-linecap="round"
-		stroke-linejoin="round"
-		class="lucide lucide-chevron-right m-4 size-7 shrink-0 text-gray-600"
-	>
-		<path d="m9 18 6-6-6-6" />
-	</svg>
+	<ArrowRight class="m-2 size-7 shrink-0 stroke-[2.5] text-black" />
 </a>

@@ -1,7 +1,7 @@
 import { redirect } from "@sveltejs/kit";
 import type { PageLoad } from "./$types";
 import { flashParams } from "$lib/flash.svelte";
-import { trpcClient } from "$lib/trpc";
+import { apiClient, call } from "$lib/api";
 import posthog from 'posthog-js';
 import { dev } from '$app/environment';
 
@@ -19,10 +19,11 @@ export const load: PageLoad = async ({ parent, fetch, depends }) => {
   }
 
   depends("data:owned-team", "data:joined-team");
+  const client = apiClient({ fetch });
   const [isRegistered, ownedTeam, joinedTeam] = await Promise.all([
-    trpcClient({ fetch }).user.isRegistered.query(),
-    trpcClient({ fetch }).team.getOwnedTeam.query(),
-    trpcClient({ fetch }).team.getJoinedTeam.query()
+    call(client.user["is-registered"].$get()),
+    call(client.team.owned.$get()),
+    call(client.team.joined.$get())
   ]);
 
   return {

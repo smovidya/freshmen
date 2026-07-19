@@ -4,7 +4,7 @@ import { parse } from '@vanillaes/csv';
 import rawData from "$lib/data/results_team_processed_with_groups.csv?raw";
 import { flashParams } from "$lib/flash.svelte";
 import { flags } from "$lib/flags";
-import { trpcClient } from "$lib/trpc";
+import { apiClient, call } from "$lib/api";
 import { groupData } from "$lib/groups";
 
 export const load: PageLoad = async ({ parent }) => {
@@ -17,9 +17,10 @@ export const load: PageLoad = async ({ parent }) => {
     redirect(307, `/menu?${flashParams("not-yet-start")}`);
   }
 
+  const client = apiClient();
   const [ownedTeam, joinedTeam] = await Promise.all([
-    trpcClient({ fetch }).team.getOwnedTeam.query(),
-    trpcClient({ fetch }).team.getJoinedTeam.query()
+    call(client.team.owned.$get()),
+    call(client.team.joined.$get())
   ]).catch((e) => {
     console.warn(e);
     // actually wtf

@@ -8,7 +8,7 @@ import { generateTeamCode } from "./team.service";
 
 export async function isRegistered(email: string, db: Db | Tx) {
   const existed = await db
-    .select({})
+    .select({ id: tables.students.id })
     .from(tables.students)
     .where(eq(tables.students.email, email));
 
