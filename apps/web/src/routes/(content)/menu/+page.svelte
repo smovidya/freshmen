@@ -24,7 +24,7 @@
 					<div class="w-full">
 						<h2 class="mb-1 text-xl font-bold text-black">ปิดลงทะเบียนแล้ว</h2>
 						<p class="w-full text-black/70">
-							เราจะนำข้อมูลที่ลงทะเบียนไปสุ่มและเตรียมกิจกรรมต้อนรับ รอฟังประกาศผลกรุ๊ปในวันที่ 22
+							เราจะนำข้อมูลที่ลงทะเบียนไปสุ่มและเตรียมกิจกรรมต้อนรับ รอฟังประกาศผลกรุ๊ปในวันที่ 23
 							กรกฎาคม เวลา 18:00 น. ที่นี่พร้อมลิงก์เข้าโอเพนแชตจ้า
 						</p>
 						<p class="text-black/70">
@@ -58,24 +58,24 @@
 				/>
 			{/if}
 		</TaskSection>
-		<TaskSection subtitle="22 กรกฎาคม">
+		<TaskSection subtitle="23 กรกฎาคม">
 			<TaskCard
 				disabled={!flags.isEnabled('group-announcement')}
 				href="/group-result"
 				title="ประกาศผลกรุ๊ป"
 				description="ประกาศผลกรุ๊ปที่น้อง ๆ จะได้เป็นสมาชิกตลอดกิจกรรม"
 				status={!flags.isEnabled('group-announcement')
-					? 'ประกาศภายในวันที่ 22 กรกฎาคม'
+					? 'ประกาศภายในวันที่ 23 กรกฎาคม'
 					: 'ประกาศผลแล้ว'}
 				icon={Megaphone}
 			/>
 		</TaskSection>
-		<TaskSection subtitle="26 &ndash; 29 กรกฎาคม">
+		<TaskSection subtitle="25 &ndash; 27 กรกฎาคม">
 			<TaskCard
 				disabled={!flags.isEnabled('game-playing')}
 				href="/game"
 				title="เกมสุดพิเศษล่าความภูมิใจและศักดิ์ศรี"
-				description="เล่นได้ในวันที่ 26 กรกฎาคม"
+				description="เล่นได้ในวันที่ 25 กรกฎาคม"
 				status="เล่นได้!!!"
 				icon={Swords}
 			/>
