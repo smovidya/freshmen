@@ -23,10 +23,15 @@ export type PartialSyncTable<Row = any> = {
   mode: 'partial';
   sheetTitle: string;
   intervalMinutes: number;
-  // Must return only rows newer than `cursor`, ordered ascending by the same field
-  // `getCursorValue` reads - the workflow advances the cursor to the last row's value.
+  // Must return rows with updatedAt > cursor (covers both new inserts and edits to
+  // existing rows), ordered ascending by that same field - the workflow advances the
+  // cursor to the last row's value.
   query: (db: Db, cursor: Date | null) => Promise<Row[]>;
   getCursorValue: (row: Row) => Date;
+  // Column header + accessor used to find an existing sheet row to update in place
+  // (upsert) instead of always appending - required so edits land on the same row.
+  keyHeader: string;
+  getKey: (row: Row) => string;
   columns: SyncColumn<Row>[];
 };
 
@@ -86,7 +91,7 @@ const teamsSync: FullSyncTable<typeof tables.teams.$inferSelect> = {
   ],
 };
 
-function scansQuery(db: Db, cursor: Date | null) {
+function scansSelect(db: Db) {
   return db
     .select({
       id: tables.scans.id,
@@ -99,63 +104,102 @@ function scansQuery(db: Db, cursor: Date | null) {
       checkpointType: tables.checkpoints.checkpointType,
       activityName: tables.activities.name,
       scannedAt: tables.scans.createdAt,
+      updatedAt: tables.scans.updatedAt,
     })
     .from(tables.scans)
     .innerJoin(tables.students, eq(tables.scans.studentId, tables.students.id))
     .innerJoin(tables.staffs, eq(tables.scans.staffId, tables.staffs.id))
     .innerJoin(tables.checkpoints, eq(tables.scans.checkpointId, tables.checkpoints.id))
-    .innerJoin(tables.activities, eq(tables.checkpoints.activityId, tables.activities.id))
-    .where(cursor ? gt(tables.scans.createdAt, cursor) : undefined)
-    .orderBy(asc(tables.scans.createdAt));
+    .innerJoin(tables.activities, eq(tables.checkpoints.activityId, tables.activities.id));
 }
 
-type ScanRow = Awaited<ReturnType<typeof scansQuery>>[number];
+type ScanRow = Awaited<ReturnType<typeof scansSelect>>[number];
+
+const scanColumns: SyncColumn<ScanRow>[] = [
+  { header: 'scan_id', value: (r) => r.id },
+  { header: 'student_id', value: (r) => r.studentId },
+  { header: 'student_name', value: (r) => `${r.studentFirstName} ${r.studentLastName}` },
+  { header: 'staff_name', value: (r) => r.staffName },
+  { header: 'staff_role', value: (r) => r.staffRole },
+  { header: 'checkpoint_name', value: (r) => r.checkpointName },
+  { header: 'checkpoint_type', value: (r) => r.checkpointType },
+  { header: 'activity_name', value: (r) => r.activityName },
+  { header: 'scanned_at', value: (r) => r.scannedAt.toISOString() },
+];
 
 const scansSync: PartialSyncTable<ScanRow> = {
   key: 'scans',
   mode: 'partial',
   sheetTitle: 'scans',
   intervalMinutes: 2,
-  query: scansQuery,
-  getCursorValue: (row) => row.scannedAt,
-  columns: [
-    { header: 'scan_id', value: (r) => r.id },
-    { header: 'student_id', value: (r) => r.studentId },
-    { header: 'student_name', value: (r) => `${r.studentFirstName} ${r.studentLastName}` },
-    { header: 'staff_name', value: (r) => r.staffName },
-    { header: 'staff_role', value: (r) => r.staffRole },
-    { header: 'checkpoint_name', value: (r) => r.checkpointName },
-    { header: 'checkpoint_type', value: (r) => r.checkpointType },
-    { header: 'activity_name', value: (r) => r.activityName },
-    { header: 'scanned_at', value: (r) => r.scannedAt.toISOString() },
-  ],
+  query: (db, cursor) =>
+    scansSelect(db)
+      .where(cursor ? gt(tables.scans.updatedAt, cursor) : undefined)
+      .orderBy(asc(tables.scans.updatedAt)),
+  getCursorValue: (row) => row.updatedAt,
+  keyHeader: 'scan_id',
+  getKey: (row) => row.id,
+  columns: scanColumns,
 };
 
-function studentGroupQuery(db: Db, cursor: Date | null) {
-  return db
-    .select()
-    .from(tables.studentGroup)
-    .where(cursor ? gt(tables.studentGroup.createdAt, cursor) : undefined)
-    .orderBy(asc(tables.studentGroup.createdAt));
+// Safety-net full rewrite: the partial sync above only catches inserts/edits made
+// after its cursor, so any drift (missed run, manual DB fix, etc.) self-heals here
+// every 30 min instead of staying out of sync indefinitely.
+const scansFullSync: FullSyncTable<ScanRow> = {
+  key: 'scans-full',
+  mode: 'full',
+  sheetTitle: 'scans',
+  intervalMinutes: 30,
+  strategy: 'rewrite',
+  query: (db) => scansSelect(db).orderBy(asc(tables.scans.createdAt)),
+  columns: scanColumns,
+};
+
+function studentGroupSelect(db: Db) {
+  return db.select().from(tables.studentGroup);
 }
 
-type StudentGroupRow = Awaited<ReturnType<typeof studentGroupQuery>>[number];
+type StudentGroupRow = Awaited<ReturnType<typeof studentGroupSelect>>[number];
+
+const studentGroupColumns: SyncColumn<StudentGroupRow>[] = [
+  { header: 'id', value: (r) => r.id },
+  { header: 'student_id', value: (r) => r.studentId },
+  { header: 'group_number', value: (r) => String(r.groupNumber) },
+  { header: 'subgroup_number', value: (r) => String(r.subgroupNumber) },
+  { header: 'created_at', value: (r) => r.createdAt.toISOString() },
+  { header: 'updated_at', value: (r) => r.updatedAt.toISOString() },
+];
 
 const studentGroupSync: PartialSyncTable<StudentGroupRow> = {
   key: 'student_group',
   mode: 'partial',
   sheetTitle: 'student_group',
   intervalMinutes: 2,
-  query: studentGroupQuery,
-  getCursorValue: (row) => row.createdAt,
-  columns: [
-    { header: 'id', value: (r) => r.id },
-    { header: 'student_id', value: (r) => r.studentId },
-    { header: 'group_number', value: (r) => String(r.groupNumber) },
-    { header: 'subgroup_number', value: (r) => String(r.subgroupNumber) },
-    { header: 'created_at', value: (r) => r.createdAt.toISOString() },
-    { header: 'updated_at', value: (r) => r.updatedAt.toISOString() },
-  ],
+  query: (db, cursor) =>
+    studentGroupSelect(db)
+      .where(cursor ? gt(tables.studentGroup.updatedAt, cursor) : undefined)
+      .orderBy(asc(tables.studentGroup.updatedAt)),
+  getCursorValue: (row) => row.updatedAt,
+  keyHeader: 'id',
+  getKey: (row) => row.id,
+  columns: studentGroupColumns,
 };
 
-export const syncTables: SyncTable[] = [studentsSync, teamsSync, scansSync, studentGroupSync];
+const studentGroupFullSync: FullSyncTable<StudentGroupRow> = {
+  key: 'student_group-full',
+  mode: 'full',
+  sheetTitle: 'student_group',
+  intervalMinutes: 30,
+  strategy: 'rewrite',
+  query: (db) => studentGroupSelect(db).orderBy(asc(tables.studentGroup.createdAt)),
+  columns: studentGroupColumns,
+};
+
+export const syncTables: SyncTable[] = [
+  studentsSync,
+  teamsSync,
+  scansSync,
+  scansFullSync,
+  studentGroupSync,
+  studentGroupFullSync,
+];

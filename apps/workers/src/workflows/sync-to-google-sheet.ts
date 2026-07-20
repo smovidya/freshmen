@@ -37,9 +37,25 @@ export class SyncToGoogleSheetWorkflow extends WorkflowEntrypoint<Env, Params> {
           await recordSync(db, table.key);
           return;
         }
-        await sheet.addRows(
-          rows.map((row) => Object.fromEntries(table.columns.map((c) => [c.header, c.value(row)]))),
-        );
+
+        // Upsert by key: an existing key updates its sheet row in place (so edits
+        // that bump updated_at land on the same row), anything unmatched appends.
+        const existingRows = await sheet.getRows();
+        const rowByKey = new Map(existingRows.map((r) => [String(r.get(table.keyHeader)), r]));
+
+        for (const row of rows) {
+          const key = table.getKey(row);
+          const values = Object.fromEntries(table.columns.map((c) => [c.header, c.value(row)]));
+          const existing = rowByKey.get(key);
+          if (existing) {
+            existing.assign(values);
+            await existing.save();
+          } else {
+            const newRow = await sheet.addRow(values);
+            rowByKey.set(key, newRow);
+          }
+        }
+
         const lastRow = rows[rows.length - 1]!;
         await recordSync(db, table.key, table.getCursorValue(lastRow));
       });
