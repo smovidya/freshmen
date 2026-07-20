@@ -11,8 +11,8 @@ export const registrationSchema = z.object({
   emergencyContactName: z.string().min(1, 'กรุณากรอกชื่อผู้ติดต่อฉุกเฉิน'),
   emergencyContactPhone: z.string().regex(/^[0-9]{10}$/, 'กรุณากรอกหมายเลขโทรศัพท์ 10 หลัก'),
   emergencyContactRelationship: z.string().min(1, 'กรุณาเลือกความสัมพันธ์'),
-  medicalConditions: z.string().optional(),
-  drugAllergies: z.string().optional(),
+  medicalConditions: z.string().optional().default(''),
+  drugAllergies: z.string().optional().default(''),
   foodAllergies: z.string().optional().default(''),
   foodLimitations: z.string().optional().default('')
 });
