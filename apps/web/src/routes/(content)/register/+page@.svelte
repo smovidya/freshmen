@@ -18,7 +18,6 @@
 		SelectItem,
 		SelectTrigger
 	} from '$lib/components/ui/select/index.js';
-	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import TagChecklist from '$lib/components/tag-checklist.svelte';
 	import { departmentIds, departmentLabels } from '$lib/departments';
 	import { apiClient, call } from '$lib/api';
@@ -89,6 +88,15 @@
 		label: departmentLabels[id]
 	}));
 
+	const medicalConditionOptions = [
+		'โรคหืด',
+		'โรคความดันโลหิตสูง',
+		'โรคเบาหวาน',
+		'โรคหัวใจ',
+		'โรคลมชัก',
+		'ภาวะพร่องเอนไซม์ G6PD'
+	];
+	const drugAllergyOptions = ['เพนิซิลลิน', 'แอสไพริน', 'ยากลุ่มซัลฟา', 'ยากลุ่ม NSAIDs'];
 	const foodAllergyOptions = ['อาหารทะเล', 'นม/แลกโตส', 'แป้งสาลี', 'ไข่', 'ถั่ว', 'ผงชูรส'];
 	const foodLimitationOptions = [
 		'ฮาลาล',
@@ -288,13 +296,12 @@
 		<div class="mt-3 space-y-3 rounded-2xl bg-white p-5 pt-7 shadow-md">
 			<FormField {form} name="medicalConditions">
 				<FormControl>
-					{#snippet children({ props })}
+					{#snippet children()}
 						<FormLabel>โรคประจำตัว</FormLabel>
-						<Textarea
-							{...props}
+						<TagChecklist
+							title="โรคประจำตัว"
+							options={medicalConditionOptions}
 							bind:value={$formData.medicalConditions}
-							placeholder="โรคหืด, โรคความดันโลหิตสูง"
-							rows={3}
 						/>
 						<FormDescription>
 							โรคประจำตัวที่อาจส่งผลต่อการเข้าร่วมกิจกรรม การดูแลเบื้องต้น
@@ -307,13 +314,12 @@
 
 			<FormField {form} name="drugAllergies">
 				<FormControl>
-					{#snippet children({ props })}
+					{#snippet children()}
 						<FormLabel>ข้อมูลการแพ้ยา</FormLabel>
-						<Textarea
-							{...props}
+						<TagChecklist
+							title="ยาที่แพ้"
+							options={drugAllergyOptions}
 							bind:value={$formData.drugAllergies}
-							placeholder="เพนิซิลลิน, แอสไพริน"
-							rows={2}
 						/>
 					{/snippet}
 				</FormControl>
