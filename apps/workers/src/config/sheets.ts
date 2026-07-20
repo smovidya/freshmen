@@ -131,4 +131,31 @@ const scansSync: PartialSyncTable<ScanRow> = {
   ],
 };
 
-export const syncTables: SyncTable[] = [studentsSync, teamsSync, scansSync];
+function studentGroupQuery(db: Db, cursor: Date | null) {
+  return db
+    .select()
+    .from(tables.studentGroup)
+    .where(cursor ? gt(tables.studentGroup.createdAt, cursor) : undefined)
+    .orderBy(asc(tables.studentGroup.createdAt));
+}
+
+type StudentGroupRow = Awaited<ReturnType<typeof studentGroupQuery>>[number];
+
+const studentGroupSync: PartialSyncTable<StudentGroupRow> = {
+  key: 'student_group',
+  mode: 'partial',
+  sheetTitle: 'student_group',
+  intervalMinutes: 2,
+  query: studentGroupQuery,
+  getCursorValue: (row) => row.createdAt,
+  columns: [
+    { header: 'id', value: (r) => r.id },
+    { header: 'student_id', value: (r) => r.studentId },
+    { header: 'group_number', value: (r) => String(r.groupNumber) },
+    { header: 'subgroup_number', value: (r) => String(r.subgroupNumber) },
+    { header: 'created_at', value: (r) => r.createdAt.toISOString() },
+    { header: 'updated_at', value: (r) => r.updatedAt.toISOString() },
+  ],
+};
+
+export const syncTables: SyncTable[] = [studentsSync, teamsSync, scansSync, studentGroupSync];
