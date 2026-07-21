@@ -1,9 +1,6 @@
 export const features = {
   "login": true,
-  "registering": {
-    start: "2026-07-19T18:00:00+07:00",
-    end: "2026-07-21T23:59:59+07:00",
-  },
+  "registering": true,
   "team-joining": {
     start: "2026-07-19T18:00:00+07:00",
     end: "2026-07-21T23:59:59+07:00",

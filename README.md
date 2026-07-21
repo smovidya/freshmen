@@ -66,7 +66,7 @@ Time-gated features are controlled by `packages/flags/config.ts` (all times Asia
 
 | Flag | Window |
 | --- | --- |
-| `registering` | 2026-07-19 18:00 → 2026-07-21 23:59 |
+| `registering` | always open (no end) |
 | `team-joining` | 2026-07-19 18:00 → 2026-07-21 23:59 |
 | `group-choosing` (group preference ordering) | 2026-07-19 18:00 → 2026-07-21 23:59 |
 | `group-announcement` | opens 2026-07-23 18:00 (no end) |
