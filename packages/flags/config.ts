@@ -1,5 +1,5 @@
 export const features = {
-  "login": false,
+  "login": true,
   "registering": {
     start: "2026-07-19T18:00:00+07:00",
     end: "2026-07-21T23:59:59+07:00",
@@ -19,7 +19,7 @@ export const features = {
     start: "2026-07-25T00:00:00+07:00",
     end: "2026-07-27T23:59:59+07:00",
   },
-  "game-allow-non-freshmen": false
+  "game-allow-non-freshmen": true
 } satisfies Record<string, EventAvailability>;
 
 /**
