@@ -18,7 +18,7 @@
 <main class="container mx-auto flex h-full w-full flex-col">
 	<FestivalHeader />
 	<div class="mt-6 flex flex-col gap-7 sm:p-3">
-		<TaskSection subtitle="19 &ndash; 21 กรกฎาคม">
+		<TaskSection>
 			{#if !flags.isEnabled('registering')}
 				<div class="flex flex-row items-center rounded-3xl bg-white/90 p-4 shadow-md sm:gap-4">
 					<div class="w-full">
