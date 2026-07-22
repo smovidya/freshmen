@@ -40,8 +40,10 @@ export async function getGroupPreference(email: string, db: Db | Tx) {
 }
 
 
+export const GROUP_NUMBERS = [1, 3, 4, 5, 6, 7] as const;
+
 export function createRandomGroupNumberPreferenceOrder() {
-  const numbers = [1, 3, 4, 5, 6, 7];
+  const numbers: number[] = [...GROUP_NUMBERS];
 
   // Fisher-Yates shuffle algorithm
   for (let i = numbers.length - 1; i > 0; i--) {

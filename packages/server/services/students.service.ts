@@ -1,5 +1,5 @@
 import { tables, type Db, type Tx } from "@vidyafreshmen/db";
-import type { registrationSchema } from "@vidyafreshmen/dto";
+import type { registerWalkinSchema, registrationSchema } from "@vidyafreshmen/dto";
 import { eq } from "drizzle-orm";
 import z from "zod/v4";
 import { createRandomGroupNumberPreferenceOrder } from "./group.service";
@@ -89,6 +89,14 @@ export async function createStudentWithTeam(input: z.infer<typeof registrationSc
   ]);
 
   return { student, team };
+}
+
+// Staff-assisted registration at the door for a student who hasn't logged in
+// yet - reuses createStudentWithTeam, just keyed off a staff-entered student
+// ID instead of a logged-in session's email.
+export async function registerWalkin(input: z.infer<typeof registerWalkinSchema>, db: Db) {
+  const email = `${input.studentId}@student.chula.ac.th`;
+  return createStudentWithTeam(input, email, db);
 }
 
 export async function getStudentByEmail(email: string, db: Db | Tx) {

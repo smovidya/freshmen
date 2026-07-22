@@ -102,11 +102,12 @@ export async function getOwnedTeam(email: string, db: Db | Tx) {
     .select({
       teamId: tables.students.teamOwnedId,
       groupNumberPreferenceOrder: tables.teams.groupNumberPreferenceOrder,
-      resultGroupNumber: tables.teams.resultGroupNumber,
+      resultGroupNumber: tables.availableGroups.number,
       teamCodes: tables.teams.teamCodes
     })
     .from(tables.students)
     .innerJoin(tables.teams, eq(tables.teams.id, tables.students.teamOwnedId))
+    .leftJoin(tables.availableGroups, eq(tables.availableGroups.id, tables.teams.resultGroupNumber))
     .where(eq(tables.students.email, email))
     .limit(1);
 
@@ -147,7 +148,7 @@ export async function getOwnedTeam(email: string, db: Db | Tx) {
     id: team.teamId,
     owner: owner!,
     teamCodes: team.teamCodes,
-    resultGroupNumber: team.resultGroupNumber,
+    resultGroupNumber: team.resultGroupNumber ? parseInt(team.resultGroupNumber) : null,
     groupPreferenceOrder: team.groupNumberPreferenceOrder?.split(",").map(it => parseInt(it)) ?? createRandomGroupNumberPreferenceOrder(),
     members
   };
@@ -158,10 +159,11 @@ export async function getJoinedTeam(email: string, db: Db | Tx) {
     .select({
       teamId: tables.students.teamId,
       groupNumberPreferenceOrder: tables.teams.groupNumberPreferenceOrder,
-      resultGroupNumber: tables.teams.resultGroupNumber,
+      resultGroupNumber: tables.availableGroups.number,
     })
     .from(tables.students)
     .innerJoin(tables.teams, eq(tables.teams.id, tables.students.teamId))
+    .leftJoin(tables.availableGroups, eq(tables.availableGroups.id, tables.teams.resultGroupNumber))
     .where(eq(tables.students.email, email))
     .limit(1);
 
@@ -200,7 +202,7 @@ export async function getJoinedTeam(email: string, db: Db | Tx) {
 
   return {
     id: team.teamId,
-    resultGroupNumber: team.resultGroupNumber,
+    resultGroupNumber: team.resultGroupNumber ? parseInt(team.resultGroupNumber) : null,
     groupPreferenceOrder: team.groupNumberPreferenceOrder?.split(",").map(it => parseInt(it)) ?? [],
     owner: owner!,
     members
