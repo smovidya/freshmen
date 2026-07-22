@@ -20,13 +20,15 @@
 
 	const authBaseUrl = env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:5173';
 
-	function loginAs(ouid: string) {
+	function loginAs(ouid: string, role?: 'staff' | 'admin') {
 		if (!/^\d{10}$/.test(ouid)) {
 			alert('OUID must be 10 digits.');
 			return;
 		}
 		const redirectTo = window.location.href;
-		window.location.href = `${authBaseUrl}/dev-login?ouid=${encodeURIComponent(ouid)}&redirectTo=${encodeURIComponent(redirectTo)}`;
+		let href = `${authBaseUrl}/dev-login?ouid=${encodeURIComponent(ouid)}&redirectTo=${encodeURIComponent(redirectTo)}`;
+		if (role) href += `&role=${role}`;
+		window.location.href = href;
 	}
 
 	async function signOut() {
@@ -108,6 +110,16 @@
 										class="h-8 bg-zinc-800 text-zinc-100"
 									/>
 									<Button size="sm" onclick={() => loginAs(customOuid)}>Login</Button>
+								</div>
+								<div class="flex gap-1.5">
+									<Button
+										size="sm"
+										class="flex-1"
+										variant="secondary"
+										onclick={() => loginAs(customOuid || '6900000001', 'staff')}
+									>
+										Login as staff
+									</Button>
 								</div>
 							</div>
 						</div>

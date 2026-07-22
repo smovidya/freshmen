@@ -30,7 +30,10 @@
 			>
 				<div class="flex flex-col items-center justify-center gap-3">
 					<h2 class="text-3xl">ไม่มีอะไรให้ดู ;-;</h2>
-					<p>น้องอาจจะไม่ได้เลือกกรุ๊ปไว้</p>
+					<p class="text-center">
+						เนื่องจากไม่ได้ลงทะเบียนภายใน 21 กรกฎาคม เวลา 23:59 จึงยังไม่ได้ถูกสุ่มลงกลุ่มใดในขณะนี้
+						แต่ไม่เป็นไร มาหน้างานได้เลย!
+					</p>
 				</div>
 				<p class="mt-2 text-center text-gray-600">
 					หากคิดว่านี่เป็นข้อผิดพลาดกรุณาติดต่อ Instagram @smovidya_official

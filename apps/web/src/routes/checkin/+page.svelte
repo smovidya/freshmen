@@ -24,9 +24,14 @@
 					department: string;
 					studentId: string;
 				};
-				groupNumber: number;
-				subgroupNumber: number;
+				groupNumber: number | null;
+				subgroupNumber: number | null;
 		  };
+
+	// "701" = group 7, boing/subgroup 01.
+	function boingCode(groupNumber: number, subgroupNumber: number) {
+		return `${groupNumber}${String(subgroupNumber).padStart(2, '0')}`;
+	}
 
 	const client = apiClient();
 
@@ -73,6 +78,27 @@
 		} finally {
 			submitting = false;
 			manualInput = '';
+		}
+	}
+
+	let assigningGroup = $state(false);
+
+	async function assignOnsiteGroup() {
+		if (!checkpointId || result?.status === 'not-registered' || !result) return;
+		const studentIdentifier = result.student.studentId;
+		assigningGroup = true;
+		try {
+			const assigned = (await call(
+				client.scan['assign-group'].$post({ json: { studentIdentifier, checkpointId } })
+			)) as { groupNumber: number; subgroupNumber: number };
+			if (result.student.studentId === studentIdentifier) {
+				result = { ...result, groupNumber: assigned.groupNumber, subgroupNumber: assigned.subgroupNumber };
+			}
+			toast.success('สุ่มกรุ๊ปหน้างานสำเร็จ');
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : 'สุ่มกรุ๊ปไม่สำเร็จ');
+		} finally {
+			assigningGroup = false;
 		}
 	}
 
@@ -224,12 +250,28 @@
 						{departmentLabels[r.student.department as keyof typeof departmentLabels] ??
 							r.student.department} &middot; {r.student.studentId}
 					</p>
-					<p class="mt-2">
-						กรุ๊ป <strong
-							>{groupData.find((g) => g.number === r.groupNumber)?.name ?? r.groupNumber}</strong
-						>
-						&middot; โบอิ้ง <strong>{r.subgroupNumber}</strong>
-					</p>
+					{#if r.groupNumber !== null && r.subgroupNumber !== null}
+						<div class="bg-muted/40 mt-3 rounded-lg border p-3">
+							<p class="text-2xl leading-tight font-bold">
+								กรุ๊ป {r.groupNumber}
+								<span class="text-muted-foreground text-base font-normal">
+									({groupData.find((g) => g.number === r.groupNumber)?.name ?? r.groupNumber})
+								</span>
+							</p>
+							<p class="text-muted-foreground text-sm">
+								โบอิ้ง <strong class="text-foreground text-base"
+									>{boingCode(r.groupNumber, r.subgroupNumber)}</strong
+								>
+							</p>
+						</div>
+					{:else}
+						<div class="mt-3 flex items-center justify-between rounded-lg border p-3">
+							<p class="text-muted-foreground text-sm">ยังไม่มีกรุ๊ป/โบอิ้ง</p>
+							<Button size="sm" onclick={assignOnsiteGroup} disabled={assigningGroup}>
+								{assigningGroup ? 'กำลังสุ่ม...' : 'สุ่มกรุ๊ปหน้างาน'}
+							</Button>
+						</div>
+					{/if}
 				{/if}
 			</CardContent>
 		</Card>

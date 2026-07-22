@@ -2,7 +2,8 @@
 	import { TaskCard, TaskSection, FestivalHeader, AirportBackdrop } from '$lib/components/festival';
 	import { flags } from '$lib/flags';
 	import { getDisplayName } from '$lib/text-shuffle.svelte';
-	import { FileUser, ListOrdered, Megaphone, QrCode, Swords } from 'lucide-svelte';
+	import { groupData } from '$lib/groups';
+	import { FileUser, ListOrdered, Megaphone, QrCode, ScanLine, Swords } from 'lucide-svelte';
 
 	let { data } = $props();
 	const friends = $derived(
@@ -12,12 +13,31 @@
 					.map((it) => getDisplayName(it))
 			: null
 	);
+	const isStaff = $derived(data.whoami.role === 'staff');
+	const canCheckin = $derived(data.whoami.role === 'staff' || data.whoami.role === 'admin');
+
+	// "701" = group 7, boing/subgroup 01.
+	function boingCode(groupNumber: number, subgroupNumber: number) {
+		return `${groupNumber}${String(subgroupNumber).padStart(2, '0')}`;
+	}
 </script>
 
 <AirportBackdrop />
 <main class="container mx-auto flex h-full w-full flex-col">
 	<FestivalHeader />
 	<div class="mt-6 flex flex-col gap-7 sm:p-3">
+		{#if canCheckin}
+			<TaskSection>
+				<TaskCard
+					href="/checkin"
+					title="สแกนเช็คอินนิสิต"
+					description="สำหรับสตาฟ: สแกน QR หรือกรอกรหัสนิสิตเพื่อเช็คอิน"
+					status="พร้อมใช้งาน"
+					icon={ScanLine}
+				/>
+			</TaskSection>
+		{/if}
+		{#if !isStaff}
 		<TaskSection>
 			{#if !flags.isEnabled('registering')}
 				<div class="flex flex-row items-center rounded-3xl bg-white/90 p-4 shadow-md sm:gap-4">
@@ -70,7 +90,24 @@
 				icon={Megaphone}
 			/>
 		</TaskSection>
+		{/if}
 		<TaskSection subtitle="25 &ndash; 27 กรกฎาคม">
+			{#if !isStaff && data.team?.resultGroupNumber && data.team?.subgroupNumber}
+				<div class="rounded-3xl bg-white/90 p-4 shadow-md">
+					<p class="text-2xl leading-tight font-bold text-black">
+						กรุ๊ป {data.team.resultGroupNumber}
+						<span class="text-base font-normal text-black/70">
+							({groupData.find((g) => g.number === data.team!.resultGroupNumber)?.name ??
+								data.team.resultGroupNumber})
+						</span>
+					</p>
+					<p class="text-sm text-black/70">
+						โบอิ้ง <strong class="text-base text-black"
+							>{boingCode(data.team.resultGroupNumber, data.team.subgroupNumber)}</strong
+						>
+					</p>
+				</div>
+			{/if}
 			<TaskCard
 				href="/checkin-qr"
 				title="QR เช็คอิน"

@@ -12,9 +12,13 @@ export const GET: RequestHandler = async ({ cookies, platform, url }) => {
 	const ouid = url.searchParams.get('ouid') ?? '6912345623';
 	const redirectTo =
 		url.searchParams.get('redirectTo') || platform.env.FRONTEND_URL || 'http://localhost:5173';
+	const role = url.searchParams.get('role');
 
 	if (!/^\d{10}$/.test(ouid)) {
 		return new Response('invalid ouid: must be 10 digits', { status: 400 });
+	}
+	if (role && role !== 'staff' && role !== 'admin') {
+		return new Response('invalid role: must be staff or admin', { status: 400 });
 	}
 
 	const email = `${ouid}@student.chula.ac.th`;
@@ -42,6 +46,12 @@ export const GET: RequestHandler = async ({ cookies, platform, url }) => {
 					error: (code, body) => new Error(`${code}: ${body?.message ?? ''}`)
 				}
 			));
+
+		if (role) {
+			await platform.env.DB.prepare('UPDATE user SET role = ? WHERE id = ?')
+				.bind(role, user.id)
+				.run();
+		}
 
 		const session = await internalAdapter.createSession(user.id, {});
 		const signature = await makeSignature(session.token, ctx.secret);

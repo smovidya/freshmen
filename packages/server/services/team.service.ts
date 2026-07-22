@@ -97,6 +97,17 @@ export async function generateTeamCode(db: Db | Tx): Promise<string> {
   throw new Error(`Failed to generate unique team code after ${maxAttempts} attempts`);
 }
 
+async function getSubgroupNumber(email: string, db: Db | Tx) {
+  const [row] = await db
+    .select({ subgroupNumber: tables.studentGroup.subgroupNumber })
+    .from(tables.studentGroup)
+    .innerJoin(tables.students, eq(tables.students.id, tables.studentGroup.studentId))
+    .where(eq(tables.students.email, email))
+    .limit(1);
+
+  return row?.subgroupNumber ?? null;
+}
+
 export async function getOwnedTeam(email: string, db: Db | Tx) {
   const result = await db
     .select({
@@ -149,6 +160,7 @@ export async function getOwnedTeam(email: string, db: Db | Tx) {
     owner: owner!,
     teamCodes: team.teamCodes,
     resultGroupNumber: team.resultGroupNumber ? parseInt(team.resultGroupNumber) : null,
+    subgroupNumber: await getSubgroupNumber(email, db),
     groupPreferenceOrder: team.groupNumberPreferenceOrder?.split(",").map(it => parseInt(it)) ?? createRandomGroupNumberPreferenceOrder(),
     members
   };
@@ -203,6 +215,7 @@ export async function getJoinedTeam(email: string, db: Db | Tx) {
   return {
     id: team.teamId,
     resultGroupNumber: team.resultGroupNumber ? parseInt(team.resultGroupNumber) : null,
+    subgroupNumber: await getSubgroupNumber(email, db),
     groupPreferenceOrder: team.groupNumberPreferenceOrder?.split(",").map(it => parseInt(it)) ?? [],
     owner: owner!,
     members

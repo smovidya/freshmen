@@ -132,6 +132,60 @@ export async function assignOnsiteBoingIfMissing(
   return chosen;
 }
 
+async function peekGroupNumber(studentDbId: string, db: Db): Promise<number | null> {
+  const [student] = await db
+    .select({ teamId: tables.students.teamId, teamOwnedId: tables.students.teamOwnedId })
+    .from(tables.students)
+    .where(eq(tables.students.id, studentDbId));
+
+  if (!student) return null;
+
+  const [team] = await db
+    .select({ resultGroupNumber: tables.teams.resultGroupNumber })
+    .from(tables.teams)
+    .where(eq(tables.teams.id, effectiveTeamId(student)));
+
+  if (!team?.resultGroupNumber) return null;
+
+  const [group] = await db
+    .select({ number: tables.availableGroups.number })
+    .from(tables.availableGroups)
+    .where(eq(tables.availableGroups.id, team.resultGroupNumber));
+
+  return group ? Number(group.number) : null;
+}
+
+async function peekSubgroupNumber(studentDbId: string, db: Db): Promise<number | null> {
+  const [existing] = await db
+    .select({ subgroupNumber: tables.studentGroup.subgroupNumber })
+    .from(tables.studentGroup)
+    .where(eq(tables.studentGroup.studentId, studentDbId));
+
+  return existing?.subgroupNumber ?? null;
+}
+
+// Explicit staff-triggered onsite random assignment ("สุ่มกรุ๊ปหน้างาน") -
+// scanning alone no longer auto-assigns a group/boing, so the least-checked-in
+// balancing only fires when staff deliberately click the button for a student
+// who's missing one. Still idempotent: no-ops (via assignOnsiteGroupIfMissing/
+// assignOnsiteBoingIfMissing) if the student already has a group/subgroup.
+export async function assignOnsiteRandomGroup(
+  input: { studentIdentifier: string; checkpointId: string },
+  db: Db,
+): Promise<{ groupNumber: number; subgroupNumber: number }> {
+  const [student] = await db
+    .select({ id: tables.students.id })
+    .from(tables.students)
+    .where(eq(tables.students.studentId, input.studentIdentifier));
+
+  if (!student) throw new Error("Student not found");
+
+  const groupNumber = await assignOnsiteGroupIfMissing(student.id, input.checkpointId, db);
+  const subgroupNumber = await assignOnsiteBoingIfMissing(student.id, Number(groupNumber), input.checkpointId, db);
+
+  return { groupNumber: Number(groupNumber), subgroupNumber };
+}
+
 export type ScanResult =
   | { status: "not-registered"; studentIdentifier: string }
   | {
@@ -143,8 +197,8 @@ export type ScanResult =
         department: string;
         studentId: string;
       };
-      groupNumber: number;
-      subgroupNumber: number;
+      groupNumber: number | null;
+      subgroupNumber: number | null;
     };
 
 export async function recordScan(
@@ -181,8 +235,8 @@ export async function recordScan(
 
   const alreadyCheckedIn = inserted.length === 0;
 
-  const groupNumber = await assignOnsiteGroupIfMissing(student.id, checkpoint.id, db);
-  const subgroupNumber = await assignOnsiteBoingIfMissing(student.id, Number(groupNumber), checkpoint.id, db);
+  const groupNumber = await peekGroupNumber(student.id, db);
+  const subgroupNumber = groupNumber !== null ? await peekSubgroupNumber(student.id, db) : null;
 
   return {
     status: alreadyCheckedIn ? "already-checked-in" : "checked-in",
