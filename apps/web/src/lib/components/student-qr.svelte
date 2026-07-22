@@ -15,6 +15,6 @@
 	<canvas bind:this={canvas}></canvas>
 	<p class="font-mono text-2xl tracking-widest">{studentId}</p>
 	<p class="text-muted-foreground text-center text-sm">
-		ให้เจ้าหน้าที่สแกน QR นี้ หรือบอกรหัสนิสิตเพื่อเช็คอิน
+		ให้สตาฟสแกน QR นี้ หรือบอกรหัสนิสิตเพื่อเช็คอิน
 	</p>
 </div>

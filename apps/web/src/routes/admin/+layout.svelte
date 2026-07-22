@@ -8,7 +8,8 @@
 
 	const navItems = [
 		{ href: '/admin', label: 'ผู้ใช้งาน' },
-		{ href: '/admin/staff', label: 'เจ้าหน้าที่' }
+		{ href: '/admin/staff', label: 'สตาฟ' },
+		{ href: '/checkin', label: 'เช็คอิน' }
 	];
 </script>
 

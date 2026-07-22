@@ -59,7 +59,7 @@
 
 	const roleLabels: Record<Role, string> = {
 		admin: 'ผู้ดูแลระบบ',
-		staff: 'เจ้าหน้าที่',
+		staff: 'สตาฟ',
 		user: 'นิสิต'
 	};
 
@@ -168,7 +168,7 @@
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="text-2xl font-semibold">จัดการผู้ใช้งาน</h1>
-			<p class="text-muted-foreground text-sm">เพิ่ม ลบ และเลื่อนสิทธิ์ผู้ดูแลระบบ / เจ้าหน้าที่</p>
+			<p class="text-muted-foreground text-sm">เพิ่ม ลบ และเลื่อนสิทธิ์ผู้ดูแลระบบ / สตาฟ</p>
 		</div>
 		<Dialog bind:open={addOpen}>
 			<Button
@@ -268,7 +268,7 @@
 										{/if}
 										{#if user.role !== 'staff'}
 											<DropdownMenuItem onclick={() => setRole(user, 'staff')}>
-												ตั้งเป็นเจ้าหน้าที่
+												ตั้งเป็นสตาฟ
 											</DropdownMenuItem>
 										{/if}
 										{#if user.role !== 'user'}

@@ -74,7 +74,7 @@
 			<TaskCard
 				href="/checkin-qr"
 				title="QR เช็คอิน"
-				description="แสดง QR รหัสนิสิตให้เจ้าหน้าที่สแกนตอนเข้างานแต่ละวัน"
+				description="แสดง QR รหัสนิสิตให้สตาฟสแกนตอนเข้างานแต่ละวัน"
 				status="พร้อมใช้งาน"
 				icon={QrCode}
 			/>

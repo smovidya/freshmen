@@ -60,7 +60,7 @@
 		try {
 			staffs = (await call(client.staff.$get())) as Staff[];
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'โหลดรายชื่อเจ้าหน้าที่ไม่สำเร็จ');
+			toast.error(err instanceof Error ? err.message : 'โหลดรายชื่อสตาฟไม่สำเร็จ');
 		} finally {
 			loading = false;
 		}
@@ -90,12 +90,12 @@
 					}
 				})
 			);
-			toast.success('เพิ่มเจ้าหน้าที่แล้ว');
+			toast.success('เพิ่มสตาฟแล้ว');
 			addOpen = false;
 			resetAddForm();
 			await loadStaffs();
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'เพิ่มเจ้าหน้าที่ไม่สำเร็จ');
+			toast.error(err instanceof Error ? err.message : 'เพิ่มสตาฟไม่สำเร็จ');
 		} finally {
 			adding = false;
 		}
@@ -110,7 +110,7 @@
 			removeTarget = null;
 			await loadStaffs();
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'ลบเจ้าหน้าที่ไม่สำเร็จ');
+			toast.error(err instanceof Error ? err.message : 'ลบสตาฟไม่สำเร็จ');
 		} finally {
 			removing = false;
 		}
@@ -120,8 +120,8 @@
 <div class="flex flex-col gap-6">
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-2xl font-semibold">จัดการเจ้าหน้าที่</h1>
-			<p class="text-muted-foreground text-sm">เพิ่มและลบเจ้าหน้าที่งานรับน้อง (ไม่ใช่นิสิต)</p>
+			<h1 class="text-2xl font-semibold">จัดการสตาฟ</h1>
+			<p class="text-muted-foreground text-sm">เพิ่มและลบสตาฟงานรับน้อง (ไม่ใช่นิสิต)</p>
 		</div>
 		<Dialog bind:open={addOpen}>
 			<Button
@@ -130,13 +130,13 @@
 					addOpen = true;
 				}}
 			>
-				+ เพิ่มเจ้าหน้าที่
+				+ เพิ่มสตาฟ
 			</Button>
 			<DialogContent>
 				<form onsubmit={submitAdd}>
 					<DialogHeader>
-						<DialogTitle>เพิ่มเจ้าหน้าที่</DialogTitle>
-						<DialogDescription>กรอกข้อมูลเจ้าหน้าที่ ไม่ใช่นิสิตที่ลงทะเบียน</DialogDescription>
+						<DialogTitle>เพิ่มสตาฟ</DialogTitle>
+						<DialogDescription>กรอกข้อมูลสตาฟ ไม่ใช่นิสิตที่ลงทะเบียน</DialogDescription>
 					</DialogHeader>
 					<div class="flex flex-col gap-4 py-4">
 						<div class="flex flex-col gap-2">
@@ -163,7 +163,7 @@
 					</div>
 					<DialogFooter>
 						<Button type="submit" disabled={adding}
-							>{adding ? 'กำลังเพิ่ม...' : 'เพิ่มเจ้าหน้าที่'}</Button
+							>{adding ? 'กำลังเพิ่ม...' : 'เพิ่มสตาฟ'}</Button
 						>
 					</DialogFooter>
 				</form>
@@ -191,7 +191,7 @@
 				{:else if staffs.length === 0}
 					<TableRow>
 						<TableCell colspan={5} class="text-muted-foreground text-center"
-							>ไม่พบเจ้าหน้าที่</TableCell
+							>ไม่พบสตาฟ</TableCell
 						>
 					</TableRow>
 				{:else}
@@ -227,9 +227,9 @@
 >
 	<AlertDialogContent>
 		<AlertDialogHeader>
-			<AlertDialogTitle>ลบเจ้าหน้าที่นี้?</AlertDialogTitle>
+			<AlertDialogTitle>ลบสตาฟนี้?</AlertDialogTitle>
 			<AlertDialogDescription>
-				ลบ {removeTarget?.name} ออกจากรายชื่อเจ้าหน้าที่
+				ลบ {removeTarget?.name} ออกจากรายชื่อสตาฟ
 			</AlertDialogDescription>
 		</AlertDialogHeader>
 		<AlertDialogFooter>
