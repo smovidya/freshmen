@@ -2,7 +2,6 @@ import { tables, type Db, type Tx } from "@vidyafreshmen/db";
 import type { registerWalkinSchema, registrationSchema } from "@vidyafreshmen/dto";
 import { eq } from "drizzle-orm";
 import z from "zod/v4";
-import { createRandomGroupNumberPreferenceOrder } from "./group.service";
 import { generateTeamCode } from "./team.service";
 
 
@@ -57,10 +56,14 @@ export async function createStudentWithTeam(input: z.infer<typeof registrationSc
   const teamId = crypto.randomUUID();
   const id = crypto.randomUUID();
   const teamCode = await generateTeamCode(db);
+  // The offline group-preference random draw has already run for this
+  // festival - new registrations (walk-ins/late signups) no longer get a
+  // random preference order seeded here. They stay group-less until the
+  // onsite check-in scan assigns one via the least-checked-in fallback
+  // (see scan.service.ts's assignOnsiteGroupIfMissing).
   const team = {
     id: teamId,
     creatorId: id,
-    groupNumberPreferenceOrder: createRandomGroupNumberPreferenceOrder().join(','),
     teamCodes: teamCode,
   };
   const student = {
