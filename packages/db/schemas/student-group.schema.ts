@@ -1,8 +1,10 @@
+import { relations } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { students } from './student.schema';
 
 export const studentGroup = sqliteTable('student_group', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  studentId: text('student_id').notNull(),
+  studentId: text('student_id').notNull().unique().references(() => students.id, { onDelete: 'cascade' }),
   groupNumber: integer('group_number').notNull(),
   subgroupNumber: integer('subgroup_number').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' })
@@ -13,3 +15,10 @@ export const studentGroup = sqliteTable('student_group', {
     .$onUpdateFn(() => new Date())
     .notNull(),
 });
+
+export const studentGroupRelations = relations(studentGroup, ({ one }) => ({
+  student: one(students, {
+    fields: [studentGroup.studentId],
+    references: [students.id],
+  }),
+}));

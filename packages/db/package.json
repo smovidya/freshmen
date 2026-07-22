@@ -9,6 +9,9 @@
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote --config ../../apps/web/wrangler.jsonc",
     "db:seed:local": "wrangler d1 execute DB --local --file=./seed.sql --config ../../apps/web/wrangler.jsonc",
     "db:seed:remote": "wrangler d1 execute DB --remote --file=./seed.sql --config ../../apps/web/wrangler.jsonc",
+    "db:seed-checkin:local": "wrangler d1 execute DB --local --file=./seed-checkin.sql --config ../../apps/web/wrangler.jsonc",
+    "db:seed-checkin:remote": "wrangler d1 execute DB --remote --file=./seed-checkin.sql --config ../../apps/web/wrangler.jsonc",
+    "db:seed-available-groups:local": "wrangler d1 execute DB --local --file=./seed-available-groups.sql --config ../../apps/web/wrangler.jsonc",
     "db:studio": "drizzle-kit studio"
   },
   "exports": {

@@ -1,13 +1,19 @@
 import { createAuthClient } from 'better-auth/svelte';
-import { genericOAuthClient, inferAdditionalFields, jwtClient } from 'better-auth/client/plugins';
+import {
+	adminClient,
+	genericOAuthClient,
+	inferAdditionalFields,
+	jwtClient
+} from 'better-auth/client/plugins';
 import { env } from '$env/dynamic/public';
-import type { createAuth } from '@vidyafreshmen/auth';
+import { authRoles, type createAuth } from '@vidyafreshmen/auth';
 
 export const authClient = createAuthClient({
 	baseURL: env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:5173',
 	plugins: [
 		genericOAuthClient(),
 		inferAdditionalFields<ReturnType<typeof createAuth>>(),
-		jwtClient()
+		jwtClient(),
+		adminClient({ roles: authRoles })
 	],
 });

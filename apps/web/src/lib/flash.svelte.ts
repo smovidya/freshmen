@@ -21,6 +21,9 @@ const flashMessageHandlers = {
   "not-allowed": () => {
     toast.info("ไม่สามารถเล่นได้");
   },
+  "unauthorized": () => {
+    toast.error("คุณไม่มีสิทธิ์เข้าถึงหน้านี้");
+  },
 };
 
 export type FlashMessageType = keyof typeof flashMessageHandlers;

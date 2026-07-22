@@ -10,6 +10,10 @@ export const user = sqliteTable("user", {
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
 	ouid: text('ouid').unique(),
 	group: text('group'),
+	role: text('role'),
+	banned: integer('banned', { mode: 'boolean' }),
+	banReason: text('ban_reason'),
+	banExpires: integer('ban_expires', { mode: 'timestamp' }),
 });
 
 export const session = sqliteTable("session", {

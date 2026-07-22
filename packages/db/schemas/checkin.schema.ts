@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 import { students } from './student.schema';
+import { user } from './auth.schema';
 
 const timestamps = {
   createdAt: integer('created_at', { mode: 'timestamp' })
@@ -18,6 +19,7 @@ export const staffs = sqliteTable('staffs', {
   name: text('name').notNull(),
   nickname: text('nickname'),
   staffRole: text('staff_role').notNull(),
+  userId: text('user_id').unique().references(() => user.id, { onDelete: 'set null' }),
   ...timestamps,
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 }, (table) => [
@@ -70,9 +72,13 @@ export const scans = sqliteTable('scans', {
   index('idx_scans_staff_id').on(table.staffId),
 ]);
 
-export const staffsRelations = relations(staffs, ({ many }) => ({
+export const staffsRelations = relations(staffs, ({ one, many }) => ({
   staffActivities: many(staffActivities),
   scans: many(scans),
+  user: one(user, {
+    fields: [staffs.userId],
+    references: [user.id],
+  }),
 }));
 
 export const activitiesRelations = relations(activities, ({ many }) => ({
