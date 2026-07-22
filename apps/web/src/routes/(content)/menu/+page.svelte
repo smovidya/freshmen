@@ -14,7 +14,6 @@
 			: null
 	);
 	const isStaff = $derived(data.whoami.role === 'staff');
-	const canCheckin = $derived(data.whoami.role === 'staff' || data.whoami.role === 'admin');
 
 	// "701" = group 7, boing/subgroup 01.
 	function boingCode(groupNumber: number, subgroupNumber: number) {
@@ -26,17 +25,16 @@
 <main class="container mx-auto flex h-full w-full flex-col">
 	<FestivalHeader />
 	<div class="mt-6 flex flex-col gap-7 sm:p-3">
-		{#if canCheckin}
-			<TaskSection>
-				<TaskCard
-					href="/checkin"
-					title="สแกนเช็คอินนิสิต"
-					description="สำหรับสตาฟ: สแกน QR หรือกรอกรหัสนิสิตเพื่อเช็คอิน"
-					status="พร้อมใช้งาน"
-					icon={ScanLine}
-				/>
-			</TaskSection>
-		{/if}
+		<TaskSection>
+			<TaskCard
+				href="/checkin"
+				title="สแกนเช็คอินนิสิต"
+				description="สำหรับสตาฟ: สแกน QR หรือกรอกรหัสนิสิตเพื่อเช็คอิน"
+				status="พร้อมใช้งาน"
+				icon={ScanLine}
+				roles={['staff', 'admin']}
+			/>
+		</TaskSection>
 		{#if !isStaff}
 		<TaskSection>
 			{#if !flags.isEnabled('registering')}
