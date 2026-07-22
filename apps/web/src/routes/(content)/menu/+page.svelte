@@ -2,7 +2,7 @@
 	import { TaskCard, TaskSection, FestivalHeader, AirportBackdrop } from '$lib/components/festival';
 	import { flags } from '$lib/flags';
 	import { getDisplayName } from '$lib/text-shuffle.svelte';
-	import { FileUser, ListOrdered, Megaphone, Swords } from 'lucide-svelte';
+	import { FileUser, ListOrdered, Megaphone, QrCode, Swords } from 'lucide-svelte';
 
 	let { data } = $props();
 	const friends = $derived(
@@ -71,6 +71,13 @@
 			/>
 		</TaskSection>
 		<TaskSection subtitle="25 &ndash; 27 กรกฎาคม">
+			<TaskCard
+				href="/checkin-qr"
+				title="QR เช็คอิน"
+				description="แสดง QR รหัสนิสิตให้เจ้าหน้าที่สแกนตอนเข้างานแต่ละวัน"
+				status="พร้อมใช้งาน"
+				icon={QrCode}
+			/>
 			<TaskCard
 				disabled={!flags.isEnabled('game-playing')}
 				href="/game"
