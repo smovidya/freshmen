@@ -1,19 +1,93 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import confetti from 'canvas-confetti';
 	import BackButton from '$lib/components/back-button.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import Bubbles from '../group/bubbles.svelte';
 	import MemberList from '../group/member-list.svelte';
 	import OpenChatIcon from './open-chat-icon.svelte';
-	import { AirportBackdrop } from '$lib/components/festival';
+	import { AirportBackdrop, Sign } from '$lib/components/festival';
 
 	let { data } = $props();
 	const team = $derived(data.joinedTeam ?? data.ownedTeam);
 	const group = $derived(data.groupData.find((it) => it.number === data.groupResult));
+
+	let revealOpen = $state(false);
+	let reducedMotion = $state(false);
+
+	function fireConfetti() {
+		if (reducedMotion) return;
+		const colors = ['#FFDB68', '#4a6fc2', '#ffffff'];
+		confetti({ particleCount: 120, spread: 75, origin: { y: 0.6 }, colors });
+		confetti({ particleCount: 60, angle: 60, spread: 55, origin: { x: 0, y: 0.7 }, colors });
+		confetti({ particleCount: 60, angle: 120, spread: 55, origin: { x: 1, y: 0.7 }, colors });
+	}
+
+	onMount(() => {
+		reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		if (!data.groupResult) return;
+		const seenKey = `group-reveal-seen-${data.groupResult}`;
+		if (localStorage.getItem(seenKey)) return;
+		localStorage.setItem(seenKey, '1');
+		revealOpen = true;
+	});
+
+	$effect(() => {
+		if (revealOpen) {
+			fireConfetti();
+		}
+	});
 </script>
 
+{#if data.groupResult}
+	<Dialog.Root bind:open={revealOpen}>
+		<Dialog.Content
+			class="max-w-sm overflow-hidden rounded-3xl border-none bg-gradient-to-b from-[#4a6fc2] to-[#2f4a86] p-0 text-center text-white shadow-2xl"
+		>
+			<div class="flex flex-col items-center gap-3 px-6 py-10">
+				<p
+					class="text-sm font-medium tracking-wide text-white/80 {reducedMotion
+						? ''
+						: 'animate-in fade-in slide-in-from-top-2 duration-500'}"
+				>
+					ยินดีด้วย! คุณได้กรุ๊ป
+				</p>
+				<h2
+					class="text-4xl font-bold drop-shadow-md {reducedMotion
+						? ''
+						: 'animate-in zoom-in-50 delay-150 duration-500'}"
+				>
+					{group?.name}
+				</h2>
+				<button
+					type="button"
+					onclick={fireConfetti}
+					class="touch-manipulation rounded-full bg-white/15 px-4 py-1 text-lg font-semibold transition-transform duration-150 ease-out active:scale-90"
+				>
+					กรุ๊ป {group?.number}
+				</button>
+				<Button
+					onclick={() => (revealOpen = false)}
+					size="lg"
+					class="mt-4 w-full touch-manipulation cursor-pointer bg-white text-[#2f4a86] shadow-md transition-transform duration-150 ease-out hover:bg-white/90 active:scale-95"
+				>
+					ดูรายละเอียด
+				</Button>
+			</div>
+		</Dialog.Content>
+	</Dialog.Root>
+{/if}
+
+<AirportBackdrop showCharacter={false} showScene={false} showSign={false} />
 <main class="container mx-auto flex h-full max-w-[60rem] flex-col px-5 py-14">
-	<AirportBackdrop showCharacter={false} />
-	<nav class="mt-64 flex items-center justify-between gap-4">
+	<img
+		src={Sign}
+		alt="VIDYA FRESHMEN FESTIVAL 2026"
+		class="mx-auto w-[85%] max-w-[420px] drop-shadow-lg"
+	/>
+	<nav class="mt-6 flex items-center justify-between gap-4">
 		<BackButton href="/menu" />
 		<div class="text-center">
 			<h1 class="text-3xl font-medium">ประกาศผลกรุ๊ป</h1>
