@@ -13,7 +13,7 @@ Package manager: bun (`bun@1.2.0`, workspaces: `apps/*`, `packages/*`, `scripts/
 ```bash
 bun install                    # install deps
 bun run dev                    # turbo dev --parallel across all workspaces (SvelteKit dev server, http://localhost:5173)
-cd apps/web && bun run dev:worker   # full stack against real Workers bindings (D1, Workflows)
+cd apps/web && bun run dev:tunnel   # builds, then serves the built worker behind a public Cloudflare quick tunnel (URL printed on start)
 cd apps/workers && bun run dev      # apps/workers wrangler dev (Google Sheets sync worker)
 cd apps/workers && bun run cf-typegen  # regenerate worker-configuration.d.ts after wrangler.jsonc changes
 bun run build                  # turbo build
@@ -39,6 +39,8 @@ Environment setup (see README for full detail): copy `apps/web/example.dev.vars`
 ## Architecture
 
 Single Cloudflare Worker serves both the SvelteKit frontend and a Hono API mounted under `/api/*`. `packages/typescript-config` is broken/unused per README — don't rely on it.
+
+Plain `bun run dev` (`vite dev`, SvelteKit's own dev server) is the full stack now — no separate `wrangler dev` process (the old `dev:worker` script/turbo task is gone). For sharing a running instance externally, `cd apps/web && bun run dev:tunnel` builds the worker and serves it via `vite.tunnel.config.ts` (a separate Vite config using `@cloudflare/vite-plugin`'s `cloudflare()` plugin with `tunnel: { autoStart: true }`) — this is deliberately kept out of the main `vite.config.ts`: combining `cloudflare()` with SvelteKit's own `sveltekit()` plugin in one config crashes `vite dev` (the plugin can't resolve `.cloudflare/worker.js` through SvelteKit's module pipeline). `dev:tunnel` only serves a snapshot of the last build, not live-reloading source changes.
 
 **Request flow**: `apps/web/src/routes/api/[...path]/+server.ts` hands every method to `apiApp.fetch(request, platform.env, platform.ctx)`. `apiApp` (`apps/web/src/lib/server/api.ts`) is where Cloudflare bindings (`Env`, D1, secrets) actually get touched — it builds `db`, `flags`, and `user`/`session` (via `better-auth`) once per request and sets them on Hono context, then delegates to `apiRouter` from `@vidyafreshmen/server` for everything under `/api`. `@vidyafreshmen/auth` and `@vidyafreshmen/db` deliberately avoid importing `cloudflare:workers` directly — bindings are threaded down through context instead, so shared packages stay Env-agnostic.
 

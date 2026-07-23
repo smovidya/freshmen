@@ -39,10 +39,6 @@
         "BETTER_AUTH_SECRET"
       ]
     },
-    "dev:worker": {
-      "cache": false,
-      "persistent": true
-    },
     "db:migrate:local": {
       "cache": false
     },
