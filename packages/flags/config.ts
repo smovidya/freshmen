@@ -10,7 +10,7 @@ export const features = {
     end: "2026-07-21T23:59:59+07:00",
   },
   "group-announcement": {
-    scheduled: "2026-07-23T18:00:00+07:00",
+    scheduled: "2026-07-23T16:00:00+07:00",
   },
   "game-playing": {
     start: "2026-07-25T00:00:00+07:00",
