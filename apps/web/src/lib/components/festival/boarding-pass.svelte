@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { LogOutIcon, Plane } from 'lucide-svelte';
+	import { LogOutIcon, MessageCircle, Plane } from 'lucide-svelte';
 	import { authClient } from '$lib/auth/client';
 	import { goto } from '$app/navigation';
 	import { groupData } from '$lib/groups';
@@ -131,5 +131,49 @@
 			</div>
 			<canvas bind:this={qrCanvas} class="size-16 shrink-0 rounded-md"></canvas>
 		</a>
+
+		{#if group?.link}
+			<div class="relative flex items-center">
+				<svg class="absolute -left-3 size-6" viewBox="0 0 24 24" aria-hidden="true">
+					<defs>
+						<radialGradient id="notch-shade-l2" cx="65%" cy="50%" r="65%">
+							<stop offset="55%" stop-color="#4a6fc2" />
+							<stop offset="100%" stop-color="#2f4a86" />
+						</radialGradient>
+					</defs>
+					<circle cx="12" cy="12" r="12" fill="url(#notch-shade-l2)" />
+				</svg>
+				<div class="w-full border-t-2 border-dashed border-black/20"></div>
+				<svg class="absolute -right-3 size-6" viewBox="0 0 24 24" aria-hidden="true">
+					<defs>
+						<radialGradient id="notch-shade-r2" cx="35%" cy="50%" r="65%">
+							<stop offset="55%" stop-color="#4a6fc2" />
+							<stop offset="100%" stop-color="#2f4a86" />
+						</radialGradient>
+					</defs>
+					<circle cx="12" cy="12" r="12" fill="url(#notch-shade-r2)" />
+				</svg>
+			</div>
+
+			<a
+				href={group.link}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="flex items-center gap-3 p-5 transition-colors hover:bg-black/[0.03]"
+			>
+				<div class="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#06C755]">
+					<MessageCircle class="size-5 fill-white text-white" />
+				</div>
+				<div class="min-w-0 flex-1">
+					<p class="text-[10px] font-semibold tracking-wide text-black/50">OPENCHAT</p>
+					<p class="truncate text-sm font-bold">เข้าร่วมโอเพนแชท {group.name}</p>
+				</div>
+				<span
+					class="shrink-0 rounded-full bg-[#06C755]/10 px-3 py-1.5 text-xs font-bold text-[#06C755]"
+				>
+					เข้าร่วม
+				</span>
+			</a>
+		{/if}
 	</div>
 </div>
