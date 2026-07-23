@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { TaskCard, TaskSection, FestivalHeader, AirportBackdrop } from '$lib/components/festival';
+	import { TaskCard, TaskSection, BoardingPass, AirportBackdrop, Sign } from '$lib/components/festival';
 	import { flags } from '$lib/flags';
 	import { getDisplayName } from '$lib/text-shuffle.svelte';
-	import { groupData } from '$lib/groups';
 	import { FileUser, ListOrdered, Megaphone, QrCode, ScanLine, Swords } from 'lucide-svelte';
 
 	let { data } = $props();
@@ -14,16 +13,16 @@
 			: null
 	);
 	const isStaff = $derived(data.whoami.role === 'staff');
-
-	// "701" = group 7, boing/subgroup 01.
-	function boingCode(groupNumber: number, subgroupNumber: number) {
-		return `${groupNumber}${String(subgroupNumber).padStart(2, '0')}`;
-	}
 </script>
 
-<AirportBackdrop />
+<AirportBackdrop showScene={false} showSign={false} />
 <main class="container mx-auto flex h-full w-full flex-col">
-	<FestivalHeader />
+	<img
+		src={Sign}
+		alt="VIDYA FRESHMEN FESTIVAL 2026"
+		class="mx-auto mt-6 w-[85%] max-w-[420px] drop-shadow-lg"
+	/>
+	<BoardingPass whoami={data.whoami} team={data.team} isRegistered={data.isRegistered} />
 	<div class="mt-6 flex flex-col gap-7 sm:p-3">
 		<TaskSection>
 			<TaskCard
@@ -61,19 +60,21 @@
 					status={data.isRegistered ? 'ดำเนินการแล้ว' : 'ยังไม่ดำเนินการ'}
 					icon={FileUser}
 				/>
-				<TaskCard
-					disabled={!flags.isEnabled('group-choosing')}
-					done={!!friends}
-					href="/group"
-					title="เรียงลำดับกรุ๊ปที่ชื่นชอบ"
-					description="เรียงลำดับกรุ๊ปรับน้องตามที่น้อง ๆ สนใจ พร้อมจับมือเพื่อนไปด้วยอีก 2 คน"
-					status={!friends
-						? 'ทำตามขั้นตอนข้างบนก่อน'
-						: `${friends.length !== 0 ? 'จับกลุ่มกับ ' : ''}${friends.join(
-								' และ '
-							)} ที่เรียงไว้คือ ${data.team!.groupPreferenceOrder.join(' ')}`}
-					icon={ListOrdered}
-				/>
+				{#if !flags.isPast('group-choosing')}
+					<TaskCard
+						disabled={!flags.isEnabled('group-choosing')}
+						done={!!friends}
+						href="/group"
+						title="เรียงลำดับกรุ๊ปที่ชื่นชอบ"
+						description="เรียงลำดับกรุ๊ปรับน้องตามที่น้อง ๆ สนใจ พร้อมจับมือเพื่อนไปด้วยอีก 2 คน"
+						status={!friends
+							? 'ทำตามขั้นตอนข้างบนก่อน'
+							: `${friends.length !== 0 ? 'จับกลุ่มกับ ' : ''}${friends.join(
+									' และ '
+								)} ที่เรียงไว้คือ ${data.team!.groupPreferenceOrder.join(' ')}`}
+						icon={ListOrdered}
+					/>
+				{/if}
 			{/if}
 		</TaskSection>
 		<TaskSection subtitle="23 กรกฎาคม">
@@ -90,22 +91,6 @@
 		</TaskSection>
 		{/if}
 		<TaskSection subtitle="25 &ndash; 27 กรกฎาคม">
-			{#if !isStaff && data.team?.resultGroupNumber && data.team?.subgroupNumber}
-				<div class="rounded-3xl bg-white/90 p-4 shadow-md">
-					<p class="text-2xl leading-tight font-bold text-black">
-						กรุ๊ป {data.team.resultGroupNumber}
-						<span class="text-base font-normal text-black/70">
-							({groupData.find((g) => g.number === data.team!.resultGroupNumber)?.name ??
-								data.team.resultGroupNumber})
-						</span>
-					</p>
-					<p class="text-sm text-black/70">
-						โบอิ้ง <strong class="text-base text-black"
-							>{boingCode(data.team.resultGroupNumber, data.team.subgroupNumber)}</strong
-						>
-					</p>
-				</div>
-			{/if}
 			<TaskCard
 				href="/checkin-qr"
 				title="QR เช็คอิน"

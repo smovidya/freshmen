@@ -1,4 +1,6 @@
 <script lang="ts">
+	import '@fontsource/dm-mono';
+	import '@fontsource-variable/google-sans';
 	import { dev } from '$app/environment';
 	import DevToolbar from '$lib/dev/DevToolbar.svelte';
 

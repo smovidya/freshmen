@@ -35,7 +35,7 @@
 	<a
 		href={disabled ? undefined : href}
 		data-sveltekit-preload-data="tap"
-		class="flex flex-row items-center gap-3 rounded-3xl bg-[#FFDB68] p-4 shadow-md transition-all hover:brightness-105 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 sm:gap-4"
+		class="group relative flex flex-row items-center gap-3 rounded-3xl bg-[#FFDB68] p-4 shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:translate-y-0 aria-disabled:hover:shadow-md sm:gap-4"
 		aria-disabled={disabled}
 	>
 		<div
@@ -47,13 +47,21 @@
 				<Icon class="size-8 stroke-[1.5] text-white sm:size-10" />
 			{/if}
 		</div>
-		<div class="w-full">
+		<div class="min-w-0 flex-1">
 			<h2 class="mb-1 text-lg font-bold text-black sm:text-xl">{title}</h2>
 			<p class="w-full text-sm text-black/70">{description}</p>
-			<span class={cn('text-xs font-medium', done ? 'text-[#3aa095]' : 'text-[#c74137]')}
-				>{status}</span
+			<span
+				class={cn(
+					'mt-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase',
+					done ? 'bg-[#3aa095]/15 text-[#3aa095]' : 'bg-[#c74137]/15 text-[#c74137]'
+				)}>{status}</span
 			>
 		</div>
-		<ArrowRight class="m-2 size-7 shrink-0 stroke-[2.5] text-black" />
+		<div class="hidden self-stretch border-l-2 border-dashed border-black/15 sm:block"></div>
+		<div
+			class="flex size-9 shrink-0 items-center justify-center rounded-full bg-black/5 text-black transition-colors group-hover:bg-black/10 sm:size-10"
+		>
+			<ArrowRight class="size-4 stroke-[2.5] sm:size-5" />
+		</div>
 	</a>
 {/if}

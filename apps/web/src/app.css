@@ -7,13 +7,13 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #cee5ed;
+  --background: oklch(1 0 0);
   --foreground: oklch(0.147 0.004 49.25);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.147 0.004 49.25);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.147 0.004 49.25);
-  --primary: oklch(0.532 0.139 263.976);
+  --primary: #3c5da8;
   --primary-foreground: oklch(0.985 0.001 106.423);
   --secondary: oklch(0.965 0.001 106.424);
   --secondary-foreground: oklch(0.216 0.006 56.043);
@@ -111,7 +111,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: 'Noto Sans Thai Variable', sans-serif;
+  --font-sans: 'DM Mono', 'Google Sans Variable', sans-serif;
 /* 
   --color-theme-red: oklch(0.5516 0.1455 28.95);
   --color-theme-green: oklch(0.6469 0.0713 184.63); */
@@ -123,6 +123,6 @@
   }
 
   body {
-    @apply bg-[#F0CE7D] text-foreground;
+    @apply bg-[oklch(0.82_0.05_263.976)] text-foreground font-sans;
   }
 }
