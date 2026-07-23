@@ -49,4 +49,28 @@ export class FeatureFlags {
 
     return false;
   }
+
+  /** True once a feature's window/deadline has closed (vs. not yet enabled, which isPast doesn't distinguish). */
+  isPast(feature: keyof typeof features): boolean {
+    if (this.enabledAll) {
+      return false; // dev bypass: never treat a feature as closed
+    }
+    const featureStatus: EventAvailability | undefined = this.#features[feature];
+
+    if (!featureStatus || typeof featureStatus === 'boolean') {
+      return false;
+    }
+
+    const now = new Date();
+
+    if ('end' in featureStatus) {
+      return now > new Date(featureStatus.end);
+    }
+
+    if ('deadline' in featureStatus) {
+      return now > new Date(featureStatus.deadline);
+    }
+
+    return false;
+  }
 }
