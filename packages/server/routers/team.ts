@@ -1,4 +1,5 @@
 import { groupPreferenceSchema } from '@vidyafreshmen/dto';
+import type { FeatureFlags } from '@vidyafreshmen/flags';
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import z from 'zod/v4';
@@ -15,6 +16,19 @@ import {
 
 const joinBodySchema = z.object({ code: z.string().length(4) });
 const kickBodySchema = z.object({ email: z.email() });
+
+// Group results come back from the DB join regardless of festival schedule,
+// so this is the enforcement point keeping them hidden until announcement time
+// (the client-side check in boarding-pass.svelte is UX only, not a guarantee).
+function maskGroupResultUnlessAnnounced<T extends { resultGroupNumber: number | null; subgroupNumber: number | null } | null>(
+  team: T,
+  flags: FeatureFlags
+): T {
+  if (!team || flags.isEnabled('group-announcement')) {
+    return team;
+  }
+  return { ...team, resultGroupNumber: null, subgroupNumber: null };
+}
 
 export const teamRouter = new Hono<{ Variables: Variables }>()
   .post('/join', requireUser, zValidator('json', joinBodySchema), async (c) => {
@@ -43,11 +57,13 @@ export const teamRouter = new Hono<{ Variables: Variables }>()
   })
   .get('/owned', requireUser, async (c) => {
     const user = c.get('user')!;
-    return c.json(await getOwnedTeam(user.email, c.get('db')));
+    const team = await getOwnedTeam(user.email, c.get('db'));
+    return c.json(maskGroupResultUnlessAnnounced(team, c.get('flags')));
   })
   .get('/joined', requireUser, async (c) => {
     const user = c.get('user')!;
-    return c.json(await getJoinedTeam(user.email, c.get('db')));
+    const team = await getJoinedTeam(user.email, c.get('db'));
+    return c.json(maskGroupResultUnlessAnnounced(team, c.get('flags')));
   })
   .post('/leave', requireUser, async (c) => {
     if (!c.get('flags').isEnabled('team-joining')) {
