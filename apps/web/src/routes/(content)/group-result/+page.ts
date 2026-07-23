@@ -5,7 +5,7 @@ import { flags } from '$lib/flags';
 import { apiClient, call } from '$lib/api';
 import { groupData } from '$lib/groups';
 
-export const load: PageLoad = async ({ parent }) => {
+export const load: PageLoad = async ({ parent, fetch }) => {
 	const { whoami } = await parent();
 	if (!whoami) {
 		redirect(307, `/?${flashParams('please-login')}`);
@@ -15,7 +15,7 @@ export const load: PageLoad = async ({ parent }) => {
 		redirect(307, `/menu?${flashParams('not-yet-start')}`);
 	}
 
-	const client = apiClient();
+	const client = apiClient({ fetch });
 	const [ownedTeam, joinedTeam] = await Promise.all([
 		call(client.team.owned.$get()),
 		call(client.team.joined.$get())

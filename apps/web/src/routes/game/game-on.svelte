@@ -13,7 +13,7 @@
 	import G7OpenWithEff from '$lib/assets/game/g7_open_withEff.png';
 	import PopSound from '$lib/assets/game/pop-cat-original-meme_3ObdYkj.mp3';
 	import { GameAPIClient, GamePopper } from '$lib/game.svelte';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 
 	import {
 		Drawer,
@@ -38,7 +38,7 @@
 		client
 	}: { studentGroup: string; studentOuid: string; client: GameAPIClient } = $props();
 
-	const popper = new GamePopper(client);
+	const popper = untrack(() => new GamePopper(client));
 
 	let popSound: HTMLAudioElement;
 	let leaderboard: Awaited<ReturnType<GameAPIClient['getLeaderboard']>> = $state([]);
