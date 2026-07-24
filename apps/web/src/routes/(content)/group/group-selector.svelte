@@ -76,7 +76,7 @@
 			>
 				<div class="ml-1 flex items-center gap-4">
 					<span class="text-nowrap">
-						กรุ๊ป {item.number}
+						สายการบิน {item.number}
 					</span>
 					<span class="text-lg">
 						{item.name}

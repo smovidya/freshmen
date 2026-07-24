@@ -57,7 +57,7 @@
 <nav class="flex items-center justify-between gap-4">
 	<BackButton href="/menu" />
 	<div class="text-center">
-		<h1 class="text-3xl font-medium">เลือกกรุ๊ป</h1>
+		<h1 class="text-3xl font-medium">เลือกสายการบิน</h1>
 		<!-- <p class="text-zinc-700">เรียงลำดับกรุ๊ปรับน้องตามที่น้อง ๆ สนใจ พร้อมจับมือเพื่อนไปด้วยอีก 2 คน</p> -->
 	</div>
 	<div class="w-10"></div>
@@ -66,7 +66,7 @@
 <section class="mt-12">
 	<div class="items-center gap-3 rounded-2xl bg-[#ffffed] p-6 shadow-md md:flex-row md:gap-6">
 		<h2 class="text-xl font-semibold">พาเพื่อนเข้ากลุ่มด้วยกัน</h2>
-		<p>น้อง ๆ สามารถเชิญเพื่อนอีก 2 คน (รวมน้องเป็น 3) โดยจะโดนจัดให้อยู่กรุ๊ปเดียวกัน</p>
+		<p>น้อง ๆ สามารถเชิญเพื่อนอีก 2 คน (รวมน้องเป็น 3) โดยจะโดนจัดให้อยู่สายการบินเดียวกัน</p>
 	</div>
 
 	<!-- <TeamDisplayMember {leaveTeam} team={data.ownedTeam} /> -->

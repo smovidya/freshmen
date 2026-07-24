@@ -70,7 +70,7 @@
 			<div class="flex w-full items-center justify-between rounded-md bg-[#f8efc9] p-4 shadow-md">
 				<div class="ml-1 flex items-center gap-4">
 					<span>
-						กรุ๊ป {group.id}
+						สายการบิน {group.id}
 					</span>
 					<span class="text-lg">
 						{group.name}

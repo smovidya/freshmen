@@ -35,6 +35,14 @@ export async function getOrCreateSheet(
 ): Promise<GoogleSpreadsheetWorksheet> {
   const existing = doc.sheetsByTitle[title];
   if (existing) {
+    // A sync config can grow new columns over time (e.g. an added computed field) -
+    // append any header the sheet doesn't have yet so writes using it don't fail
+    // before the next full rewrite gets around to fixing the header row.
+    await existing.loadHeaderRow();
+    const missing = headers.filter((h) => !existing.headerValues.includes(h));
+    if (missing.length > 0) {
+      await existing.setHeaderRow([...existing.headerValues, ...missing]);
+    }
     return existing;
   }
   return doc.addSheet({ title, headerValues: headers });

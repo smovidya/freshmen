@@ -80,13 +80,13 @@
 
 		<div class="grid grid-cols-3 gap-2 px-5 pb-5 text-center">
 			<div>
-				<p class="text-[10px] font-semibold tracking-wide text-black/50">FLIGHT</p>
+				<p class="text-[10px] font-semibold tracking-wide text-black/50">AIRLINE</p>
 				<p class="truncate text-sm font-bold">
 					{#if group}{group.name}{:else if isRegistered}รอประกาศ{:else}—{/if}
 				</p>
 			</div>
 			<div>
-				<p class="text-[10px] font-semibold tracking-wide text-black/50">GATE</p>
+				<p class="text-[10px] font-semibold tracking-wide text-black/50">BOEING</p>
 				<p class="text-sm font-bold">
 					{issued ? boingCode(team!.resultGroupNumber!, team!.subgroupNumber!) : '—'}
 				</p>

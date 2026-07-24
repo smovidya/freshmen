@@ -1,4 +1,4 @@
-import { asc, eq, gt } from 'drizzle-orm';
+import { asc, eq, gt, sql } from 'drizzle-orm';
 import { tables, type Db } from '@vidyafreshmen/db';
 
 export type SyncColumn<Row> = {
@@ -156,7 +156,23 @@ const scansFullSync: FullSyncTable<ScanRow> = {
 };
 
 function studentGroupSelect(db: Db) {
-  return db.select().from(tables.studentGroup);
+  return db
+    .select({
+      id: tables.studentGroup.id,
+      studentId: tables.studentGroup.studentId,
+      groupNumber: tables.studentGroup.groupNumber,
+      // available_groups.number is text, student_group.group_number is integer -
+      // cast to match, same pattern as scan.service.ts's `String(chosenNumber)` join.
+      groupName: tables.availableGroups.name,
+      subgroupNumber: tables.studentGroup.subgroupNumber,
+      createdAt: tables.studentGroup.createdAt,
+      updatedAt: tables.studentGroup.updatedAt,
+    })
+    .from(tables.studentGroup)
+    .leftJoin(
+      tables.availableGroups,
+      eq(tables.availableGroups.number, sql`CAST(${tables.studentGroup.groupNumber} AS TEXT)`)
+    );
 }
 
 type StudentGroupRow = Awaited<ReturnType<typeof studentGroupSelect>>[number];
@@ -165,6 +181,7 @@ const studentGroupColumns: SyncColumn<StudentGroupRow>[] = [
   { header: 'id', value: (r) => r.id },
   { header: 'student_id', value: (r) => r.studentId },
   { header: 'group_number', value: (r) => String(r.groupNumber) },
+  { header: 'group_name', value: (r) => r.groupName ?? '' },
   { header: 'subgroup_number', value: (r) => String(r.subgroupNumber) },
   { header: 'created_at', value: (r) => r.createdAt.toISOString() },
   { header: 'updated_at', value: (r) => r.updatedAt.toISOString() },

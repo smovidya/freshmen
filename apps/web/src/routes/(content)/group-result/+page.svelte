@@ -52,7 +52,7 @@
 						? ''
 						: 'animate-in fade-in slide-in-from-top-2 duration-500'}"
 				>
-					ยินดีด้วย! คุณได้กรุ๊ป
+					ยินดีด้วย! คุณได้สายการบิน
 				</p>
 				<h2
 					class="text-4xl font-bold drop-shadow-md {reducedMotion
@@ -66,7 +66,7 @@
 					onclick={fireConfetti}
 					class="touch-manipulation rounded-full bg-white/15 px-4 py-1 text-lg font-semibold transition-transform duration-150 ease-out active:scale-90"
 				>
-					กรุ๊ป {group?.number}
+					สายการบิน {group?.number}
 				</button>
 				<Button
 					onclick={() => (revealOpen = false)}
@@ -90,14 +90,14 @@
 	<nav class="mt-6 flex items-center justify-between gap-4">
 		<BackButton href="/menu" />
 		<div class="text-center">
-			<h1 class="text-3xl font-medium">ประกาศผลกรุ๊ป</h1>
+			<h1 class="text-3xl font-medium">ประกาศผลสายการบิน</h1>
 		</div>
 		<div class="w-10"></div>
 	</nav>
 
 	<section class="mt-12 flex flex-col items-center justify-center gap-2">
-		<h2 class="rounded-md bg-white/60 px-2 py-1 text-xl font-semibold">กรุ๊ปที่ได้</h2>
-		<p class="rounded-md bg-white/60 px-2 py-1">โชคชะตากำหนดให้คุณได้อยู่กรุ๊ป...</p>
+		<h2 class="rounded-md bg-white/60 px-2 py-1 text-xl font-semibold">สายการบินที่ได้</h2>
+		<p class="rounded-md bg-white/60 px-2 py-1">โชคชะตากำหนดให้คุณได้อยู่สายการบิน...</p>
 		{#if !data.groupResult}
 			<div
 				class="mt-3 flex w-full flex-col justify-between gap-6 rounded-2xl border border-white/30 bg-white/70 px-5 py-10 shadow-md backdrop-blur-3xl"
@@ -105,7 +105,7 @@
 				<div class="flex flex-col items-center justify-center gap-3">
 					<h2 class="text-3xl">ไม่มีอะไรให้ดู ;-;</h2>
 					<p class="text-center">
-						เนื่องจากไม่ได้ลงทะเบียนภายใน 21 กรกฎาคม เวลา 23:59 จึงยังไม่ได้ถูกสุ่มลงกลุ่มใดในขณะนี้
+						เนื่องจากไม่ได้ลงทะเบียนภายใน 21 กรกฎาคม เวลา 23:59 จึงยังไม่ได้ถูกสุ่มลงสายการบินใดในขณะนี้
 						แต่ไม่เป็นไร มาหน้างานได้เลย!
 					</p>
 				</div>
@@ -119,10 +119,10 @@
 			>
 				<div>
 					<h2 class="text-3xl">{group?.name}</h2>
-					<p>กรุ๊ป {group?.number}</p>
+					<p>สายการบิน {group?.number}</p>
 				</div>
 				<p class="mt-3 text-gray-600">
-					<strong>ขั้นต่อไป:</strong> อย่าลืมเข้าโอเพนแชทเพื่อพบปะเพื่อนใหม่ในกรุ๊ปนะ!
+					<strong>ขั้นต่อไป:</strong> อย่าลืมเข้าโอเพนแชทเพื่อพบปะเพื่อนใหม่ในสายการบินนะ!
 				</p>
 				<Button
 					href={group?.link}

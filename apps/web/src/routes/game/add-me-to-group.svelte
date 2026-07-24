@@ -23,12 +23,12 @@
 			);
 		} catch (error) {
 			toast.error(
-				'ไม่สามารถเข้าร่วมกรุ๊ปได้' + (error instanceof Error ? `: ${error.message}` : '')
+				'ไม่สามารถเข้าร่วมสายการบินได้' + (error instanceof Error ? `: ${error.message}` : '')
 			);
 			return;
 		}
 
-		toast.success('เข้าร่วมกรุ๊ปสำเร็จ');
+		toast.success('เข้าร่วมสายการบินสำเร็จ');
 		await client.refreshToken();
 		window.location.reload();
 	}
@@ -36,11 +36,11 @@
 
 <div class="flex flex-col items-center justify-center gap-5">
 	<div class="text-center">
-		<h2 class="text-2xl font-bold">คุณยังไม่ได้ระบุกรุ๊ป</h2>
+		<h2 class="text-2xl font-bold">คุณยังไม่ได้ระบุสายการบิน</h2>
 		<p>ใส่รหัสผ่านจากสตาฟเพื่อเริ่มเล่นเกม</p>
 	</div>
 	<div class="flex flex-col items-center justify-center space-y-2">
 		<Input type="text" placeholder="รหัสผ่าน" bind:value={joinPassword} />
-		<Button variant="secondary" onclick={joinGroup}>เข้าร่วมกรุ๊ป</Button>
+		<Button variant="secondary" onclick={joinGroup}>เข้าร่วมสายการบิน</Button>
 	</div>
 </div>

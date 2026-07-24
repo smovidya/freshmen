@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Vidya Freshmen — festival/registration web app for Chulalongkorn Science freshmen (student.chula.ac.th SSO only). Bun/Turborepo monorepo, deployed as two Cloudflare Workers: `apps/web` (SvelteKit frontend + Hono API, the `vidyafreshmen` worker) and `apps/workers` (cron-only background jobs, the `vidyafreshmen-workers` worker), sharing one D1 database.
 
+## Terminology (2026 CI)
+
+This year's branding is airline-themed. In all **user-facing copy**, call a group ("กรุ๊ป") a **สายการบิน (Airline)**, and call a subgroup/boing a **โบอิ้ง (Boeing)** — e.g. boarding-pass.svelte's AIRLINE/BOEING fields. This is display terminology only: DB columns/schema (`result_group_number`, `student_group.group_number`/`subgroup_number`), TypeScript identifiers (`resultGroupNumber`, `subgroupNumber`, `groupData`, `boingCode`), and route/param names stay as `group`/`subgroup` — don't rename code to match.
+
 ## Commands
 
 Package manager: bun (`bun@1.2.0`, workspaces: `apps/*`, `packages/*`, `scripts/*`).
@@ -60,15 +64,7 @@ Plain `bun run dev` (`vite dev`, SvelteKit's own dev server) is the full stack n
 
 **`apps/web/src/lib/components/tag-checklist.svelte`**: reusable checklist-with-"other" input (`Switch` to toggle "has any" + checkbox tags + free-text "other" field, all collapsed into one comma-joined `string` value). Used for every optional multi-value registration field (`medicalConditions`, `drugAllergies`, `foodAllergies`, `foodLimitations` in `register/+page@.svelte`) instead of a raw `Textarea` — prefer it over a textarea for any new checklist-shaped optional field.
 
-**`apps/workers`** (`@vidyafreshmen/workers`): standalone Worker, no HTTP — cron-triggered (`*/2 * * * *`) background jobs only, sharing the same D1 database as `apps/web`. Currently runs one Cloudflare Workflow, `SyncToGoogleSheetWorkflow` (binding `SYNC_TO_GOOGLE_SHEET`), relaying D1 → a Google Sheet one-way. `src/index.ts`'s `scheduled()` handler checks `sync_state` (via `lib/sync-state.ts`) for which configured tables are due, then kicks off one workflow instance with the due keys; each table syncs inside its own `step.do` in `src/workflows/sync-to-google-sheet.ts`.
-
-Sync tables are configured in `src/config/sheets.ts` (`syncTables` array), two modes:
-- **`full`** (`students`, `teams`, every 10 min; plus `scans-full`/`student_group-full` safety nets every 30 min): `strategy: 'rewrite'` — clears the whole sheet tab and re-adds every row from a fresh query. `'upsert'` is modeled in the type but not implemented.
-- **`partial`** (`scans`, `student_group`, every 2 min): cursor-based on each row's `updated_at` (not `created_at` — needs to catch edits, not just inserts) via `lib/sync-state.ts`'s `getCursor`/`recordSync`. Upserts by a configured `keyHeader`/`getKey` (loads existing sheet rows with `sheet.getRows()`, updates matching ones in place via `GoogleSpreadsheetRow.assign()` + `.save()`, appends the rest) rather than blindly appending — otherwise edited rows would duplicate instead of updating. No-ops (skips writing entirely) when nothing's newer than the cursor.
-
-Both modes support arbitrary joined queries (`(db: Db, cursor: Date | null) => Promise<Row[]>`) so a sync entry can flatten joined data (e.g. `scans` resolves `students`/`staffs`/`checkpoints`/`activities` down to one row with the real university student ID instead of internal UUIDs) — no need to join in the spreadsheet.
-
-`src/lib/google-sheets.ts` wraps `google-auth-library`'s `JWT` + `google-spreadsheet`. **Critical gotcha** (see the `google-auth-library` skill): `env.GOOGLE_PRIVATE_KEY` from a dotenv-style var/secret has literal `\n` escapes, not real line breaks — `gtoken`/`jws` sign with the key string as-is and need it unescaped (`.replace(/\\n/g, '\n')`) or every Sheets API call fails silently through Workflow retries with no useful error. `getOrCreateSheet` auto-creates a sheet tab if the configured title doesn't exist yet in the spreadsheet.
+**`apps/workers`** (`@vidyafreshmen/workers`): standalone Worker, no HTTP — cron-triggered background jobs syncing D1 → Google Sheets. See `apps/workers/CLAUDE.md` for the sync-table config, full/partial sync strategy, and the Google Sheets auth gotcha.
 
 ## Festival schedule
 
