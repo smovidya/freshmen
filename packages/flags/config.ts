@@ -13,7 +13,7 @@ export const features = {
     scheduled: "2026-07-23T16:00:00+07:00",
   },
   "game-playing": {
-    start: "2026-07-25T00:00:00+07:00",
+    start: "2026-07-25T09:00:00+07:00",
     end: "2026-07-27T23:59:59+07:00",
   },
   "game-allow-non-freshmen": true
@@ -24,6 +24,16 @@ export const features = {
  * Example: "2025-07-19T12:00:00+07:00"
  */
 export type FestivalDateTime = `${string}-${string}-${string}T${string}:${string}:${string}+07:00`;
+
+// Staff-only daily top-10 leaderboard (see FeatureFlags.getRevealedDailyLeaderboards).
+// Each entry both bounds the score query (everything credited at or before
+// cutoffAt) and gates when staff can see it - results for a given day are
+// visible immediately after that day's own cutoff passes, not held back to a
+// later date.
+export const dailyLeaderboardCutoffs: { date: string; cutoffAt: FestivalDateTime }[] = [
+  { date: "2026-07-26", cutoffAt: "2026-07-26T17:00:00+07:00" },
+  { date: "2026-07-27", cutoffAt: "2026-07-27T17:00:00+07:00" },
+];
 
 /**
  * Represents an event/activity that runs during a specific time window.

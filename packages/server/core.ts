@@ -13,6 +13,10 @@ export type Variables = {
   session: AuthInstance["$Infer"]["Session"]["session"] | null;
   db: Db;
   flags: FeatureFlags;
+  // Turnstile bot-check on public forms (registration) is production-only -
+  // set from WORKER_ENV, same convention as flags' enabledAll bypass.
+  isProduction: boolean;
+  turnstileSecret: string | undefined;
 };
 
 // Runs after the API endpoint's session-extraction middleware has populated

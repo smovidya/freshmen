@@ -160,6 +160,7 @@ function studentGroupSelect(db: Db) {
     .select({
       id: tables.studentGroup.id,
       studentId: tables.studentGroup.studentId,
+      ouid: tables.studentGroup.ouid,
       groupNumber: tables.studentGroup.groupNumber,
       // available_groups.number is text, student_group.group_number is integer -
       // cast to match, same pattern as scan.service.ts's `String(chosenNumber)` join.
@@ -180,6 +181,7 @@ type StudentGroupRow = Awaited<ReturnType<typeof studentGroupSelect>>[number];
 const studentGroupColumns: SyncColumn<StudentGroupRow>[] = [
   { header: 'id', value: (r) => r.id },
   { header: 'student_id', value: (r) => r.studentId },
+  { header: 'ouid', value: (r) => r.ouid ?? '' },
   { header: 'group_number', value: (r) => String(r.groupNumber) },
   { header: 'group_name', value: (r) => r.groupName ?? '' },
   { header: 'subgroup_number', value: (r) => String(r.subgroupNumber) },

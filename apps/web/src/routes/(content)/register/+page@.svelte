@@ -19,7 +19,9 @@
 		SelectTrigger
 	} from '$lib/components/ui/select/index.js';
 	import TagChecklist from '$lib/components/tag-checklist.svelte';
+	import TurnstileWidget from '$lib/components/turnstile-widget.svelte';
 	import { departmentIds, departmentLabels } from '$lib/departments';
+	import { env } from '$env/dynamic/public';
 	import { apiClient, call } from '$lib/api';
 	import { registrationSchema } from '@vidyafreshmen/dto';
 	import { toast } from 'svelte-sonner';
@@ -37,6 +39,10 @@
 	let email = $derived(session.current.data?.user.email!);
 	let studentId = $derived(email?.split('@')[0]);
 	let submitting = $state(false);
+	let turnstileToken = $state<string | null>(null);
+	// Only production registers a Turnstile widget (see turnstile-widget.svelte)
+	// - elsewhere there's nothing to wait on before allowing submit.
+	const turnstileRequired = Boolean(env.PUBLIC_TURNSTILE_SITE_KEY);
 
 	const form = superForm(data.form, {
 		SPA: true,
@@ -52,14 +58,14 @@
 				if (isRegistered) {
 					await call(
 						apiClient().user['student-info'].$put({
-							json: { ...form.data }
+							json: { ...form.data, turnstileToken: turnstileToken ?? undefined }
 						})
 					);
 					toast.success('บันทึกข้อมูลสำเร็จ 🎉');
 				} else {
 					await call(
 						apiClient().user.register.$post({
-							json: { ...form.data }
+							json: { ...form.data, turnstileToken: turnstileToken ?? undefined }
 						})
 					);
 					toast.success('ลงทะเบียนสำเร็จ 🎉');
@@ -375,9 +381,19 @@
 			และเปิดเผยข้อมูลส่วนบุคคลตามนโยบายนี้
 		</div>
 
+		<!-- Bot check (production only - no-op elsewhere, see turnstile-widget.svelte) -->
+		<div class="mt-8 flex justify-center">
+			<TurnstileWidget bind:token={turnstileToken} />
+		</div>
+
 		<!-- Submit Button -->
 		<div class="flex justify-end pt-6">
-			<Button type="submit" size="lg" class="text-md mt-4 h-12 w-full ">
+			<Button
+				type="submit"
+				size="lg"
+				class="text-md mt-4 h-12 w-full"
+				disabled={submitting || (turnstileRequired && !turnstileToken)}
+			>
 				{#if isRegistered}
 					บันทึก
 				{:else}

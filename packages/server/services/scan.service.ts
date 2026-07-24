@@ -122,9 +122,15 @@ export async function assignOnsiteBoingIfMissing(
 
   if (existing) return existing.subgroupNumber;
 
+  const [student] = await db
+    .select({ email: tables.students.email })
+    .from(tables.students)
+    .where(eq(tables.students.id, studentDbId));
+
   const chosen = await pickLeastAssignedSubgroup(groupNumber, checkpointId, db);
   await db.insert(tables.studentGroup).values({
     studentId: studentDbId,
+    ouid: student ? student.email.split("@")[0] : null,
     groupNumber,
     subgroupNumber: chosen,
   });

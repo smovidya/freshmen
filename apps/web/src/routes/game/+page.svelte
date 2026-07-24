@@ -3,15 +3,11 @@
 	import GameOn from './game-on.svelte';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import { GameAPIClient } from '$lib/game.svelte';
-	import { onMount } from 'svelte';
 	import { updated } from '$app/state';
 
 	let { data } = $props();
 
-	const client = new GameAPIClient(false);
-	onMount(() => {
-		client.refreshToken();
-	});
+	const client = new GameAPIClient();
 
 	$effect(() => {
 		if (updated.current) {
@@ -21,19 +17,19 @@
 </script>
 
 <svelte:head>
-	<title>ศึกเทพป็อปปลดล็อกแดนสวรรค์</title>
+	<title>ศึกเขย่าลูกแก้วทะยานฟ้า</title>
 	<meta
 		name="description"
-		content="ศึกเทพป็อปปลดล็อกแดนสวรรค์ Mini Game กระชับควาสัมพันธ์ระหว่างแคว้นรับน้องทั้ง 6 แห่ง เทศกาลต้อนรับนิสิตใหม่ประจำปี 2569 คณะวิทยาศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย"
+		content="ศึกเขย่าลูกแก้วทะยานฟ้า Mini Game กระชับควาสัมพันธ์ระหว่างสายการบินรับน้องทั้ง 6 แห่ง เทศกาลต้อนรับนิสิตใหม่ประจำปี 2569 คณะวิทยาศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย"
 	/>
 </svelte:head>
 
 <Toaster />
-<main class="subtle-bg flex h-screen flex-col items-center justify-center">
+<main class="subtle-bg flex min-h-screen flex-col items-center justify-center">
 	{#if data.whoami.group}
 		<GameOn {client} studentGroup={data.whoami.group} studentOuid={data.whoami.ouid} />
 	{:else}
-		<AddMeToGroup {client} />
+		<AddMeToGroup />
 	{/if}
 </main>
 

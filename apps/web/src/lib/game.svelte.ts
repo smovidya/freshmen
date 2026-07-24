@@ -1,190 +1,93 @@
-import { env } from '$env/dynamic/public';
-import { authClient } from './auth/client';
+import { apiClient, call } from './api';
+import { toast } from 'svelte-sonner';
 import { dev } from '$app/environment';
 import { untrack } from 'svelte';
-import { toast } from 'svelte-sonner';
-
-export const gameApiPrefix = `${env.PUBLIC_BETTER_AUTH_URL || 'http://localhost:5173'}/game`;
 
 export type LeaderboardEntry = {
 	playerId: string;
+	playerName: string;
 	score: number;
-	player_name?: string;
 };
 
 export class GameAPIClient {
-	#token: string | null = $state(null);
-	playerDisplayName = $state<string | null>(null);
+	#client = apiClient();
 
-	constructor(init = true) {
-		if (init) {
-			this.refreshToken();
-		}
+	// Cookie session is already available by the time this component mounts
+	// (no async token handshake needed) - kept as a getter so callers that
+	// waited on it (GamePopper.init) don't need to change.
+	ready = true;
+
+	// Single-use session token required by /game/pop, chained one-per-request
+	// (see game.service.ts) - fetched separately so GamePopper can bootstrap
+	// one before its first flush.
+	async getPopToken(): Promise<string> {
+		const { token } = await call(this.#client.game['pop-token'].$get());
+		return token;
 	}
 
-	async fetchApi(
-		endpoint: string,
-		options: RequestInit = {},
-		{ retryCount = 0 } = {}
-	): Promise<Response> {
-		if (!this.#token) {
-			await this.refreshToken();
-		}
-		if (!this.#token) {
-			toast.error('ไม่สามารถยืนยันตัวตนได้ กรุณาเข้าสู่ระบบใหม่');
-			throw new Error('Not authenticated');
-		}
-		const res = await fetch(`${gameApiPrefix}${endpoint}`, {
-			...options,
-			// cache: "reload",
-			headers: {
-				...options.headers,
-				Authorization: `Bearer ${this.#token}`
-			}
-		});
-
-		if (res.status === 401) {
-			if (retryCount < 1) {
-				await this.refreshToken();
-				return this.fetchApi(endpoint, options, { retryCount: retryCount + 1 });
-			}
-			toast.error('ไม่สามารถยืนยันตัวตนได้ กรุณาเข้าสู่ระบบใหม่');
-			throw new Error('Not authenticated');
-		}
-
-		if (!res.ok) {
-			toast.error(`เกิดข้อผิดพลาด: ${res.statusText}`);
-			throw new Error(`API error: ${res.statusText}`);
-		}
-
-		return res;
-	}
-
-	async refreshToken() {
-		const { data, error } = await authClient.getSession();
-		if (error || !data?.session) {
+	// Returns the amount the server actually credited (post token check,
+	// elapsed-time throttle, and buff-cap accounting) plus the next token in
+	// the chain - null on request failure (invalid/expired token included),
+	// so the caller can reconcile its optimistic display instead of trusting
+	// it and knows to fetch a fresh token before retrying.
+	async submitPop(count: number, token: string): Promise<{ applied: number; nextToken: string } | null> {
+		if (count === 0) {
 			return null;
 		}
 
-		const res = await fetch(`${env.PUBLIC_BETTER_AUTH_URL}/api/auth/token`, {
-			credentials: 'include'
-		});
-
-		this.#token = ((await res.json()) as { token: string }).token;
-	}
-
-	ready = $derived(!!this.#token);
-
-	async updateName(newName: string) {
 		try {
-			await this.fetchApi('/username', {
-				method: 'POST',
-				body: newName
-			});
-			this.playerDisplayName = newName;
-			toast.success('อัพเดตชื่อผู้ใช้เรียบร้อยแล้ว');
-			this.playerDisplayName = newName;
+			return await call(this.#client.game.pop.$post({ json: { pop: count, token } }));
 		} catch (e) {
-			toast.error('ไม่สามารถอัพเดตชื่อผู้ใช้ได้');
+			toast.error('ไม่สามารถส่งข้อมูลได้');
 			console.error(e);
+			return null;
 		}
-	}
-
-	async getName() {
-		try {
-			return await this.fetchApi('/username')
-				.catch(() => {
-					throw new Error('Failed to fetch username');
-				})
-				.then((it) => it.text());
-		} catch {
-			toast.error('ไม่สามารถดึงชื่อผู้ใช้ได้');
-		}
-	}
-
-	async submitPop(count = 1) {
-		if (!this.ready || count === 0) {
-			return;
-		}
-
-		await this.fetchApi(`/pop?pop=${count}`, {
-			method: 'POST'
-		});
 	}
 
 	async getLeaderboard() {
-		const res = await this.fetchApi('/stats');
-
-		return (await res.json()) as {
-			leaderboard: LeaderboardEntry[];
-			totalScore: number;
-			groupNumber: string;
-		}[];
-	}
-
-	async getSelfPopCount() {
-		const res = await this.fetchApi('/stats/self');
-		return (await res.json()) as number;
+		return call(this.#client.game.stats.$get()) as Promise<
+			{
+				groupNumber: string;
+				totalScore: number;
+				leaderboard: LeaderboardEntry[];
+			}[]
+		>;
 	}
 }
 
 export class GamePopper {
-	// groupPollIntervalId!: NodeJS.Timeout; // wtf, idc anymore
-	flushIntervalId!: NodeJS.Timeout;
-	selfPollIntervalId!: NodeJS.Timeout; // wtf, idc anymore
-	batchedCount: number = $state(0);
+	flushIntervalId!: ReturnType<typeof setInterval>;
+	// Raw tap count since last flush - this (not the multiplied display value)
+	// is what gets sent to the server, since the server applies its own
+	// authoritative multiplier/cap accounting (packages/server/services/points.service.ts's
+	// creditPoints). Multiplying here too would double-apply the buff.
+	rawBatchedCount: number = $state(0);
 	#serverCount = $state(0);
-	displaySelfCount = $derived(this.batchedCount + this.#serverCount);
-	displayName = $state<string | undefined>(undefined);
+	// Set from the caller whenever the active buff changes (see game-on.svelte)
+	// so displaySelfCount (and each tap's felt increment) reflects it in real
+	// time - previously this was always 1:1 regardless of an active x3/x100
+	// buff, so the boost was invisible until the next 5s poll silently caught
+	// the total up.
+	multiplier: number = $state(1);
+	displaySelfCount = $derived(this.rawBatchedCount * this.multiplier + this.#serverCount);
 
-	// TODO: optimistic update, nahhhh
-	// #clickSpeedPerGroups = $state(zeroGroupCounts());
 	#client: GameAPIClient;
-	// groupId: string;
-
-	#ready = $state(false);
+	// null = no usable token yet (not fetched, consumed by the last flush, or
+	// invalidated by a failed request) - #flush fetches a fresh one on demand
+	// rather than the interval loop needing to track this itself.
+	#popToken: string | null = null;
 
 	constructor(client: GameAPIClient) {
-		// this.groupId = groupId;
 		this.#client = client;
-		// console.log(localStorage.getItem("__pop_count"));
 		this.#serverCount = parseInt(localStorage.getItem('__pop_count') ?? '0') || 0;
 	}
 
 	async init() {
-		this.#serverCount = await this.#client.getSelfPopCount();
-		localStorage.setItem('__pop_count', String(untrack(() => this.#serverCount)));
-		this.displayName = await this.#client.getName();
-		// let abortController: AbortController | null = null;
-		// const pollGroupCount = () => {
-		//   abortController?.abort();
-		//   abortController = new AbortController();
-		//   this.#client.getInGroupLeaderboard(this.groupId).then((counts) => {
-		//     this.#realGroupCount = {
-		//       ...this.#realGroupCount,
-		//       ...counts
-		//     };
-		//   }).catch(() => { });
-		// };
-
-		// pollGroupCount();
-		// this.groupPollIntervalId = setInterval(pollGroupCount, dev ? 500 : 1000 * 30);
-
-		const pollSelfCount = () => {
-			this.#client
-				.getSelfPopCount()
-				.then((count) => {
-					if (count > this.#serverCount) {
-						// update from another device
-						this.#serverCount = count;
-					}
-					this.#ready = true;
-				})
-				.catch(() => {});
-		};
-
-		pollSelfCount();
-		this.selfPollIntervalId = setInterval(pollSelfCount, dev ? 1000 : 1000 * 5);
+		try {
+			this.#popToken = await this.#client.getPopToken();
+		} catch (e) {
+			console.error(e);
+		}
 
 		this.flushIntervalId = setInterval(
 			() => {
@@ -194,27 +97,69 @@ export class GamePopper {
 		);
 	}
 
+	// Confirmed base count now comes from the shared PointsStore's balance
+	// (game-on.svelte wires this up whenever points.balance changes) instead
+	// of this class polling /game/stats/self on its own timer - that was a
+	// second independent fetch of the exact same points balance, which could
+	// land out of step with the shop drawer's PointsStore poll and show a
+	// different number there than here.
+	syncServerCount(balance: number) {
+		if (balance > this.#serverCount) {
+			this.#serverCount = balance;
+			localStorage.setItem('__pop_count', String(balance));
+		}
+	}
+
 	private stop() {
-		clearInterval(this.selfPollIntervalId);
 		clearInterval(this.flushIntervalId);
 	}
 
 	pop() {
-		this.batchedCount += 1;
+		this.rawBatchedCount += 1;
 		localStorage.setItem('__pop_count', String(untrack(() => this.displaySelfCount)));
 	}
 
 	async #flush() {
-		const batched = untrack(() => this.batchedCount);
-		// console.log(`Flushing ${batched} pop`);
-		this.#serverCount = untrack(() => this.displaySelfCount);
-		this.batchedCount = 0;
-		try {
-			await this.#client.submitPop(batched);
-		} catch (e) {
-			toast.error('ไม่สามารถส่งข้อมูลได้');
-			console.log(e);
+		const batched = untrack(() => this.rawBatchedCount);
+		if (batched === 0) return;
+
+		// No usable token (first-ever flush, or the last one was consumed by a
+		// failed/invalidated request) - fetch one before spending the batch.
+		// Leaves rawBatchedCount untouched on failure so the taps aren't lost,
+		// just retried on the next interval tick.
+		let token = this.#popToken;
+		if (!token) {
+			try {
+				token = await this.#client.getPopToken();
+				this.#popToken = token;
+			} catch (e) {
+				console.error(e);
+				return;
+			}
 		}
+
+		const multiplierAtFlush = untrack(() => this.multiplier);
+		const baseServerCount = untrack(() => this.#serverCount);
+		// Optimistic: assumes the server applies the full multiplier (true
+		// whenever the buff isn't at its cap yet and the throttle isn't hit)
+		// so the number doesn't dip while the request is in flight.
+		this.#serverCount = baseServerCount + batched * multiplierAtFlush;
+		this.rawBatchedCount = 0;
+
+		const result = await this.#client.submitPop(batched, token);
+		// Chain the next token regardless of outcome - null forces a fresh
+		// fetch next time (e.g. this one was rejected as invalid/expired).
+		this.#popToken = result?.nextToken ?? null;
+
+		// Server is authoritative - if the elapsed-time throttle or buff cap
+		// granted less than the optimistic guess (or the request failed
+		// outright), correct down now instead of leaving an inflated number
+		// until the next balance poll silently catches it.
+		const trueServerCount = baseServerCount + (result?.applied ?? 0);
+		if (trueServerCount < this.#serverCount) {
+			this.#serverCount = trueServerCount;
+		}
+		localStorage.setItem('__pop_count', String(untrack(() => this.displaySelfCount)));
 	}
 
 	destroy() {

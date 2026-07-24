@@ -14,5 +14,11 @@ export const registrationSchema = z.object({
   medicalConditions: z.string().optional().default(''),
   drugAllergies: z.string().optional().default(''),
   foodAllergies: z.string().optional().default(''),
-  foodLimitations: z.string().optional().default('')
+  foodLimitations: z.string().optional().default(''),
+  // Present only when the Turnstile widget rendered client-side (production
+  // only - see PUBLIC_TURNSTILE_SITE_KEY). Optional here so superForm's
+  // client-side schema validation never blocks submission on it; the actual
+  // requirement is enforced server-side in packages/server/routers/user.ts
+  // via siteverify, gated on the request's own isProduction context.
+  turnstileToken: z.string().optional()
 });

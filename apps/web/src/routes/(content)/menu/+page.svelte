@@ -8,7 +8,7 @@
 	} from '$lib/components/festival';
 	import { flags } from '$lib/flags';
 	import { getDisplayName } from '$lib/text-shuffle.svelte';
-	import { FileUser, ListOrdered, Megaphone, QrCode, ScanLine, Swords } from 'lucide-svelte';
+	import { FileUser, ListOrdered, Megaphone, QrCode, ScanLine, Swords, Trophy } from 'lucide-svelte';
 
 	let { data } = $props();
 	const friends = $derived(
@@ -21,7 +21,7 @@
 	const isStaff = $derived(data.whoami.role === 'staff');
 </script>
 
-<AirportBackdrop showScene={false} showSign={false} />
+<AirportBackdrop showSign={false} />
 <main class="container mx-auto flex h-full w-full flex-col">
 	<img
 		src={Sign}
@@ -37,6 +37,14 @@
 				description="สำหรับสตาฟ: สแกน QR หรือกรอกรหัสนิสิตเพื่อเช็คอิน"
 				status="พร้อมใช้งาน"
 				icon={ScanLine}
+				roles={['staff', 'admin']}
+			/>
+			<TaskCard
+				href="/checkin/leaderboard"
+				title="คะแนนสูงสุดรายวัน"
+				description="สำหรับสตาฟ: ดูผลตัดยอดคะแนน Top 10 เวลา 17:00 ของแต่ละวัน"
+				status="พร้อมใช้งาน"
+				icon={Trophy}
 				roles={['staff', 'admin']}
 			/>
 		</TaskSection>
@@ -67,7 +75,7 @@
 						status={data.isRegistered ? 'ดำเนินการแล้ว' : 'ยังไม่ดำเนินการ'}
 						icon={FileUser}
 					/>
-					{#if !flags.isPast('group-choosing')}
+					{#if !flags.isEnabled('group-announcement')}
 						<TaskCard
 							disabled={!flags.isEnabled('group-choosing')}
 							done={!!friends}

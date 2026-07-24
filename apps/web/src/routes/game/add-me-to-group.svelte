@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
-	import { GameAPIClient } from '$lib/game.svelte';
 	import { apiClient, call } from '$lib/api';
 	import { toast } from 'svelte-sonner';
 
-	let { client }: { client: GameAPIClient } = $props();
 	const api = apiClient();
 
 	let joinPassword = $state('');
@@ -29,7 +27,6 @@
 		}
 
 		toast.success('เข้าร่วมสายการบินสำเร็จ');
-		await client.refreshToken();
 		window.location.reload();
 	}
 </script>

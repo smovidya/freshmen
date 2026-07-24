@@ -5,7 +5,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
 import { adminAc, defaultAc, userAc } from "better-auth/plugins/admin/access";
 import { jwt } from "better-auth/plugins/jwt";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 
 // Staff has no better-auth admin permissions (can't manage users/sessions) -
@@ -37,17 +37,38 @@ export const createAuth = ({ env }: { env: any }) => {
         create: {
           async before(user, context) {
             if (user.email.endsWith("@student.chula.ac.th")) {
-              const ouid = user.email.split("@")[0];
+              const ouid = user.email.split("@")[0]!;
               const elevatedOuids = (env.ELEVATED_OUID_LIST || "")
                 .split(",")
                 .map((id: string) => id.trim())
                 .filter(Boolean);
 
+              let role = user.role;
+              if (elevatedOuids.includes(ouid)) {
+                role = "admin";
+              } else {
+                // Roster of festival staff pre-added via the /admin staff
+                // page or a seed - matched by student id (== ouid) so they
+                // get scanner access on first login, no manual setRole needed.
+                const [staffRow] = await db
+                  .select({ id: tables.staffs.id })
+                  .from(tables.staffs)
+                  .where(
+                    and(
+                      eq(tables.staffs.studentId, ouid),
+                      isNull(tables.staffs.deletedAt),
+                    ),
+                  );
+                if (staffRow) {
+                  role = "staff";
+                }
+              }
+
               return {
                 data: {
                   ...user,
                   ouid: ouid,
-                  role: elevatedOuids.includes(ouid) ? "admin" : user.role,
+                  role,
                 },
               };
             }
@@ -94,6 +115,17 @@ export const createAuth = ({ env }: { env: any }) => {
           type: "string",
           label: "Group",
           unique: false,
+          input: false,
+        },
+        friendCode: {
+          type: "string",
+          label: "Friend Code",
+          unique: true,
+          input: false,
+        },
+        friendCodeUpdatedAt: {
+          type: "date",
+          label: "Friend Code Updated At",
           input: false,
         },
       },

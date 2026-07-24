@@ -1,0 +1,1 @@
+ALTER TABLE `user` ADD `friend_code_updated_at` integer;

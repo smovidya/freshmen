@@ -1,15 +1,25 @@
 import { Hono } from 'hono';
 import type { Variables } from './core';
+import { gameRouter } from './routers/game';
 import { scanRouter } from './routers/scan';
 import { staffRouter } from './routers/staff';
 import { teamRouter } from './routers/team';
 import { userRouter } from './routers/user';
+import { pointsRouter } from './routers/points';
+import { shopRouter } from './routers/shop';
+import { minigameRouter } from './routers/minigame';
+import { friendsRouter } from './routers/friends';
 
 export const apiRouter = new Hono<{ Variables: Variables }>()
   .route('/user', userRouter)
   .route('/team', teamRouter)
   .route('/staff', staffRouter)
   .route('/scan', scanRouter)
+  .route('/game', gameRouter)
+  .route('/points', pointsRouter)
+  .route('/shop', shopRouter)
+  .route('/minigame', minigameRouter)
+  .route('/friends', friendsRouter)
   .onError((err, c) => {
     // Service functions throw plain Errors for business-logic failures (not
     // every failure path returns a typed {error} response) - surface the

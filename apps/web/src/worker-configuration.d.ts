@@ -12,6 +12,8 @@ declare namespace Cloudflare {
 		GOOGLE_SERVICE_ACCOUNT_EMAIL: string;
 		GOOGLE_PRIVATE_KEY: string;
 		ELEVATED_OUID_LIST: string;
+		TURNSTILE_SECRET: string;
+		PUBLIC_TURNSTILE_SITE_KEY: string;
 		GAME_REGION_HANDLER: DurableObjectNamespace<import('../.cloudflare/worker').GameRegionHandler>;
 		GAME_STATS_DB: D1Database;
 		DB: D1Database;

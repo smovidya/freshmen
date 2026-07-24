@@ -5,6 +5,7 @@ import { students } from './student.schema';
 export const studentGroup = sqliteTable('student_group', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   studentId: text('student_id').notNull().unique().references(() => students.id, { onDelete: 'cascade' }),
+  ouid: text('ouid'),
   groupNumber: integer('group_number').notNull(),
   subgroupNumber: integer('subgroup_number').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' })

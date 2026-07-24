@@ -1,36 +1,64 @@
 <script lang="ts">
-	import G1CloseWithEff from '$lib/assets/game/g1_close_withEff.png';
-	import G1OpenWithEff from '$lib/assets/game/g1_open_withEff.png';
-	import G3CloseWithEff from '$lib/assets/game/g3_close_withEff.png';
-	import G3OpenWithEff from '$lib/assets/game/g3_open_withEff.png';
-	import G4CloseWithEff from '$lib/assets/game/g4_close_withEff.png';
-	import G4OpenWithEff from '$lib/assets/game/g4_open_withEff.png';
-	import G5CloseWithEff from '$lib/assets/game/g5_close_withEff.png';
-	import G5OpenWithEff from '$lib/assets/game/g5_open_withEff.png';
-	import G6Close from '$lib/assets/game/g6_close.png';
-	import G6Open from '$lib/assets/game/g6_open.png';
-	import G7CloseWithEff from '$lib/assets/game/g7_close_withEff.png';
-	import G7OpenWithEff from '$lib/assets/game/g7_open_withEff.png';
+	import CrystalBall from '$lib/assets/game/crystal-ball.png';
+	import WeatherNormal from '$lib/assets/game/weather-normal.png';
 	import PopSound from '$lib/assets/game/pop-cat-original-meme_3ObdYkj.mp3';
 	import { GameAPIClient, GamePopper } from '$lib/game.svelte';
 	import { onMount, untrack } from 'svelte';
-
-	import {
-		Drawer,
-		DrawerContent,
-		DrawerHeader,
-		DrawerTitle,
-		DrawerTrigger
-	} from '$lib/components/ui/drawer';
-	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
-	import { buttonVariants } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import Button from '$lib/components/ui/button/button.svelte';
 	import { when } from '$lib/reacitivity.svelte';
-	import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { browser } from '$app/environment';
+	import { browser, dev } from '$app/environment';
+	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
 	import NumberFlow from '@number-flow/svelte';
+	import House from '@lucide/svelte/icons/house';
+	import Store from '@lucide/svelte/icons/store';
+	import Users from '@lucide/svelte/icons/users';
+	import Package from '@lucide/svelte/icons/package';
+	import * as Drawer from '$lib/components/ui/drawer';
+	import ShopBody from '$lib/components/game/shop-body.svelte';
+	import FriendsBody from '$lib/components/game/friends-body.svelte';
+	import ItemsBody from '$lib/components/game/items-body.svelte';
+	import { PointsAPIClient, PointsStore } from '$lib/points.svelte';
+
+	let shopOpen = $state(false);
+	let friendsOpen = $state(false);
+	let itemsOpen = $state(false);
+
+	const pointsClient = untrack(() => new PointsAPIClient());
+	const points = untrack(() => new PointsStore(pointsClient));
+	let milestonePollIntervalId: ReturnType<typeof setInterval> | undefined;
+
+	// Auto-opens a free bonus minigame the moment the server notices the
+	// score crossed 67/676/6767 (packages/server/services/points.service.ts's
+	// checkMilestones) - claimPendingMilestones both reads and marks-notified
+	// in one call, so this never re-fires for the same threshold.
+	async function checkMilestones() {
+		try {
+			const pending = await pointsClient.claimPendingMilestones();
+			const milestone = pending[0];
+			if (milestone) {
+				toast.success(`🎉 คุณทำแต้มถึง ${milestone.threshold}! รับมินิเกมโบนัสฟรี!`);
+				await goto(`/game/minigames/${milestone.gameType}`);
+			}
+		} catch {
+			// transient network error - next poll retries
+		}
+	}
+
+	// Buff durations aren't in the /points/self payload (only expiresAt is) -
+	// mirrors packages/server/services/shop.service.ts's BUFF_CONFIG durationMs,
+	// just for the countdown bar's total-width reference.
+	const BUFF_DURATION_MS: Record<string, number> = { buff_x3: 30_000, buff_x100: 10_000 };
+
+	let nowTick = $state(Date.now());
+	let tickIntervalId: ReturnType<typeof setInterval> | undefined;
+
+	const buffRemainingFraction = $derived.by(() => {
+		const buff = points.activeBuff;
+		if (!buff) return 0;
+		const totalMs = BUFF_DURATION_MS[buff.buffType] ?? 30_000;
+		const remainingMs = new Date(buff.expiresAt).getTime() - nowTick;
+		return Math.max(0, Math.min(100, (remainingMs / totalMs) * 100));
+	});
 
 	let {
 		studentGroup = $bindable('1'),
@@ -40,79 +68,46 @@
 
 	const popper = untrack(() => new GamePopper(client));
 
-	let popSound: HTMLAudioElement;
-	let leaderboard: Awaited<ReturnType<GameAPIClient['getLeaderboard']>> = $state([]);
-	const inGroupLeaderboard = $derived(
-		leaderboard.find((it) => it.groupNumber === studentGroup)?.leaderboard ?? []
-	);
-
-	const getLeaderboard = async () => {
-		leaderboard = await client.getLeaderboard();
-	};
-
 	when(
 		() => client.ready,
 		() => {
 			popper.init();
-			getLeaderboard();
 		}
 	);
 
-	const popImages = {
-		g1: {
-			close: G1CloseWithEff,
-			open: G1OpenWithEff
-		},
-		g3: {
-			close: G3CloseWithEff,
-			open: G3OpenWithEff
-		},
-		g4: {
-			close: G4CloseWithEff,
-			open: G4OpenWithEff
-		},
-		g5: {
-			close: G5CloseWithEff,
-			open: G5OpenWithEff
-		},
-		g6: {
-			close: G6Close,
-			open: G6Open
-		},
-		g7: {
-			close: G7CloseWithEff,
-			open: G7OpenWithEff
-		}
-	} as Record<
-		string,
-		{
-			close: string;
-			open: string;
-		}
-	>;
+	$effect(() => {
+		popper.multiplier = points.activeBuff?.multiplier ?? 1;
+	});
+
+	// Same PointsStore instance the shop drawer reads from (passed to
+	// ShopBody below) - keeps the confirmed base count here and the balance
+	// shown in the shop in lockstep instead of two independently-polled
+	// numbers drifting apart.
+	$effect(() => {
+		popper.syncServerCount(points.balance);
+	});
 
 	let poping = $state(false);
-	let currentPopBatchCount = $state(0);
-	let popTimeout: NodeJS.Timeout | null = null;
-	let groupImageKey = 'g' + studentGroup;
-	let myDisplayName = $state('');
-	let isEditingName = $state(false);
+	let popTimeout: ReturnType<typeof setTimeout> | null = null;
+	let needsMotionPermission = $state(false);
 
-	function onPop() {
-		if (poping) return;
+	const SHAKE_THRESHOLD = 15; // m/s^2 delta to count as shake
+	const SHAKE_COOLDOWN_MS = 400;
+	let lastShakeAt = 0;
+	let lastAccel: { x: number; y: number; z: number } | null = null;
+
+	function onShakeStart() {
 		poping = true;
 		if (popTimeout) clearTimeout(popTimeout);
 		popTimeout = setTimeout(() => {
 			poping = false;
 			popTimeout = null;
-		}, 200);
+		}, 250);
 	}
 
-	async function onUnpop(isCount = false) {
-		if (!poping) return;
-		poping = false;
-		if (isCount) popper.pop();
-		if (isCount && browser) {
+	async function onShakeCounted() {
+		popper.pop();
+		if (browser) {
 			const audio = new Audio(PopSound);
 			await audio.play().catch((error) => {
 				console.error('Error playing sound:', error);
@@ -120,192 +115,273 @@
 		}
 	}
 
+	function handleMotion(event: DeviceMotionEvent) {
+		const accel = event.accelerationIncludingGravity;
+		if (!accel || accel.x === null || accel.y === null || accel.z === null) return;
+		const current = { x: accel.x, y: accel.y, z: accel.z };
+		if (lastAccel) {
+			const delta =
+				Math.abs(current.x - lastAccel.x) +
+				Math.abs(current.y - lastAccel.y) +
+				Math.abs(current.z - lastAccel.z);
+			const now = Date.now();
+			if (delta > SHAKE_THRESHOLD && now - lastShakeAt > SHAKE_COOLDOWN_MS) {
+				lastShakeAt = now;
+				onShakeStart();
+				onShakeCounted();
+			}
+		}
+		lastAccel = current;
+	}
+
+	async function requestMotionPermission() {
+		const DeviceMotionEventTyped = DeviceMotionEvent as unknown as {
+			requestPermission?: () => Promise<'granted' | 'denied'>;
+		};
+		if (typeof DeviceMotionEventTyped.requestPermission === 'function') {
+			try {
+				const result = await DeviceMotionEventTyped.requestPermission();
+				if (result === 'granted') {
+					needsMotionPermission = false;
+					window.addEventListener('devicemotion', handleMotion);
+				} else {
+					toast.info('กรุณาอนุญาตให้เข้าถึงเซนเซอร์การเคลื่อนไหวเพื่อเล่นเกมนี้');
+				}
+			} catch (error) {
+				console.error('Error requesting motion permission:', error);
+			}
+		}
+	}
+
+	// No accelerometer on a computer - let dev spoof a shake with a keypress or
+	// button so this is testable without a real phone.
+	function simulateShake() {
+		onShakeStart();
+		onShakeCounted();
+	}
+
+	function handleDevKeydown(event: KeyboardEvent) {
+		if (!dev || event.repeat) return;
+		event.preventDefault();
+		simulateShake();
+	}
+
 	onMount(() => {
-		const id1 = setInterval(getLeaderboard, 1000 * 3);
+		const DeviceMotionEventTyped = DeviceMotionEvent as unknown as {
+			requestPermission?: () => Promise<'granted' | 'denied'>;
+		};
+		if (typeof DeviceMotionEventTyped.requestPermission === 'function') {
+			needsMotionPermission = true;
+		} else {
+			window.addEventListener('devicemotion', handleMotion);
+		}
+
+		points.startPolling();
+		tickIntervalId = setInterval(() => {
+			nowTick = Date.now();
+		}, 200);
+
+		checkMilestones();
+		milestonePollIntervalId = setInterval(checkMilestones, 5000);
+
 		return () => {
+			window.removeEventListener('devicemotion', handleMotion);
 			popper.destroy();
-			clearInterval(id1);
+			points.stopPolling();
+			clearInterval(tickIntervalId);
+			clearInterval(milestonePollIntervalId);
 		};
 	});
-
-	function formatNumberToShorthand(num: number): string {
-		if (num >= 1e6) return (num / 1e6).toFixed(1) + 'm';
-		if (num >= 1e3) return (num / 1e3).toFixed(1) + 'k';
-		return num.toString();
-	}
-
-	function formatLocalNum(num: number) {
-		return num.toLocaleString();
-	}
 </script>
 
-<svelte:window
-	onkeydown={(event) => {
-		onPop();
-	}}
-	onkeyup={(event) => {
-		onUnpop(true);
-	}}
-/>
+<svelte:window onkeydown={handleDevKeydown} />
 
-<!-- background image repeat -->
-<div class="flex h-screen flex-col items-center justify-center">
-	<div class="mb-4 flex flex-col items-center">
-		<div class="flex flex-col items-center justify-center">
-			<div>
-				{popper.displayName}
+<div class="flex min-h-screen w-full flex-col items-center bg-[#f3f2fb]">
+	<div class="flex w-full items-center gap-4 p-4">
+		<a href="/menu" class="flex size-6 items-center justify-center" aria-label="กลับหน้าเมนู">
+			<House class="size-6" />
+		</a>
+		<p class="flex-1 text-center text-xl font-semibold text-black">ศึกเขย่าลูกแก้วทะยานฟ้า</p>
+		<div class="size-6"></div>
+	</div>
+
+	<div class="flex w-full max-w-md flex-1 flex-col items-center gap-8 p-4">
+		<div class="flex w-full items-start gap-3">
+			<button
+				type="button"
+				onclick={() => (shopOpen = true)}
+				class="flex flex-1 items-center justify-center gap-1 rounded-full bg-[#fdf886] px-4 py-3 text-[#9a6418]"
+			>
+				<Store class="size-[19px]" />
+				<span class="text-base font-medium">ร้านค้า</span>
+			</button>
+			<button
+				type="button"
+				onclick={() => (friendsOpen = true)}
+				class="flex flex-1 items-center justify-center gap-1 rounded-full bg-[#fdf886] px-4 py-3 text-[#9a6418]"
+			>
+				<Users class="size-[19px]" />
+				<span class="text-base font-medium">เพื่อนของฉัน</span>
+			</button>
+		</div>
+
+		<div class="flex w-full flex-col items-center gap-6">
+			<div class="flex w-full flex-col gap-4 text-center">
+				<h1 class="text-[32px] font-medium text-black">เขย่าเพื่อรับแต้ม</h1>
+				<p class="text-base text-[#62748e]">รับแต้มโดยการเขย่าโทรศัพท์ เขย่าเลย!</p>
 			</div>
-			<div class="mb-4 text-center text-2xl font-bold">
-				<NumberFlow value={currentPopBatchCount + popper.displaySelfCount} />
+
+			<div class="flex w-full flex-col items-center gap-8">
+				<button
+					type="button"
+					onclick={needsMotionPermission ? requestMotionPermission : undefined}
+					aria-label="เขย่าลูกแก้ว"
+					class="size-[300px] touch-manipulation outline-none select-none"
+					class:scale-95={poping}
+					style="transition: transform 0.15s ease-out;"
+				>
+					<div
+						class="crystal-ball size-full bg-contain bg-center bg-no-repeat"
+						class:shake-feedback={poping}
+						style="background-image: url({CrystalBall});"
+					></div>
+					<span class="sr-only">เขย่าลูกแก้ว</span>
+				</button>
+
+				{#if needsMotionPermission}
+					<p class="text-center text-sm text-[#62748e]">แตะลูกแก้วเพื่ออนุญาตให้ใช้เซนเซอร์การเคลื่อนไหว</p>
+				{/if}
+
+				{#if dev}
+					<button
+						type="button"
+						onclick={simulateShake}
+						class="rounded-full bg-black/10 px-4 py-2 text-xs font-medium text-black/70"
+					>
+						จำลองเขย่า (dev, กด space ก็ได้)
+					</button>
+				{/if}
+
+				<div class="flex w-full flex-col items-center gap-1 text-center">
+					{#if points.activeBuff}
+						<div class="flex flex-col items-center gap-1.5">
+							<span
+								class="rounded border-2 border-[#FFC700] bg-black px-3 py-1 text-sm font-black tracking-widest text-[#FFC700] uppercase"
+							>
+								x{points.activeBuff.multiplier} boost
+							</span>
+							<div class="h-1.5 w-40 overflow-hidden rounded-full border border-black/20 bg-black">
+								<div
+									class="h-full bg-[#FFC700]"
+									style="width: {buffRemainingFraction}%; transition: width 0.2s linear;"
+								></div>
+							</div>
+						</div>
+					{/if}
+					<p class="text-[40px] font-semibold text-black">
+						<NumberFlow value={popper.displaySelfCount} />
+					</p>
+					<p class="text-base text-[#62748e]">แต้ม</p>
+				</div>
 			</div>
 		</div>
-		<button
-			class="h-full min-h-64 w-full min-w-64 touch-manipulation rounded-lg bg-contain bg-center bg-no-repeat outline-none select-none focus:outline-none"
-			onmousedown={onPop}
-			onmouseup={() => onUnpop()}
-			ontouchstart={() => onPop()}
-			ontouchend={() => onUnpop()}
-			onpointerdown={() => onPop()}
-			onpointerup={() => onUnpop(true)}
-			aria-label="Toggle Pop"
-			style="background-image: url({poping
-				? popImages[groupImageKey].open
-				: popImages[groupImageKey].close});"
-		>
-			<span class="sr-only">Toggle Pop</span>
-		</button>
-	</div>
-	<div>
-		<Drawer>
-			<DrawerTrigger
-				onclick={async () => {
-					isEditingName = false;
-					myDisplayName = (await client.getName()) || '';
-					getLeaderboard();
-				}}
-				class={buttonVariants({ variant: 'outline', class: 'h-auto rounded-2xl p-2' })}
-			>
-				<div class="flex flex-col items-center gap-1">
-					<strong> อันดับ </strong>
-					<div class="text-muted-foreground w-full rounded-md text-sm">กดเพื่อดูอันดับทั้งหมด</div>
-					<div class="flex flex-row gap-2">
-						<!-- 3 อันดับ -->
-						{#each leaderboard
-							.toSorted((a, b) => b.totalScore - a.totalScore)
-							.slice(0, 3) as { groupNumber, totalScore }, i}
-							<div class="flex flex-col gap-1 rounded-lg border p-2">
-								<span class="">
-									{#if i === 0}🥇{:else if i === 1}🥈{:else if i === 2}🥉{/if}
-									แคว้น {groupNumber}</span
-								>
-								<span class="text-lg">
-									{#if totalScore >= 1e6}
-										<NumberFlow value={(totalScore / 1e6).toFixed(2)} />m
-									{:else if totalScore >= 1e3}
-										<NumberFlow value={(totalScore / 1e3).toFixed(2)} />k
-									{:else}
-										<NumberFlow value={totalScore} />
-									{/if}
-								</span>
-							</div>
-						{/each}
-					</div>
-				</div>
-			</DrawerTrigger>
 
-			<DrawerContent class="mx-auto max-w-2xl px-5">
-				<DrawerHeader>
-					<DrawerTitle>สถิติเกม</DrawerTitle>
-				</DrawerHeader>
-				<div class="flex h-fit max-h-[80vh] min-h-[50vh] flex-col items-center justify-start gap-4">
-					<Tabs value="all" class="w-full">
-						<TabsList>
-							<TabsTrigger value="all">ทุกแคว้น</TabsTrigger>
-							<TabsTrigger value="mygroup">
-								แคว้น {studentGroup}
-							</TabsTrigger>
-						</TabsList>
-						<TabsContent value="all">
-							{#each leaderboard.toSorted((a, b) => b.totalScore - a.totalScore) as { groupNumber, totalScore }, i}
-								<div class="flex items-center justify-between border-b p-2">
-									<span>
-										{#if i === 0}🥇{:else if i === 1}🥈{:else if i === 2}🥉{/if}
-										แคว้น {groupNumber}
-									</span>
-									<span>
-										<NumberFlow value={totalScore} />
-									</span>
-								</div>
-							{/each}
-						</TabsContent>
-						<TabsContent class="p-3" value="mygroup">
-							<div class="flex flex-col items-center">
-								<div class="mb-2 text-lg font-semibold">แคว้น {studentGroup}</div>
-								<p>คะแนนสูงสุด 10 ผู้ขยันขันแข็งในแคว้นของคุณณณณ</p>
-								{#if inGroupLeaderboard.length > 0}
-									<div class="w-full">
-										{#each inGroupLeaderboard as { playerId, score, player_name }, i}
-											<div class="flex items-center justify-between border-b p-2">
-												<div class="flex items-center gap-2">
-													{#if i < 3}
-														<span>
-															{#if i === 0}🥇{:else if i === 1}🥈{:else if i === 2}🥉{/if}
-														</span>
-													{/if}
-													{#if playerId === studentOuid}
-														<Badge class="bg-yellow-200 text-yellow-800">คุณ</Badge>
-													{/if}
-													{#if playerId === studentOuid && isEditingName}
-														<div class="flex items-center gap-2">
-															<Input
-																bind:value={myDisplayName}
-																placeholder="ชื่อของคุณ"
-																class="w-32"
-															/>
-															<Button
-																variant="outline"
-																onclick={async () => {
-																	isEditingName = false;
-																	await client.updateName(myDisplayName);
-																	await getLeaderboard();
-																}}
-															>
-																บันทึก
-															</Button>
-														</div>
-													{:else if playerId === studentOuid}
-														<div>
-															<span class="font-bold">{player_name || studentOuid}</span>
-															<Button
-																variant="outline"
-																onclick={() => {
-																	isEditingName = true;
-																}}
-																size="sm"
-															>
-																แก้ไขชื่อคุณ
-															</Button>
-														</div>
-													{:else}
-														<div>
-															{player_name || playerId}
-														</div>
-													{/if}
-												</div>
-												<span>
-													<NumberFlow value={score} />
-												</span>
-											</div>
-										{/each}
-									</div>
-								{:else}
-									<div class="text-gray-500">ไม่มีข้อมูล</div>
-								{/if}
-							</div>
-						</TabsContent>
-					</Tabs>
-				</div>
-			</DrawerContent>
-		</Drawer>
+		<div class="w-full overflow-hidden rounded-xl border border-[#cad5e2]">
+			<div class="flex w-full items-center justify-center gap-2 bg-[#62748e] px-4 py-2">
+				<img src={WeatherNormal} alt="" class="size-[30px]" />
+				<p class="text-center text-base font-medium text-white">ช่วงเวลาปกติ</p>
+			</div>
+			<div class="flex w-full flex-col items-center justify-center bg-[#f1f5f9] p-4">
+				<p class="text-center text-sm text-[#62748e]">
+					มีโอกาสที่จะมีมินิเกมขึ้นมาในช่วงเวลาพิเศษ ที่สามารถได้รับแต้มเพิ่มขึ้นมหาศาล คอยจับตาดูไว้ให้ดี!!
+				</p>
+			</div>
+		</div>
 	</div>
 </div>
+
+<button
+	type="button"
+	onclick={() => (itemsOpen = true)}
+	aria-label="ไอเทมของฉัน"
+	class="fixed top-1/2 left-4 z-40 flex size-14 -translate-y-1/2 items-center justify-center rounded-full bg-[#fdf886] text-[#9a6418] shadow-lg"
+>
+	<Package class="size-6" />
+</button>
+
+<Drawer.Root bind:open={itemsOpen}>
+	<Drawer.Content>
+		<Drawer.Header>
+			<Drawer.Title>ไอเทมของฉัน</Drawer.Title>
+		</Drawer.Header>
+		<div class="max-h-[70vh] overflow-y-auto px-4 pb-6">
+			<ItemsBody />
+		</div>
+	</Drawer.Content>
+</Drawer.Root>
+
+<Drawer.Root bind:open={shopOpen}>
+	<Drawer.Content>
+		<Drawer.Header>
+			<Drawer.Title>ร้านค้า</Drawer.Title>
+		</Drawer.Header>
+		<div class="max-h-[70vh] overflow-y-auto px-4 pb-6">
+			<ShopBody {points} />
+		</div>
+	</Drawer.Content>
+</Drawer.Root>
+
+<Drawer.Root bind:open={friendsOpen}>
+	<Drawer.Content>
+		<Drawer.Header>
+			<Drawer.Title>เพื่อนของฉัน</Drawer.Title>
+		</Drawer.Header>
+		<div class="max-h-[70vh] overflow-y-auto px-4 pb-6">
+			<FriendsBody />
+		</div>
+	</Drawer.Content>
+</Drawer.Root>
+
+<style>
+	.crystal-ball {
+		animation: crystal-ball-wobble 0.6s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+	}
+
+	.crystal-ball.shake-feedback {
+		animation: crystal-ball-shake 0.25s ease-in-out;
+	}
+
+	@keyframes crystal-ball-wobble {
+		0% {
+			transform: rotate(0deg);
+		}
+		33% {
+			transform: rotate(-10deg);
+		}
+		67% {
+			transform: rotate(10deg);
+		}
+		100% {
+			transform: rotate(0deg);
+		}
+	}
+
+	@keyframes crystal-ball-shake {
+		0%,
+		100% {
+			transform: translateX(0) rotate(0deg);
+		}
+		20% {
+			transform: translateX(-10px) rotate(-16deg);
+		}
+		40% {
+			transform: translateX(10px) rotate(16deg);
+		}
+		60% {
+			transform: translateX(-8px) rotate(-12deg);
+		}
+		80% {
+			transform: translateX(8px) rotate(12deg);
+		}
+	}
+</style>

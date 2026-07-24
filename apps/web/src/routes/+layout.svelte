@@ -4,7 +4,7 @@
 	import { dev } from '$app/environment';
 	import DevToolbar from '$lib/dev/DevToolbar.svelte';
 
-	let { children } = $props();
+	let { children, data } = $props();
 
 	$effect(() => {
 		if (typeof window !== 'undefined') {
@@ -20,6 +20,6 @@
 
 {@render children()}
 
-{#if dev}
+{#if dev || data.isNonProduction}
 	<DevToolbar />
 {/if}

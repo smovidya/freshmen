@@ -35,14 +35,14 @@
 	<a
 		href={disabled ? undefined : href}
 		data-sveltekit-preload-data="tap"
-		class="group relative flex flex-row items-center gap-3 rounded-3xl bg-[#FFDB68] p-4 shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:translate-y-0 aria-disabled:hover:shadow-md sm:gap-4"
+		class="group relative flex flex-row items-center gap-3 rounded-3xl border-2 border-black bg-[#FFDB68] p-4 shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:translate-y-0 aria-disabled:hover:shadow-md sm:gap-4"
 		aria-disabled={disabled}
 	>
 		<div
 			class="flex size-16 shrink-0 flex-row items-center justify-center rounded-2xl bg-black align-middle shadow-sm sm:size-20"
 		>
 			{#if done}
-				<Check class="size-8 stroke-[3] text-[#FFDB68] sm:size-10" />
+				<Check class="size-8 stroke-3 text-[#FFDB68] sm:size-10" />
 			{:else}
 				<Icon class="size-8 stroke-[1.5] text-white sm:size-10" />
 			{/if}

@@ -57,6 +57,69 @@
       "when": 1784676623651,
       "tag": "0007_rapid_clint_barton",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1784896876270,
+      "tag": "0008_good_gwen_stacy",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1784898815573,
+      "tag": "0009_magenta_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1784902328901,
+      "tag": "0010_fair_scrambler",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1784902366273,
+      "tag": "0011_neat_vengeance",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1784909648419,
+      "tag": "0012_fresh_spitfire",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1784913834609,
+      "tag": "0013_tricky_nick_fury",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1784914630552,
+      "tag": "0014_past_freak",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1784920098248,
+      "tag": "0015_busy_cassandra_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1784921052735,
+      "tag": "0016_conscious_lord_tyger",
+      "breakpoints": true
     }
   ]
 }

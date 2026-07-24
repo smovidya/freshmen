@@ -145,9 +145,14 @@
 </script>
 
 <div class="flex flex-col gap-6">
-	<div>
-		<h1 class="text-2xl font-semibold">เช็คอินน้องใหม่</h1>
-		<p class="text-muted-foreground text-sm">สแกน QR หรือกรอกรหัสนิสิตเพื่อเช็คอิน</p>
+	<div class="flex items-start justify-between gap-4">
+		<div>
+			<h1 class="text-2xl font-semibold">เช็คอินน้องใหม่</h1>
+			<p class="text-muted-foreground text-sm">สแกน QR หรือกรอกรหัสนิสิตเพื่อเช็คอิน</p>
+		</div>
+		<a href="/checkin/leaderboard" class="text-primary shrink-0 text-sm font-medium underline">
+			คะแนนสูงสุดรายวัน
+		</a>
 	</div>
 
 	<div class="space-y-2">

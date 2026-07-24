@@ -55,10 +55,10 @@ for (const row of rows) {
   }
   const escapedStudentId = studentId.replace(/'/g, "''");
   lines.push(
-    `INSERT INTO student_group (id, student_id, group_number, subgroup_number, created_at, updated_at)
-SELECT lower(hex(randomblob(16))), s.id, ${groupNumber}, ${subgroupNumber}, unixepoch(), unixepoch()
+    `INSERT INTO student_group (id, student_id, ouid, group_number, subgroup_number, created_at, updated_at)
+SELECT lower(hex(randomblob(16))), s.id, substr(s.email, 1, instr(s.email, '@') - 1), ${groupNumber}, ${subgroupNumber}, unixepoch(), unixepoch()
 FROM students s WHERE s.student_id = '${escapedStudentId}'
-ON CONFLICT(student_id) DO UPDATE SET group_number = excluded.group_number, subgroup_number = excluded.subgroup_number, updated_at = excluded.updated_at;`,
+ON CONFLICT(student_id) DO UPDATE SET ouid = excluded.ouid, group_number = excluded.group_number, subgroup_number = excluded.subgroup_number, updated_at = excluded.updated_at;`,
   );
 }
 

@@ -1,4 +1,4 @@
-import { type EventAvailability, features } from './config';
+import { type EventAvailability, dailyLeaderboardCutoffs, features } from './config';
 
 interface FeatureFlagsOptions {
   enabledAll?: boolean
@@ -72,5 +72,14 @@ export class FeatureFlags {
     }
 
     return false;
+  }
+
+  /** Cutoffs whose reveal moment has passed - staff can see these days' top-10 now. */
+  getRevealedDailyLeaderboards(): { date: string; cutoffAt: string }[] {
+    if (this.enabledAll) {
+      return dailyLeaderboardCutoffs; // dev/staging bypass, same convention as isEnabled
+    }
+    const now = new Date();
+    return dailyLeaderboardCutoffs.filter((c) => now >= new Date(c.cutoffAt));
   }
 }

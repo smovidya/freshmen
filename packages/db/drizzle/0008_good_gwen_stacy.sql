@@ -1,0 +1,1 @@
+ALTER TABLE `student_group` ADD `ouid` text;

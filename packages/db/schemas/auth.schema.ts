@@ -10,6 +10,8 @@ export const user = sqliteTable("user", {
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => /* @__PURE__ */ new Date()).notNull(),
 	ouid: text('ouid').unique(),
 	group: text('group'),
+	friendCode: text('friend_code').unique(),
+	friendCodeUpdatedAt: integer('friend_code_updated_at', { mode: 'timestamp' }),
 	role: text('role'),
 	banned: integer('banned', { mode: 'boolean' }),
 	banReason: text('ban_reason'),

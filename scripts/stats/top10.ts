@@ -10,7 +10,7 @@ const csv = parse((await studentDataFile.text()).trim(), { header: true, delimit
   "ชื่อเล่น": string,
   "สาขา": string,
   "ลงทะเบียน": string,
-  "แคว้น": string,
+  "สายการบิน": string,
   assign_group: string,
   "26/7/68": string,
   "27/7/68": string,
@@ -36,7 +36,7 @@ function getStudentData(studentId: string) {
     name: student["ชื่อ-สกุล"],
     major: student["สาขา"],
     nickname: student["ชื่อเล่น"],
-    group: student["แคว้น"],
+    group: student["สายการบิน"],
     assignedGroup: student.assign_group,
     subGroup: student["ตำหนัก"],
     contactNumber: student["เบอร์โทรน้อง"],
@@ -60,7 +60,7 @@ function numberFormat(num: number): string {
 
 const statsSum = stats.reduce((sum, group) => sum + group.totalScore, 0)
 for (const group of stats) {
-  console.log(`\nแคว้น: ${group.groupNumber}\t${numberFormat(group.totalScore)}\t${numberFormat(group.totalScore / statsSum * 100)}%`);
+  console.log(`\nสายการบิน: ${group.groupNumber}\t${numberFormat(group.totalScore)}\t${numberFormat(group.totalScore / statsSum * 100)}%`);
   for (const [index, student] of Object.entries(group.leaderboard)) {
     const studentData = getStudentData(student.playerId);
     console.log(`${Number(index) + 1}\t${numberFormat(student.score)}\t${student.playerId}\t${studentData?.name}\t${studentData?.nickname}\t${studentData?.subGroup}\t${studentData?.major}`);

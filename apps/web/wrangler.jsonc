@@ -42,12 +42,55 @@
 	 */
 	"vars": {
 		"WORKER_ENV": "production",
+		"PUBLIC_WORKER_ENV": "production",
 		"FRONTEND_URL": "https://freshmen.vidyachula.org",
 		"PUBLIC_BETTER_AUTH_URL": "https://freshmen.vidyachula.org",
-		"GOOGLE_SERVICE_ACCOUNT_EMAIL": "vidyfreshmen2026@smo-vidya-it.iam.gserviceaccount.com"
-	}
+		"GOOGLE_SERVICE_ACCOUNT_EMAIL": "vidyfreshmen2026@smo-vidya-it.iam.gserviceaccount.com",
+		// Site keys are non-secret by design (Cloudflare docs: meant to be
+		// embedded client-side) - safe to commit. The matching secret is
+		// TURNSTILE_SECRET, set via `wrangler secret put TURNSTILE_SECRET`
+		// (not here). Production-only deliberately: staging has no
+		// PUBLIC_TURNSTILE_SITE_KEY, so the widget doesn't render there and
+		// packages/server/routers/user.ts's isProduction gate skips
+		// enforcement - matches this widget's domain registration (production
+		// hostname only) and the "keep bots off production only" ask.
+		"PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAD8-vdfJRS0-T1Ew"
+	},
 	/**
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
 	 */
+	"env": {
+		// Staging: isolated D1 (not the real event's data), WORKER_ENV != "production"
+		// so packages/server's apiApp builds FeatureFlags with enabledAll: true
+		// (game playable immediately, no flag-window edit needed) and /dev-login
+		// stays enabled (staff sign in without real Google SSO). Deploy with
+		// `wrangler deploy --env staging` (needs its own BETTER_AUTH_SECRET,
+		// GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET set via `wrangler secret put
+		// <NAME> --env staging` - not committed here).
+		"staging": {
+			"name": "vidyafreshmen-staging",
+			"routes": [
+				{
+					"pattern": "staging.freshmen.vidyachula.org",
+					"custom_domain": true
+				}
+			],
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_id": "810d99f6-8a36-4345-9e38-3cfd3b08c81e",
+					"database_name": "vidyafreshmen-staging",
+					"migrations_dir": "../../packages/db/drizzle"
+				}
+			],
+			"vars": {
+				"WORKER_ENV": "staging",
+				"PUBLIC_WORKER_ENV": "staging",
+				"FRONTEND_URL": "https://staging.freshmen.vidyachula.org",
+				"PUBLIC_BETTER_AUTH_URL": "https://staging.freshmen.vidyachula.org",
+				"GOOGLE_SERVICE_ACCOUNT_EMAIL": "vidyfreshmen2026@smo-vidya-it.iam.gserviceaccount.com"
+			}
+		}
+	}
 }
