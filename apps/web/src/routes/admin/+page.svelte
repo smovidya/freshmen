@@ -36,12 +36,7 @@
 		DropdownMenuItem,
 		DropdownMenuTrigger
 	} from '$lib/components/ui/dropdown-menu';
-	import {
-		Select,
-		SelectContent,
-		SelectItem,
-		SelectTrigger
-	} from '$lib/components/ui/select';
+	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
 	import { toast } from 'svelte-sonner';
 
 	type Role = 'admin' | 'staff' | 'user';
@@ -217,7 +212,9 @@
 						</div>
 					</div>
 					<DialogFooter>
-						<Button type="submit" disabled={adding}>{adding ? 'กำลังเพิ่ม...' : 'เพิ่มผู้ใช้'}</Button>
+						<Button type="submit" disabled={adding}
+							>{adding ? 'กำลังเพิ่ม...' : 'เพิ่มผู้ใช้'}</Button
+						>
 					</DialogFooter>
 				</form>
 			</DialogContent>
@@ -239,7 +236,8 @@
 			<TableBody>
 				{#if loading}
 					<TableRow>
-						<TableCell colspan={4} class="text-muted-foreground text-center">กำลังโหลด...</TableCell>
+						<TableCell colspan={4} class="text-muted-foreground text-center">กำลังโหลด...</TableCell
+						>
 					</TableRow>
 				{:else if users.length === 0}
 					<TableRow>

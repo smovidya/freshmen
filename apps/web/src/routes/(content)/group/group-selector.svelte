@@ -107,7 +107,7 @@
 		{/each}
 	</div>
 
-	<p class="mx-4 mt-6 text-center bg-accent p-4 text-sm text-accent-foreground">
+	<p class="bg-accent text-accent-foreground mx-4 mt-6 p-4 text-center text-sm">
 		หลังจากกดบันทึก น้องสามารถกลับมาแก้ไขเพื่อเชิญเพื่อนและแก้อันดับที่เลือกได้ จนกว่าจะ 24:00 น.
 		ของวันที่ 21 กรกฎาคม เมื่อพ้นไปแล้วจะบันทึกตามข้อมูลปัจจุบันอัตโนมัติ
 	</p>

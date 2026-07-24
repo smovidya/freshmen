@@ -5,7 +5,13 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { cn } from '$lib/utils';
 	import { FeatureFlags } from '@vidyafreshmen/flags';
-	import { flagKeys, getFlagOverrides, setFlagOverride, clearFlagOverrides, type FlagKey } from './flag-overrides';
+	import {
+		flagKeys,
+		getFlagOverrides,
+		setFlagOverride,
+		clearFlagOverrides,
+		type FlagKey
+	} from './flag-overrides';
 
 	const session = authClient.useSession();
 
@@ -60,7 +66,9 @@
 					<button
 						class={cn(
 							'rounded-t-md px-3 py-1.5 text-xs font-medium',
-							panel === 'session' ? 'bg-zinc-800 text-amber-400' : 'text-zinc-400 hover:text-zinc-200'
+							panel === 'session'
+								? 'bg-zinc-800 text-amber-400'
+								: 'text-zinc-400 hover:text-zinc-200'
 						)}
 						onclick={() => (panel = 'session')}
 					>
@@ -85,7 +93,8 @@
 									<div class="font-medium text-zinc-100">{$session.data.user.name}</div>
 									<div class="text-zinc-400">{$session.data.user.email}</div>
 									<div class="text-zinc-400">
-										ouid: {$session.data.user.ouid ?? '-'} · group: {$session.data.user.group ?? '-'}
+										ouid: {$session.data.user.ouid ?? '-'} · group: {$session.data.user.group ??
+											'-'}
 									</div>
 								</div>
 								<Button size="sm" variant="destructive" onclick={signOut}>Sign out</Button>
@@ -94,7 +103,9 @@
 							{/if}
 
 							<div class="flex flex-col gap-1.5 border-t border-zinc-700 pt-2">
-								<p class="text-xs font-medium text-zinc-300">Mock login (mints a real session, no SSO)</p>
+								<p class="text-xs font-medium text-zinc-300">
+									Mock login (mints a real session, no SSO)
+								</p>
 								<div class="flex gap-1.5">
 									<Button size="sm" class="flex-1" onclick={() => loginAs('6912345623')}>
 										Freshman (69)
@@ -126,8 +137,8 @@
 					{:else}
 						<div class="flex flex-col gap-2">
 							<p class="text-xs text-zinc-400">
-								Click a flag to cycle: default (time-gated) → forced ON → forced OFF → default. Reloads to
-								apply.
+								Click a flag to cycle: default (time-gated) → forced ON → forced OFF → default.
+								Reloads to apply.
 							</p>
 							{#each flagKeys as key (key)}
 								{@const override = overrides[key]}

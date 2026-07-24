@@ -50,12 +50,14 @@
 
 <div class="mt-6 flex w-full flex-col items-center gap-2">
 	<div class="flex w-full items-center justify-between px-1 text-white">
-		<span class="text-shadow-[0_0_10px_var(--tw-text-shadow-color)] text-shadow-black text-xs font-medium tracking-wide">
+		<span
+			class="text-xs font-medium tracking-wide text-shadow-[0_0_10px_var(--tw-text-shadow-color)] text-shadow-black"
+		>
 			e-BOARDING PASS
 		</span>
 		{#if $session.data?.user}
 			<button
-				class="text-shadow-[0_0_10px_var(--tw-text-shadow-color)] text-shadow-black flex items-center gap-1 text-xs opacity-90 hover:opacity-100"
+				class="flex items-center gap-1 text-xs opacity-90 text-shadow-[0_0_10px_var(--tw-text-shadow-color)] text-shadow-black hover:opacity-100"
 				onclick={async () => {
 					await authClient.signOut();
 					await goto('/');

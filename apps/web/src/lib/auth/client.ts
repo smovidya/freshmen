@@ -15,5 +15,5 @@ export const authClient = createAuthClient({
 		inferAdditionalFields<ReturnType<typeof createAuth>>(),
 		jwtClient(),
 		adminClient({ roles: authRoles })
-	],
+	]
 });

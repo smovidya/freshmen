@@ -162,8 +162,7 @@
 						</div>
 					</div>
 					<DialogFooter>
-						<Button type="submit" disabled={adding}
-							>{adding ? 'กำลังเพิ่ม...' : 'เพิ่มสตาฟ'}</Button
+						<Button type="submit" disabled={adding}>{adding ? 'กำลังเพิ่ม...' : 'เพิ่มสตาฟ'}</Button
 						>
 					</DialogFooter>
 				</form>
@@ -190,9 +189,7 @@
 					</TableRow>
 				{:else if staffs.length === 0}
 					<TableRow>
-						<TableCell colspan={5} class="text-muted-foreground text-center"
-							>ไม่พบสตาฟ</TableCell
-						>
+						<TableCell colspan={5} class="text-muted-foreground text-center">ไม่พบสตาฟ</TableCell>
 					</TableRow>
 				{:else}
 					{#each staffs as staff (staff.id)}

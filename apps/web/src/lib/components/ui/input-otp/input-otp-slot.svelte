@@ -15,7 +15,7 @@
 	bind:ref
 	data-slot="input-otp-slot"
 	class={cn(
-		'border-foreground font-mono aria-invalid:border-destructive dark:bg-input/30 relative flex w-6 h-12 items-center justify-center border-b-[3px]  py-3 text-5xl transition-all outline-none',
+		'border-foreground aria-invalid:border-destructive dark:bg-input/30 relative flex h-12 w-6 items-center justify-center border-b-[3px] py-3  font-mono text-5xl transition-all outline-none',
 		cell.isActive &&
 			'border-ring ring-ring/50 aria-invalid:border-destructive dark:aria-invalid:ring-destructive/40 aria-invalid:ring-destructive/20 ring-offset-background z-10 ring-[3px]',
 		className,

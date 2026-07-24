@@ -71,7 +71,7 @@
 				<Button
 					onclick={() => (revealOpen = false)}
 					size="lg"
-					class="mt-4 w-full touch-manipulation cursor-pointer bg-white text-[#2f4a86] shadow-md transition-transform duration-150 ease-out hover:bg-white/90 active:scale-95"
+					class="mt-4 w-full cursor-pointer touch-manipulation bg-white text-[#2f4a86] shadow-md transition-transform duration-150 ease-out hover:bg-white/90 active:scale-95"
 				>
 					ดูรายละเอียด
 				</Button>
@@ -105,8 +105,8 @@
 				<div class="flex flex-col items-center justify-center gap-3">
 					<h2 class="text-3xl">ไม่มีอะไรให้ดู ;-;</h2>
 					<p class="text-center">
-						เนื่องจากไม่ได้ลงทะเบียนภายใน 21 กรกฎาคม เวลา 23:59 จึงยังไม่ได้ถูกสุ่มลงสายการบินใดในขณะนี้
-						แต่ไม่เป็นไร มาหน้างานได้เลย!
+						เนื่องจากไม่ได้ลงทะเบียนภายใน 21 กรกฎาคม เวลา 23:59
+						จึงยังไม่ได้ถูกสุ่มลงสายการบินใดในขณะนี้ แต่ไม่เป็นไร มาหน้างานได้เลย!
 					</p>
 				</div>
 				<p class="mt-2 text-center text-gray-600">

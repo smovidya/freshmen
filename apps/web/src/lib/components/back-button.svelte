@@ -8,6 +8,12 @@
 	let { class: className, ...rest }: Props = $props();
 </script>
 
-<a class={cn('size-10 rounded-full bg-black/7 hover:bg-black/10 transition-colors text-yellow-950 flex items-center justify-center', className)} {...rest}>
+<a
+	class={cn(
+		'flex size-10 items-center justify-center rounded-full bg-black/7 text-yellow-950 transition-colors hover:bg-black/10',
+		className
+	)}
+	{...rest}
+>
 	<ChevronLeft />
 </a>

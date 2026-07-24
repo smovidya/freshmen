@@ -71,7 +71,7 @@
 	}
 </script>
 
-<div class="mt-4 flex flex-col justify-center items-center gap-3 md:flex-row">
+<div class="mt-4 flex flex-col items-center justify-center gap-3 md:flex-row">
 	<div class="flex w-full flex-col rounded-2xl bg-[#ffffed] p-6 shadow-md md:h-72 md:max-w-84">
 		<h3 class="text-2xl font-semibold">สร้างก๊วนมาอยู่ด้วยกัน</h3>
 		<p class="mt-2 h-12 leading-5">
@@ -91,7 +91,7 @@
 		<div class="min-h-8 flex-1"></div>
 		<p class="mb-1">หรือถ้าน้องอินโทรเวิร์ด ไม่ต้องส่งให้ใครก็ได้นะ</p>
 	</div>
-	<span class="text-lg bg-accent text-accent-foreground px-1 rounded-md">หรือ</span>
+	<span class="bg-accent text-accent-foreground rounded-md px-1 text-lg">หรือ</span>
 	<div class="flex w-full flex-col rounded-2xl bg-[#ffffed] p-6 shadow-md md:h-72 md:max-w-84">
 		<h3 class="text-2xl font-semibold">เข้าร่วมก๊วนกับเพื่อน</h3>
 		<p class="mt-2 h-12 leading-5">ใส่โค้ดที่ได้จากเพื่อนเพื่อไปอยู่ด้วนกันเล้ย</p>

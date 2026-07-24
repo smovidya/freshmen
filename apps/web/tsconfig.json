@@ -1,8 +1,5 @@
 {
-	"extends": [
-		"@vidyafreshmen/typescript-config/svelte.json",
-		"./.svelte-kit/tsconfig.json"
-	],
+	"extends": ["@vidyafreshmen/typescript-config/svelte.json", "./.svelte-kit/tsconfig.json"],
 	"exclude": [
 		"node_modules/**",
 		"src/service-worker.js",

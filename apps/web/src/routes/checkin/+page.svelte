@@ -107,7 +107,11 @@
 				client.scan['assign-group'].$post({ json: { studentIdentifier, checkpointId } })
 			)) as { groupNumber: number; subgroupNumber: number };
 			if (result.student.studentId === studentIdentifier) {
-				result = { ...result, groupNumber: assigned.groupNumber, subgroupNumber: assigned.subgroupNumber };
+				result = {
+					...result,
+					groupNumber: assigned.groupNumber,
+					subgroupNumber: assigned.subgroupNumber
+				};
 			}
 			toast.success('สุ่มสายการบินหน้างานสำเร็จ');
 		} catch (err) {
@@ -138,7 +142,6 @@
 		scanner.start();
 		cameraOn = true;
 	}
-
 </script>
 
 <div class="flex flex-col gap-6">
@@ -240,5 +243,4 @@
 			</CardContent>
 		</Card>
 	{/if}
-
 </div>

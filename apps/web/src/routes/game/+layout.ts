@@ -1,1 +1,1 @@
-export const ssr = false; // becuase localstorage 
+export const ssr = false; // becuase localstorage

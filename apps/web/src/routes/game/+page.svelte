@@ -15,9 +15,9 @@
 
 	$effect(() => {
 		if (updated.current) {
-			location.reload()
+			location.reload();
 		}
-	})
+	});
 </script>
 
 <svelte:head>

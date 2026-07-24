@@ -6,7 +6,7 @@
 	interface Props {
 		team: OwnedTeam | JoinedTeam;
 		openKickDialog?: (email: string) => void;
-		done?: boolean
+		done?: boolean;
 	}
 
 	let { team, openKickDialog, done = false }: Props = $props();
@@ -20,9 +20,9 @@
 			<li>
 				{getDisplayName(m)}
 				{#if openKickDialog}
-					<Button 
-						variant="destructive" 
-						class="h-6" 
+					<Button
+						variant="destructive"
+						class="h-6"
 						size="sm"
 						onclick={() => openKickDialog(m.email)}
 					>

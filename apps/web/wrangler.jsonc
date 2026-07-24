@@ -8,9 +8,7 @@
 	"account_id": "e2069f9cc14d2fe64afc9d04ed6576bd",
 	"main": "./.cloudflare/worker.js",
 	"compatibility_date": "2025-07-11",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
+	"compatibility_flags": ["nodejs_compat"],
 	"observability": {
 		"enabled": true
 	},
