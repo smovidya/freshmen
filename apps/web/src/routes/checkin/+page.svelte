@@ -5,7 +5,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
-	import { departmentIds, departmentLabels } from '$lib/departments';
+	import { departmentLabels } from '$lib/departments';
 	import { groupData } from '$lib/groups';
 	import { toast } from 'svelte-sonner';
 	import { onMount } from 'svelte';
@@ -109,9 +109,9 @@
 			if (result.student.studentId === studentIdentifier) {
 				result = { ...result, groupNumber: assigned.groupNumber, subgroupNumber: assigned.subgroupNumber };
 			}
-			toast.success('สุ่มกรุ๊ปหน้างานสำเร็จ');
+			toast.success('สุ่มสายการบินหน้างานสำเร็จ');
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'สุ่มกรุ๊ปไม่สำเร็จ');
+			toast.error(err instanceof Error ? err.message : 'สุ่มสายการบินไม่สำเร็จ');
 		} finally {
 			assigningGroup = false;
 		}
@@ -139,56 +139,6 @@
 		cameraOn = true;
 	}
 
-	// Staff-assisted registration for a student who hasn't signed up yet.
-	let walkinOpen = $state(false);
-	let walkin = $state({
-		title: '',
-		firstName: '',
-		lastName: '',
-		nickname: '',
-		department: '',
-		phone: '',
-		emergencyContactName: '',
-		emergencyContactPhone: '',
-		emergencyContactRelationship: ''
-	});
-	let walkinSubmitting = $state(false);
-
-	function openWalkin(studentId: string) {
-		walkin = {
-			title: '',
-			firstName: '',
-			lastName: '',
-			nickname: '',
-			department: '',
-			phone: '',
-			emergencyContactName: '',
-			emergencyContactPhone: '',
-			emergencyContactRelationship: ''
-		};
-		walkinOpen = true;
-		walkinStudentId = studentId;
-	}
-	let walkinStudentId = $state('');
-
-	async function submitWalkin(event: SubmitEvent) {
-		event.preventDefault();
-		walkinSubmitting = true;
-		try {
-			await call(
-				client.scan['register-walkin'].$post({
-					json: { studentId: walkinStudentId, ...walkin }
-				})
-			);
-			toast.success('ลงทะเบียนหน้างานสำเร็จ');
-			walkinOpen = false;
-			await submitScan(walkinStudentId);
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'ลงทะเบียนไม่สำเร็จ');
-		} finally {
-			walkinSubmitting = false;
-		}
-	}
 </script>
 
 <div class="flex flex-col gap-6">
@@ -255,7 +205,6 @@
 			<CardContent>
 				{#if r.status === 'not-registered'}
 					<p class="mb-3">รหัสนิสิต {r.studentIdentifier} ยังไม่ได้ลงทะเบียน</p>
-					<Button onclick={() => openWalkin(r.studentIdentifier)}>ลงทะเบียนหน้างาน</Button>
 				{:else}
 					<p class="font-medium">
 						{r.student.firstName}
@@ -268,7 +217,7 @@
 					{#if r.groupNumber !== null && r.subgroupNumber !== null}
 						<div class="bg-muted/40 mt-3 rounded-lg border p-3">
 							<p class="text-2xl leading-tight font-bold">
-								กรุ๊ป {r.groupNumber}
+								สายการบิน {r.groupNumber}
 								<span class="text-muted-foreground text-base font-normal">
 									({groupData.find((g) => g.number === r.groupNumber)?.name ?? r.groupNumber})
 								</span>
@@ -281,9 +230,9 @@
 						</div>
 					{:else}
 						<div class="mt-3 flex items-center justify-between rounded-lg border p-3">
-							<p class="text-muted-foreground text-sm">ยังไม่มีกรุ๊ป/โบอิ้ง</p>
+							<p class="text-muted-foreground text-sm">ยังไม่มีสายการบิน/โบอิ้ง</p>
 							<Button size="sm" onclick={assignOnsiteGroup} disabled={assigningGroup}>
-								{assigningGroup ? 'กำลังสุ่ม...' : 'สุ่มกรุ๊ปหน้างาน'}
+								{assigningGroup ? 'กำลังสุ่ม...' : 'สุ่มสายการบินหน้างาน'}
 							</Button>
 						</div>
 					{/if}
@@ -292,73 +241,4 @@
 		</Card>
 	{/if}
 
-	{#if walkinOpen}
-		<Card>
-			<CardHeader>
-				<CardTitle>ลงทะเบียนหน้างาน - {walkinStudentId}</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<form class="flex flex-col gap-3" onsubmit={submitWalkin}>
-					<div class="grid grid-cols-2 gap-3">
-						<div class="space-y-2">
-							<Label for="w-title">คำนำหน้า</Label>
-							<Input id="w-title" bind:value={walkin.title} required />
-						</div>
-						<div class="space-y-2">
-							<Label for="w-nickname">ชื่อเล่น</Label>
-							<Input id="w-nickname" bind:value={walkin.nickname} required />
-						</div>
-						<div class="space-y-2">
-							<Label for="w-first">ชื่อ</Label>
-							<Input id="w-first" bind:value={walkin.firstName} required />
-						</div>
-						<div class="space-y-2">
-							<Label for="w-last">นามสกุล</Label>
-							<Input id="w-last" bind:value={walkin.lastName} required />
-						</div>
-					</div>
-					<div class="space-y-2">
-						<Label for="w-department">สาขาวิชา</Label>
-						<Select type="single" bind:value={walkin.department}>
-							<SelectTrigger id="w-department" class="w-full">
-								{departmentLabels[walkin.department as keyof typeof departmentLabels] ??
-									'เลือกสาขาวิชา'}
-							</SelectTrigger>
-							<SelectContent>
-								{#each departmentIds as id (id)}
-									<SelectItem value={id}>{departmentLabels[id]}</SelectItem>
-								{/each}
-							</SelectContent>
-						</Select>
-					</div>
-					<div class="space-y-2">
-						<Label for="w-phone">เบอร์โทรศัพท์</Label>
-						<Input id="w-phone" bind:value={walkin.phone} required />
-					</div>
-					<div class="grid grid-cols-2 gap-3">
-						<div class="space-y-2">
-							<Label for="w-ec-name">ผู้ติดต่อฉุกเฉิน</Label>
-							<Input id="w-ec-name" bind:value={walkin.emergencyContactName} required />
-						</div>
-						<div class="space-y-2">
-							<Label for="w-ec-phone">เบอร์ผู้ติดต่อฉุกเฉิน</Label>
-							<Input id="w-ec-phone" bind:value={walkin.emergencyContactPhone} required />
-						</div>
-					</div>
-					<div class="space-y-2">
-						<Label for="w-ec-rel">ความสัมพันธ์</Label>
-						<Input id="w-ec-rel" bind:value={walkin.emergencyContactRelationship} required />
-					</div>
-					<div class="flex justify-end gap-2">
-						<Button type="button" variant="outline" onclick={() => (walkinOpen = false)}
-							>ยกเลิก</Button
-						>
-						<Button type="submit" disabled={walkinSubmitting}>
-							{walkinSubmitting ? 'กำลังลงทะเบียน...' : 'ลงทะเบียนและเช็คอิน'}
-						</Button>
-					</div>
-				</form>
-			</CardContent>
-		</Card>
-	{/if}
 </div>
