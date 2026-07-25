@@ -28,7 +28,12 @@
 		alt="VIDYA FRESHMEN FESTIVAL 2026"
 		class="mx-auto mt-6 w-[85%] max-w-[420px] drop-shadow-lg"
 	/>
-	<BoardingPass whoami={data.whoami} team={data.team} isRegistered={data.isRegistered} />
+	<BoardingPass
+		whoami={data.whoami}
+		team={data.team}
+		isRegistered={data.isRegistered}
+		nickname={data.nickname}
+	/>
 	<div class="mt-6 flex flex-col gap-7 sm:p-3">
 		<TaskSection>
 			<TaskCard

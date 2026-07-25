@@ -38,7 +38,15 @@ export async function getOrCreateSheet(
     // A sync config can grow new columns over time (e.g. an added computed field) -
     // append any header the sheet doesn't have yet so writes using it don't fail
     // before the next full rewrite gets around to fixing the header row.
-    await existing.loadHeaderRow();
+    try {
+      await existing.loadHeaderRow();
+    } catch {
+      // Tab exists but row 1 is blank (e.g. manually cleared) - loadHeaderRow()
+      // throws instead of returning empty headerValues, so there's nothing to
+      // diff against; just write the full header row.
+      await existing.setHeaderRow(headers);
+      return existing;
+    }
     const missing = headers.filter((h) => !existing.headerValues.includes(h));
     if (missing.length > 0) {
       await existing.setHeaderRow([...existing.headerValues, ...missing]);

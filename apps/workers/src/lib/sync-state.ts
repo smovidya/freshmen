@@ -15,8 +15,14 @@ export async function getDueTables(db: Db, syncTables: SyncTable[], now: Date): 
     .filter((table) => {
       const lastSyncedAt = lastSyncedByKey.get(table.key);
       if (!lastSyncedAt) return true;
-      const dueAt = lastSyncedAt.getTime() + table.intervalMinutes * 60_000;
-      return now.getTime() >= dueAt;
+      // Slot-based (not "last + interval") so tables sharing an interval can be
+      // phase-shifted via offsetMinutes and never land on the same cron tick -
+      // collisions there were bursting past Google Sheets' write quota.
+      const period = table.intervalMinutes * 60_000;
+      const offset = (table.offsetMinutes ?? 0) * 60_000;
+      const elapsed = (((now.getTime() - offset) % period) + period) % period;
+      const currentSlotStart = now.getTime() - elapsed;
+      return lastSyncedAt.getTime() < currentSlotStart;
     })
     .map((table) => table.key);
 }

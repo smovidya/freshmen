@@ -9,11 +9,13 @@
 	const {
 		whoami,
 		team,
-		isRegistered
+		isRegistered,
+		nickname
 	}: {
 		whoami: { name: string; ouid: string | null; email: string };
 		team: { resultGroupNumber: number | null; subgroupNumber: number | null } | null;
 		isRegistered: boolean;
+		nickname?: string | null;
 	} = $props();
 
 	const session = authClient.useSession();
@@ -73,6 +75,9 @@
 			<div>
 				<p class="text-[10px] font-semibold tracking-wide text-black/50">PASSENGER</p>
 				<p class="font-mono text-lg leading-tight font-bold tracking-wide">{passengerName}</p>
+				{#if nickname}
+					<p class="text-xs font-semibold text-black/60">"{nickname}"</p>
+				{/if}
 				<p class="text-xs text-black/50">{whoami.ouid ?? '—'}</p>
 			</div>
 			<div class="flex size-11 shrink-0 items-center justify-center rounded-full bg-black">
@@ -89,7 +94,7 @@
 			</div>
 			<div>
 				<p class="text-[10px] font-semibold tracking-wide text-black/50">BOEING</p>
-				<p class="text-sm font-bold">
+				<p class="text-xl font-bold">
 					{issued ? boingCode(team!.resultGroupNumber!, team!.subgroupNumber!) : '—'}
 				</p>
 			</div>

@@ -11,6 +11,9 @@ export type FullSyncTable<Row = any> = {
   mode: 'full';
   sheetTitle: string;
   intervalMinutes: number;
+  // Phase shift (minutes) within the interval so tables sharing an interval don't
+  // become due on the same cron tick - see getDueTables in lib/sync-state.ts.
+  offsetMinutes?: number;
   // 'upsert' (update changed rows only, no full rewrite) is modeled here for a
   // future pass but not implemented yet - only 'rewrite' is handled by the workflow.
   strategy: 'rewrite';
@@ -23,6 +26,7 @@ export type PartialSyncTable<Row = any> = {
   mode: 'partial';
   sheetTitle: string;
   intervalMinutes: number;
+  offsetMinutes?: number;
   // Must return rows with updatedAt > cursor (covers both new inserts and edits to
   // existing rows), ordered ascending by that same field - the workflow advances the
   // cursor to the last row's value.
@@ -45,6 +49,7 @@ const studentsSync: FullSyncTable<typeof tables.students.$inferSelect> = {
   mode: 'full',
   sheetTitle: 'students',
   intervalMinutes: 10,
+  offsetMinutes: 0,
   strategy: 'rewrite',
   query: (db) => db.select().from(tables.students),
   columns: [
@@ -76,6 +81,7 @@ const teamsSync: FullSyncTable<typeof tables.teams.$inferSelect> = {
   mode: 'full',
   sheetTitle: 'teams',
   intervalMinutes: 10,
+  offsetMinutes: 4,
   strategy: 'rewrite',
   query: (db) => db.select().from(tables.teams),
   columns: [
@@ -156,6 +162,7 @@ const scansFullSync: FullSyncTable<ScanRow> = {
   mode: 'full',
   sheetTitle: 'scans',
   intervalMinutes: 30,
+  offsetMinutes: 12,
   strategy: 'rewrite',
   query: (db) => scansSelect(db).orderBy(asc(tables.scans.createdAt)),
   columns: scanColumns,
@@ -215,6 +222,7 @@ const studentGroupFullSync: FullSyncTable<StudentGroupRow> = {
   mode: 'full',
   sheetTitle: 'student_group',
   intervalMinutes: 30,
+  offsetMinutes: 16,
   strategy: 'rewrite',
   query: (db) => studentGroupSelect(db).orderBy(asc(tables.studentGroup.createdAt)),
   columns: studentGroupColumns,

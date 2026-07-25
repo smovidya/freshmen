@@ -11,15 +11,17 @@ export const load: PageLoad = async ({ parent, fetch, depends }) => {
 
 	depends('data:owned-team', 'data:joined-team');
 	const client = apiClient({ fetch });
-	const [isRegistered, ownedTeam, joinedTeam] = await Promise.all([
+	const [isRegistered, ownedTeam, joinedTeam, studentInfo] = await Promise.all([
 		call(client.user['is-registered'].$get()),
 		call(client.team.owned.$get()),
-		call(client.team.joined.$get())
+		call(client.team.joined.$get()),
+		call(client.user['student-info'].$get())
 	]);
 
 	return {
 		whoami,
 		isRegistered,
-		team: joinedTeam ?? ownedTeam
+		team: joinedTeam ?? ownedTeam,
+		nickname: studentInfo?.nickname ?? null
 	};
 };
