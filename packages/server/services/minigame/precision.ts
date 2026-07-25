@@ -4,10 +4,30 @@ import { creditPoints } from "../points.service";
 import { consumeTicket } from "./tickets";
 
 const TARGET_VALUE = 10.0;
-const TOLERANCE = 0.02;
-const REWARD_POINTS = 500;
-const CYCLE_PERIOD_MS = 3700; // arbitrary, deliberately not a round number
 const CYCLE_MAX = 20;
+// 1 displayed unit = 1 real second - "หยุดที่ 10.00" means stop the counter
+// at 10 real seconds elapsed, a literal stopwatch, not an arbitrary fast
+// cycle. (Previously 3700ms/20 units = 185ms/unit, making even a generous
+// tolerance a few-millisecond window - unwinnable by human reaction time.)
+const CYCLE_PERIOD_MS = CYCLE_MAX * 1000;
+
+// Tiered like puzzle's accuracy bands - a single all-or-nothing ±0.02s
+// window (~20ms) is still far tighter than human stop-reaction precision;
+// these widths are generous enough to be winnable while still rewarding
+// genuine precision with the top prize.
+const REWARD_TIERS = [
+  { maxDiffSeconds: 0.05, points: 500 },
+  { maxDiffSeconds: 0.15, points: 300 },
+  { maxDiffSeconds: 0.35, points: 150 },
+  { maxDiffSeconds: 0.7, points: 50 },
+];
+
+function scoreForDiff(diffSeconds: number): number {
+  for (const tier of REWARD_TIERS) {
+    if (diffSeconds <= tier.maxDiffSeconds) return tier.points;
+  }
+  return 0;
+}
 
 // The number the client displays is purely cosmetic - both client and server
 // derive it from the same deterministic formula, but only the server's own
@@ -52,8 +72,9 @@ export async function submit(input: { userId: string; ouid: string; playToken: s
   const { serverStartAt } = JSON.parse(play.serverState!) as { serverStartAt: number };
   const elapsedMs = Date.now() - serverStartAt;
   const value = valueAtElapsedMs(elapsedMs);
-  const hit = Math.abs(value - TARGET_VALUE) <= TOLERANCE;
-  const points = hit ? REWARD_POINTS : 0;
+  const diffSeconds = Math.abs(value - TARGET_VALUE);
+  const points = scoreForDiff(diffSeconds);
+  const hit = points > 0;
 
   await db
     .update(tables.minigamePlays)

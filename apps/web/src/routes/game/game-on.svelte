@@ -1,6 +1,5 @@
 <script lang="ts">
 	import CrystalBall from '$lib/assets/game/crystal-ball.png';
-	import WeatherNormal from '$lib/assets/game/weather-normal.png';
 	import PopSound from '$lib/assets/game/pop-cat-original-meme_3ObdYkj.mp3';
 	import { GameAPIClient, GamePopper } from '$lib/game.svelte';
 	import { onMount, untrack } from 'svelte';
@@ -13,15 +12,18 @@
 	import Store from '@lucide/svelte/icons/store';
 	import Users from '@lucide/svelte/icons/users';
 	import Package from '@lucide/svelte/icons/package';
+	import Trophy from '@lucide/svelte/icons/trophy';
 	import * as Drawer from '$lib/components/ui/drawer';
 	import ShopBody from '$lib/components/game/shop-body.svelte';
 	import FriendsBody from '$lib/components/game/friends-body.svelte';
 	import ItemsBody from '$lib/components/game/items-body.svelte';
+	import LeaderboardBody from '$lib/components/game/leaderboard-body.svelte';
 	import { PointsAPIClient, PointsStore } from '$lib/points.svelte';
 
 	let shopOpen = $state(false);
 	let friendsOpen = $state(false);
 	let itemsOpen = $state(false);
+	let leaderboardOpen = $state(false);
 
 	const pointsClient = untrack(() => new PointsAPIClient());
 	const points = untrack(() => new PointsStore(pointsClient));
@@ -206,25 +208,6 @@
 	</div>
 
 	<div class="flex w-full max-w-md flex-1 flex-col items-center gap-8 p-4">
-		<div class="flex w-full items-start gap-3">
-			<button
-				type="button"
-				onclick={() => (shopOpen = true)}
-				class="flex flex-1 items-center justify-center gap-1 rounded-full bg-[#fdf886] px-4 py-3 text-[#9a6418]"
-			>
-				<Store class="size-[19px]" />
-				<span class="text-base font-medium">ร้านค้า</span>
-			</button>
-			<button
-				type="button"
-				onclick={() => (friendsOpen = true)}
-				class="flex flex-1 items-center justify-center gap-1 rounded-full bg-[#fdf886] px-4 py-3 text-[#9a6418]"
-			>
-				<Users class="size-[19px]" />
-				<span class="text-base font-medium">เพื่อนของฉัน</span>
-			</button>
-		</div>
-
 		<div class="flex w-full flex-col items-center gap-6">
 			<div class="flex w-full flex-col gap-4 text-center">
 				<h1 class="text-[32px] font-medium text-black">เขย่าเพื่อรับแต้ม</h1>
@@ -286,28 +269,50 @@
 			</div>
 		</div>
 
-		<div class="w-full overflow-hidden rounded-xl border border-[#cad5e2]">
-			<div class="flex w-full items-center justify-center gap-2 bg-[#62748e] px-4 py-2">
-				<img src={WeatherNormal} alt="" class="size-[30px]" />
-				<p class="text-center text-base font-medium text-white">ช่วงเวลาปกติ</p>
-			</div>
-			<div class="flex w-full flex-col items-center justify-center bg-[#f1f5f9] p-4">
-				<p class="text-center text-sm text-[#62748e]">
-					มีโอกาสที่จะมีมินิเกมขึ้นมาในช่วงเวลาพิเศษ ที่สามารถได้รับแต้มเพิ่มขึ้นมหาศาล คอยจับตาดูไว้ให้ดี!!
-				</p>
-			</div>
+		<div class="grid w-full grid-cols-2 gap-3">
+			<button
+				type="button"
+				onclick={() => (shopOpen = true)}
+				class="flex flex-col items-center justify-center gap-2 rounded-3xl bg-[#fdf886] p-5 text-[#9a6418] shadow-sm transition-transform active:scale-95"
+			>
+				<span class="flex size-12 items-center justify-center rounded-2xl bg-white/40">
+					<Store class="size-6" />
+				</span>
+				<span class="text-sm font-medium">ร้านค้า</span>
+			</button>
+			<button
+				type="button"
+				onclick={() => (friendsOpen = true)}
+				class="flex flex-col items-center justify-center gap-2 rounded-3xl bg-[#c7f9cc] p-5 text-[#2d6a4f] shadow-sm transition-transform active:scale-95"
+			>
+				<span class="flex size-12 items-center justify-center rounded-2xl bg-white/40">
+					<Users class="size-6" />
+				</span>
+				<span class="text-sm font-medium">เพื่อนของฉัน</span>
+			</button>
+			<button
+				type="button"
+				onclick={() => (itemsOpen = true)}
+				class="flex flex-col items-center justify-center gap-2 rounded-3xl bg-[#bde0fe] p-5 text-[#1d4e89] shadow-sm transition-transform active:scale-95"
+			>
+				<span class="flex size-12 items-center justify-center rounded-2xl bg-white/40">
+					<Package class="size-6" />
+				</span>
+				<span class="text-sm font-medium">คลังไอเทม</span>
+			</button>
+			<button
+				type="button"
+				onclick={() => (leaderboardOpen = true)}
+				class="flex flex-col items-center justify-center gap-2 rounded-3xl bg-[#ffd6e8] p-5 text-[#9a1750] shadow-sm transition-transform active:scale-95"
+			>
+				<span class="flex size-12 items-center justify-center rounded-2xl bg-white/40">
+					<Trophy class="size-6" />
+				</span>
+				<span class="text-sm font-medium">อันดับคะแนน</span>
+			</button>
 		</div>
 	</div>
 </div>
-
-<button
-	type="button"
-	onclick={() => (itemsOpen = true)}
-	aria-label="ไอเทมของฉัน"
-	class="fixed top-1/2 left-4 z-40 flex size-14 -translate-y-1/2 items-center justify-center rounded-full bg-[#fdf886] text-[#9a6418] shadow-lg"
->
-	<Package class="size-6" />
-</button>
 
 <Drawer.Root bind:open={itemsOpen}>
 	<Drawer.Content>
@@ -338,6 +343,17 @@
 		</Drawer.Header>
 		<div class="max-h-[70vh] overflow-y-auto px-4 pb-6">
 			<FriendsBody />
+		</div>
+	</Drawer.Content>
+</Drawer.Root>
+
+<Drawer.Root bind:open={leaderboardOpen}>
+	<Drawer.Content>
+		<Drawer.Header>
+			<Drawer.Title>อันดับคะแนน</Drawer.Title>
+		</Drawer.Header>
+		<div class="max-h-[70vh] overflow-y-auto px-4 pb-6">
+			<LeaderboardBody />
 		</div>
 	</Drawer.Content>
 </Drawer.Root>

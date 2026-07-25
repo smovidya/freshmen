@@ -12,6 +12,9 @@
     "db:seed-checkin:local": "wrangler d1 execute DB --local --file=./seed-checkin.sql --config ../../apps/web/wrangler.jsonc",
     "db:seed-checkin:remote": "wrangler d1 execute DB --remote --file=./seed-checkin.sql --config ../../apps/web/wrangler.jsonc",
     "db:seed-available-groups:local": "wrangler d1 execute DB --local --file=./seed-available-groups.sql --config ../../apps/web/wrangler.jsonc",
+    "db:seed-central-staff:local": "wrangler d1 execute DB --local --file=./seed-central-staff-group.sql --config ../../apps/web/wrangler.jsonc",
+    "db:seed-central-staff:remote": "wrangler d1 execute DB --remote --file=./seed-central-staff-group.sql --config ../../apps/web/wrangler.jsonc",
+    "db:seed-central-staff:staging": "wrangler d1 execute DB --remote --env staging --file=./seed-central-staff-group.sql --config ../../apps/web/wrangler.jsonc",
     "db:studio": "drizzle-kit studio"
   },
   "exports": {

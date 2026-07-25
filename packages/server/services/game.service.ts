@@ -3,13 +3,8 @@ import { tables, type Db, type Tx } from "@vidyafreshmen/db";
 import type { groupPreferenceSchema } from "@vidyafreshmen/dto";
 import type z from "zod/v4";
 import { availableGroups, user } from '@vidyafreshmen/db/schemas';
+import type { SimpleCache } from "../core";
 import { creditPoints, getBalance } from "./points.service";
-
-export type GroupLeaderboard = {
-  groupNumber: string;
-  totalScore: number;
-  leaderboard: { playerId: string; playerName: string; score: number }[];
-};
 
 // Generous upper bound on physical human tap rate (two-thumb frantic
 // tapping). Bounds accepted raw taps by server-observed elapsed time since
@@ -151,37 +146,126 @@ export async function getSelfScore(userId: string, db: Db | Tx) {
   return getBalance(userId, db as Db);
 }
 
-// Row count here is a few hundred students for the whole event - grouping in
-// JS instead of a per-group-top-N SQL query keeps this simple and is trivial
-// at this scale.
-export async function getLeaderboard(db: Db | Tx): Promise<GroupLeaderboard[]> {
+export type DisplayPlayer = { playerId: string; displayName: string; score: number };
+export type CentralGroupTotal = { groupNumber: string; groupLabel: string; totalScore: number };
+export type MyGroupLeaderboard = {
+  ownGroup: { groupNumber: string; groupLabel: string; top10: DisplayPlayer[] };
+  central: CentralGroupTotal[];
+};
+
+// Precedence: nickname + boeing code (freshman, checked in & boeing-assigned)
+// > bare student nickname (freshman, not yet onsite-assigned a boeing) >
+// staff nickname (staffs table) > user.name (final fallback - covers
+// ELEVATED_OUID_LIST admins with no staffs row at all).
+function resolveDisplayName(row: {
+  userName: string;
+  studentNickname: string | null;
+  groupNumber: number | null;
+  subgroupNumber: number | null;
+  staffNickname: string | null;
+}): string {
+  if (row.studentNickname && row.groupNumber != null && row.subgroupNumber != null) {
+    return `${row.studentNickname}#${row.groupNumber}${String(row.subgroupNumber).padStart(2, "0")}`;
+  }
+  return row.studentNickname ?? row.staffNickname ?? row.userName;
+}
+
+// Own-group top10 and the central board are cached via the Workers Cache API
+// (5s TTL, matching the leaderboard drawer's poll interval) - own-group
+// keyed by groupNumber (identical for every member of that group, so
+// sharing the cache across them is correct, not a privacy issue), central
+// keyed globally (identical for everyone). With every open drawer polling
+// every 5s, this bounds D1 reads to ~1 per group + 1 total per 5s window,
+// regardless of how many drawers are open.
+const LEADERBOARD_CACHE_TTL_SECONDS = 5;
+
+async function cached<T>(cache: SimpleCache, cacheKeyUrl: string, compute: () => Promise<T>): Promise<T> {
+  const hit = await cache.match(cacheKeyUrl);
+  if (hit) return hit.json();
+
+  const value = await compute();
+  const response = new Response(JSON.stringify(value), {
+    headers: { "Content-Type": "application/json", "Cache-Control": `max-age=${LEADERBOARD_CACHE_TTL_SECONDS}` },
+  });
+  await cache.put(cacheKeyUrl, response);
+  return value;
+}
+
+async function computeOwnGroupTop10(groupNumber: string, db: Db): Promise<DisplayPlayer[]> {
   const rows = await db
     .select({
       playerId: user.id,
-      groupNumber: user.group,
+      userName: user.name,
       score: tables.pointsBalances.balance,
-      playerName: user.name,
+      studentNickname: tables.students.nickname,
+      groupNumber: tables.studentGroup.groupNumber,
+      subgroupNumber: tables.studentGroup.subgroupNumber,
+      staffNickname: tables.staffs.nickname,
     })
     .from(tables.pointsBalances)
     .innerJoin(user, eq(user.id, tables.pointsBalances.userId))
-    .where(isNotNull(user.group))
-    .orderBy(desc(tables.pointsBalances.balance));
+    .leftJoin(tables.students, eq(tables.students.email, user.email))
+    .leftJoin(tables.studentGroup, eq(tables.studentGroup.studentId, tables.students.id))
+    .leftJoin(tables.staffs, eq(tables.staffs.userId, user.id))
+    .where(eq(user.group, groupNumber))
+    .orderBy(desc(tables.pointsBalances.balance))
+    .limit(10);
 
-  const byGroup = new Map<string, { playerId: string; playerName: string; score: number }[]>();
-  for (const row of rows) {
-    const groupNumber = row.groupNumber!;
-    const entries = byGroup.get(groupNumber) ?? [];
-    entries.push({ playerId: row.playerId, playerName: row.playerName, score: row.score });
-    byGroup.set(groupNumber, entries);
-  }
+  return rows.map((row) => ({ playerId: row.playerId, displayName: resolveDisplayName(row), score: row.score }));
+}
 
-  return Array.from(byGroup.entries())
-    .map(([groupNumber, entries]) => ({
-      groupNumber,
-      totalScore: entries.reduce((sum, entry) => sum + entry.score, 0),
-      leaderboard: entries.slice(0, 10),
-    }))
-    .sort((a, b) => b.totalScore - a.totalScore);
+// LEFT JOIN from availableGroups (not starting from pointsBalances) so a
+// group with zero scorers yet still shows up - e.g. the Central Staff group
+// right after seeding, before anyone's joined/played.
+async function computeCentralBoard(db: Db): Promise<CentralGroupTotal[]> {
+  const totalScore = sql<number>`coalesce(sum(${tables.pointsBalances.balance}), 0)`;
+  const rows = await db
+    .select({ groupNumber: availableGroups.number, groupLabel: availableGroups.name, totalScore: totalScore.as("totalScore") })
+    .from(availableGroups)
+    .leftJoin(user, eq(user.group, availableGroups.number))
+    .leftJoin(tables.pointsBalances, eq(tables.pointsBalances.userId, user.id))
+    .groupBy(availableGroups.number)
+    .orderBy(desc(totalScore));
+
+  return rows.map((row) => ({ groupNumber: row.groupNumber, groupLabel: row.groupLabel, totalScore: row.totalScore }));
+}
+
+// `available_groups` also holds one or more non-competing staff pseudo-
+// groups (observed in practice: both "central" and "central-staff" rows
+// exist on staging, likely a legacy duplicate) - a public house-vs-house
+// scoreboard showing a "staff" bar would be confusing, not competitive.
+// An allowlist of the real airline numbers (mirrors packages/db/seed-available-groups.sql
+// and apps/web/src/lib/groups.ts, the canonical airline list) is more
+// robust here than blocklisting staff-variant ids one at a time, since any
+// future/renamed staff pseudo-group is excluded automatically instead of
+// silently leaking onto the public board until someone notices.
+const AIRLINE_GROUP_NUMBERS = new Set(["1", "3", "4", "5", "6", "7"]);
+
+export type PublicScoreboard = { groups: CentralGroupTotal[] };
+
+// Public/unauthenticated - reuses the same cached central-board computation
+// and cache entry the authenticated leaderboard drawer already populates, so
+// this adds no extra D1 load beyond what the drawer already causes.
+export async function getPublicScoreboard(db: Db, cache: SimpleCache): Promise<PublicScoreboard> {
+  const central = await cached(cache, "https://internal.cache/game/leaderboard/central", () => computeCentralBoard(db));
+  return { groups: central.filter((g) => AIRLINE_GROUP_NUMBERS.has(g.groupNumber)) };
+}
+
+// Own-group top10 is scoped by a server-derived groupNumber only (never a
+// client-supplied param) - the privacy boundary is the WHERE clause inside
+// computeOwnGroupTop10 itself, not client-side filtering. The central board
+// has no such restriction (aggregate totals only, not individual-privacy-
+// sensitive).
+export async function getMyGroupLeaderboard(groupNumber: string, db: Db, cache: SimpleCache): Promise<MyGroupLeaderboard> {
+  const [top10, central] = await Promise.all([
+    cached(cache, `https://internal.cache/game/leaderboard/group/${encodeURIComponent(groupNumber)}`, () =>
+      computeOwnGroupTop10(groupNumber, db),
+    ),
+    cached(cache, "https://internal.cache/game/leaderboard/central", () => computeCentralBoard(db)),
+  ]);
+
+  const ownGroupLabel = central.find((g) => g.groupNumber === groupNumber)?.groupLabel ?? groupNumber;
+  return { ownGroup: { groupNumber, groupLabel: ownGroupLabel, top10 }, central };
 }
 
 export type DailyTopPlayer = {

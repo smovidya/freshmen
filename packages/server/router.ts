@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Variables } from './core';
 import { gameRouter } from './routers/game';
+import { groupsRouter } from './routers/groups';
 import { scanRouter } from './routers/scan';
 import { staffRouter } from './routers/staff';
 import { teamRouter } from './routers/team';
@@ -14,6 +15,7 @@ export const apiRouter = new Hono<{ Variables: Variables }>()
   .route('/user', userRouter)
   .route('/team', teamRouter)
   .route('/staff', staffRouter)
+  .route('/groups', groupsRouter)
   .route('/scan', scanRouter)
   .route('/game', gameRouter)
   .route('/points', pointsRouter)

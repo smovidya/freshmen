@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
 	import { authClient } from '$lib/auth/client';
+	import { apiClient, call, ApiError } from '$lib/api';
+	import { goto } from '$app/navigation';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { cn } from '$lib/utils';
 	import { FeatureFlags } from '@vidyafreshmen/flags';
+	import { GAME_TYPES, TICKETED_GAME_TYPES } from '@vidyafreshmen/dto';
 	import {
 		flagKeys,
 		getFlagOverrides,
@@ -16,9 +19,38 @@
 	const session = authClient.useSession();
 
 	let open = $state(false);
-	let panel = $state<'session' | 'flags'>('session');
+	let panel = $state<'session' | 'flags' | 'minigames'>('session');
 	let customOuid = $state('');
 	let overrides = $state(getFlagOverrides());
+
+	const MINIGAME_LABELS: Record<(typeof GAME_TYPES)[number], string> = {
+		puzzle: 'เลื่อนภาพให้ตรง',
+		precision: 'กดเลขให้ได้ 10.00',
+		wheel: 'วงล้อสุ่ม',
+		quiz: 'ตอบคำถามไว ๆ',
+		mystery_box: 'กล่องสุ่มของรางวัล'
+	};
+
+	let launching = $state<string | null>(null);
+
+	async function launchMinigame(gameType: (typeof GAME_TYPES)[number]) {
+		launching = gameType;
+		try {
+			if ((TICKETED_GAME_TYPES as readonly string[]).includes(gameType)) {
+				await call(
+					apiClient().minigame.dev['grant-ticket'].$post({
+						json: { gameType: gameType as (typeof TICKETED_GAME_TYPES)[number] }
+					})
+				);
+			}
+			await goto(`/game/minigames/${gameType}`);
+			open = false;
+		} catch (e) {
+			alert(e instanceof ApiError ? e.message : 'Failed to launch minigame');
+		} finally {
+			launching = null;
+		}
+	}
 
 	// what each flag would resolve to with zero dev overrides, so the toolbar
 	// can show "this is really open/closed right now" next to the override control
@@ -83,6 +115,15 @@
 					>
 						Feature flags
 					</button>
+					<button
+						class={cn(
+							'rounded-t-md px-3 py-1.5 text-xs font-medium',
+							panel === 'minigames' ? 'bg-zinc-800 text-amber-400' : 'text-zinc-400 hover:text-zinc-200'
+						)}
+						onclick={() => (panel = 'minigames')}
+					>
+						Minigames
+					</button>
 				</div>
 
 				<div class="max-h-[60vh] overflow-y-auto p-3 text-sm">
@@ -134,7 +175,7 @@
 								</div>
 							</div>
 						</div>
-					{:else}
+					{:else if panel === 'flags'}
 						<div class="flex flex-col gap-2">
 							<p class="text-xs text-zinc-400">
 								Click a flag to cycle: default (time-gated) → forced ON → forced OFF → default.
@@ -166,6 +207,28 @@
 							<Button size="sm" variant="outline" class="mt-1" onclick={resetFlags}>
 								Reset all overrides
 							</Button>
+						</div>
+					{:else}
+						<div class="flex flex-col gap-2">
+							<p class="text-xs text-zinc-400">
+								Grants a free ticket (if needed) and jumps straight in - skips the shop. Requires a
+								group (use Session tab first).
+							</p>
+							{#each GAME_TYPES as gameType (gameType)}
+								<button
+									disabled={launching !== null}
+									class="flex items-center justify-between rounded-lg bg-zinc-800 px-2.5 py-1.5 text-left hover:bg-zinc-700 disabled:opacity-50"
+									onclick={() => launchMinigame(gameType)}
+								>
+									<span class="text-xs">
+										{MINIGAME_LABELS[gameType]}
+										<span class="text-zinc-500">({gameType})</span>
+									</span>
+									<span class="text-[0.65rem] font-semibold text-amber-400 uppercase">
+										{launching === gameType ? 'launching…' : 'play'}
+									</span>
+								</button>
+							{/each}
 						</div>
 					{/if}
 				</div>

@@ -8,11 +8,22 @@ import { createMiddleware } from "hono/factory";
 // would leak the app's ambient Env into every consumer of this package.
 type AuthInstance = ReturnType<typeof createAuth>;
 
+// Minimal structural subset of the Workers `Cache` interface - deliberately
+// not importing @cloudflare/workers-types' `Cache`/`caches` global into this
+// package (same reasoning as the comment above: stay Env/platform-agnostic).
+// `caches.default` from the actual Workers runtime satisfies this shape
+// structurally, so the SvelteKit endpoint can hand it straight through.
+export type SimpleCache = {
+  match(key: string): Promise<Response | undefined>;
+  put(key: string, response: Response): Promise<void>;
+};
+
 export type Variables = {
   user: AuthInstance["$Infer"]["Session"]["user"] | null;
   session: AuthInstance["$Infer"]["Session"]["session"] | null;
   db: Db;
   flags: FeatureFlags;
+  cache: SimpleCache;
   // Turnstile bot-check on public forms (registration) is production-only -
   // set from WORKER_ENV, same convention as flags' enabledAll bypass.
   isProduction: boolean;
@@ -55,6 +66,35 @@ export const requireStaff = createMiddleware<{ Variables: Variables }>(
         { error: "You must be staff to perform this action." },
         403,
       );
+    }
+    await next();
+  },
+);
+
+// Shared gate for every gameplay-adjacent endpoint (pop, leaderboard,
+// minigames, the QTE popup). Lives here (not routers/game.ts) so routers
+// that need it - routers/qte.ts in particular - can import it without a
+// circular routers/game.ts <-> routers/qte.ts dependency (game.ts mounts
+// qte.ts via .route()).
+export const requireGameOn = createMiddleware<{ Variables: Variables }>(
+  async (c, next) => {
+    const user = c.get("user");
+    if (!user) {
+      return c.json(
+        { error: "You must be signed in to perform this action." },
+        401,
+      );
+    }
+    // Staff/admin can exercise gameplay endpoints regardless of the
+    // game-playing window - lets festival staff test/support the game before
+    // (or between) the real freshmen-facing window, without opening it early
+    // for everyone else.
+    const isStaffOrAdmin = user.role === "staff" || user.role === "admin";
+    if (!isStaffOrAdmin && !c.get("flags").isEnabled("game-playing")) {
+      return c.json({ error: "เกมไม่เปิดให้เล่นในขณะนี้" }, 403);
+    }
+    if (!user.group) {
+      return c.json({ error: "กรุณาเข้าร่วมกลุ่มก่อนเล่นเกม" }, 400);
     }
     await next();
   },

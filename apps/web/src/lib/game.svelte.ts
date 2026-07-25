@@ -3,10 +3,21 @@ import { toast } from 'svelte-sonner';
 import { dev } from '$app/environment';
 import { untrack } from 'svelte';
 
-export type LeaderboardEntry = {
+export type DisplayPlayer = {
 	playerId: string;
-	playerName: string;
+	displayName: string;
 	score: number;
+};
+
+export type CentralGroupTotal = {
+	groupNumber: string;
+	groupLabel: string;
+	totalScore: number;
+};
+
+export type MyGroupLeaderboard = {
+	ownGroup: { groupNumber: string; groupLabel: string; top10: DisplayPlayer[] };
+	central: CentralGroupTotal[];
 };
 
 export class GameAPIClient {
@@ -44,14 +55,8 @@ export class GameAPIClient {
 		}
 	}
 
-	async getLeaderboard() {
-		return call(this.#client.game.stats.$get()) as Promise<
-			{
-				groupNumber: string;
-				totalScore: number;
-				leaderboard: LeaderboardEntry[];
-			}[]
-		>;
+	async getLeaderboard(): Promise<MyGroupLeaderboard> {
+		return call(this.#client.game.leaderboard.$get());
 	}
 }
 

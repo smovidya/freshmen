@@ -100,6 +100,7 @@ function scansSelect(db: Db) {
       studentLastName: tables.students.lastName,
       staffName: tables.staffs.name,
       staffRole: tables.staffs.staffRole,
+      checkpointId: tables.checkpoints.id,
       checkpointName: tables.checkpoints.name,
       checkpointType: tables.checkpoints.checkpointType,
       activityName: tables.activities.name,
@@ -125,6 +126,11 @@ const scanColumns: SyncColumn<ScanRow>[] = [
   { header: 'checkpoint_type', value: (r) => r.checkpointType },
   { header: 'activity_name', value: (r) => r.activityName },
   { header: 'scanned_at', value: (r) => r.scannedAt.toISOString() },
+  // Join key for attendance cross-checking in the sheet: students.studentId
+  // is the ouid (auth derives ouid from the email local part, which is the
+  // same 10-digit id), and checkpoint *id* (stable slug like "25july-morning")
+  // rather than the editable display name.
+  { header: 'ekey', value: (r) => `${r.studentId}:${r.checkpointId}` },
 ];
 
 const scansSync: PartialSyncTable<ScanRow> = {

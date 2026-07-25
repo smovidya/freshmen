@@ -3,10 +3,12 @@ import {
   precisionSubmitSchema,
   puzzleSubmitSchema,
   quizSubmitSchema,
+  TICKETED_GAME_TYPES,
   wheelPlaySchema,
 } from "@vidyafreshmen/dto";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import z from "zod/v4";
 import type { Variables } from "../core";
 import { requireGameOn } from "./game";
 import * as puzzle from "../services/minigame/puzzle";
@@ -14,12 +16,26 @@ import * as precision from "../services/minigame/precision";
 import * as wheel from "../services/minigame/wheel";
 import * as quiz from "../services/minigame/quiz";
 import * as mysteryBox from "../services/minigame/mystery-box";
-import { listUnusedTickets } from "../services/minigame/tickets";
+import { grantDevTicket, listUnusedTickets } from "../services/minigame/tickets";
+
+const devGrantTicketSchema = z.object({ gameType: z.enum(TICKETED_GAME_TYPES) });
 
 export const minigameRouter = new Hono<{ Variables: Variables }>()
   .get("/tickets", requireGameOn, async (c) => {
     const user = c.get("user")!;
     return c.json(await listUnusedTickets(user.id, c.get("db")));
+  })
+  // Dev toolbar only - lets developers jump straight into any ticketed
+  // minigame while testing, without buying through the shop. Hard-blocked in
+  // production regardless of who's asking.
+  .post("/dev/grant-ticket", requireGameOn, zValidator("json", devGrantTicketSchema), async (c) => {
+    if (c.get("isProduction")) {
+      return c.json({ error: "Not available in production" }, 403);
+    }
+    const user = c.get("user")!;
+    const { gameType } = c.req.valid("json");
+    await grantDevTicket(user.id, gameType, c.get("db"));
+    return c.json({ ok: true });
   })
   .post("/puzzle/start", requireGameOn, async (c) => {
     const user = c.get("user")!;

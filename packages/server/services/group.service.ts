@@ -1,5 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { tables, type Db, type Tx } from "@vidyafreshmen/db";
+import { availableGroups } from "@vidyafreshmen/db/schemas";
 import type { groupPreferenceSchema } from "@vidyafreshmen/dto";
 import type z from "zod/v4";
 
@@ -52,5 +53,49 @@ export function createRandomGroupNumberPreferenceOrder() {
   }
 
   return numbers;
+}
+
+export type AdminGroup = {
+  id: string;
+  number: string;
+  name: string;
+  maxMembers: number;
+  hasPassword: boolean;
+};
+
+// Never returns the actual password value - the admin UI is write-only for
+// this field (type a new one, save), same shape as a credential-reset flow,
+// so the current code never round-trips over the wire on page load.
+export async function listGroupsForAdmin(db: Db): Promise<AdminGroup[]> {
+  const rows = await db
+    .select({
+      id: availableGroups.id,
+      number: availableGroups.number,
+      name: availableGroups.name,
+      maxMembers: availableGroups.maxMembers,
+      joinGroupPassword: availableGroups.joinGroupPassword,
+    })
+    .from(availableGroups)
+    .orderBy(availableGroups.number);
+
+  return rows.map((row) => ({
+    id: row.id,
+    number: row.number,
+    name: row.name,
+    maxMembers: row.maxMembers,
+    hasPassword: !!row.joinGroupPassword,
+  }));
+}
+
+export async function updateGroupPassword(groupId: string, password: string, db: Db): Promise<void> {
+  const updated = await db
+    .update(availableGroups)
+    .set({ joinGroupPassword: password })
+    .where(eq(availableGroups.id, groupId))
+    .returning({ id: availableGroups.id });
+
+  if (updated.length === 0) {
+    throw new Error("ไม่พบกลุ่มนี้");
+  }
 }
 

@@ -35,6 +35,40 @@ export async function consumeTicket(userId: string, gameType: string, db: Db): P
   return ticket.id;
 }
 
+// Dev/staging only (gated by isProduction in the router, not here) - lets the
+// dev toolbar jump straight into any ticketed minigame without going through
+// the shop purchase flow. Short expiry since it's only ever meant to be
+// consumed by the very next start() call.
+export async function grantDevTicket(userId: string, gameType: string, db: Db) {
+  const [ticket] = await db
+    .insert(tables.minigameTickets)
+    .values({
+      userId,
+      gameType,
+      sourcePurchaseId: `dev-${crypto.randomUUID()}`,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    })
+    .returning({ id: tables.minigameTickets.id });
+  return ticket!;
+}
+
+// Production-safe counterpart to grantDevTicket - used by the secret QTE
+// popup (qte.service.ts) to hand out a free random ticketed minigame play.
+// Short expiry since it's only meant to be consumed by the very next
+// start() call right after the user taps the popup.
+export async function grantFreeTicket(userId: string, gameType: string, db: Db) {
+  const [ticket] = await db
+    .insert(tables.minigameTickets)
+    .values({
+      userId,
+      gameType,
+      sourcePurchaseId: `qte-${crypto.randomUUID()}`,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    })
+    .returning({ id: tables.minigameTickets.id });
+  return ticket!;
+}
+
 export async function listUnusedTickets(userId: string, db: Db) {
   return db
     .select({

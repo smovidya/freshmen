@@ -62,6 +62,22 @@ export const quizQuestions = sqliteTable('quiz_questions', {
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 });
 
+// Secret "quick time event" popup: client schedules one when its own 20-min
+// timer fires, server enforces the real cadence guard (see qte.service.ts),
+// then a single conditional UPDATE on claim is the whole one-shot/expiry
+// gate - same idiom as minigame_plays.status / minigame_tickets.status.
+export const qteSessions = sqliteTable('qte_sessions', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  status: text('status').notNull().default('pending'),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+}, (table) => [
+  index('idx_qte_sessions_user_created').on(table.userId, table.createdAt),
+]);
+
 export const minigameTicketsRelations = relations(minigameTickets, ({ one, many }) => ({
   user: one(user, { fields: [minigameTickets.userId], references: [user.id] }),
   plays: many(minigamePlays),

@@ -1,33 +1,13 @@
 import { submitPopSchema } from "@vidyafreshmen/dto";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { requireStaff, requireUser, type Variables } from "../core";
+import { requireGameOn, requireStaff, requireUser, type Variables } from "../core";
 import * as gameService from "../services/game.service";
-import { createMiddleware } from "hono/factory";
+import { qteRouter } from "./qte";
 
-export const requireGameOn = createMiddleware<{ Variables: Variables }>(
-  async (c, next) => {
-    const user = c.get("user");
-    if (!user) {
-      return c.json(
-        { error: "You must be signed in to perform this action." },
-        401,
-      );
-    }
-    // Staff/admin can exercise gameplay endpoints regardless of the
-    // game-playing window - lets festival staff test/support the game before
-    // (or between) the real freshmen-facing window, without opening it early
-    // for everyone else.
-    const isStaffOrAdmin = user.role === "staff" || user.role === "admin";
-    if (!isStaffOrAdmin && !c.get("flags").isEnabled("game-playing")) {
-      return c.json({ error: "เกมไม่เปิดให้เล่นในขณะนี้" }, 403);
-    }
-    if (!user.group) {
-      return c.json({ error: "กรุณาเข้าร่วมกลุ่มก่อนเล่นเกม" }, 400);
-    }
-    await next();
-  },
-);
+// Re-exported for existing importers (routers/minigame.ts) - the middleware
+// itself now lives in core.ts to avoid a circular import with routers/qte.ts.
+export { requireGameOn };
 
 export const gameRouter = new Hono<{ Variables: Variables }>()
   .get("/pop-token", requireGameOn, async (c) => {
@@ -48,12 +28,20 @@ export const gameRouter = new Hono<{ Variables: Variables }>()
     const score = await gameService.getSelfScore(user.id, c.get("db"));
     return c.json(score);
   })
-  .get("/stats", requireGameOn, async (c) => {
-    const leaderboard = await gameService.getLeaderboard(c.get("db"));
-    return c.body(JSON.stringify(leaderboard), 200, {
-      "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=5",
-    });
+  .get("/leaderboard", requireGameOn, async (c) => {
+    const user = c.get("user")!;
+    // requireGameOn already guarantees user.group is set.
+    const leaderboard = await gameService.getMyGroupLeaderboard(user.group!, c.get("db"), c.get("cache"));
+    return c.json(leaderboard);
+  })
+  // Deliberately public - no requireUser/requireGameOn. Powers the big-screen
+  // /scoreboard display, which has no session (a projector isn't logged in).
+  // Only exposes per-house aggregate totals, the same numbers already visible
+  // to every signed-in player via the central board above - no new privacy
+  // surface, just an unauthenticated read of existing public-facing data.
+  .get("/scoreboard-public", async (c) => {
+    const scoreboard = await gameService.getPublicScoreboard(c.get("db"), c.get("cache"));
+    return c.json(scoreboard);
   })
   // Staff-only. Only returns days whose cutoff has already passed - not
   // gated behind game-playing (staff need this outside that window too) and
@@ -72,4 +60,6 @@ export const gameRouter = new Hono<{ Variables: Variables }>()
     );
 
     return c.json({ days });
-  });
+  })
+  // Secret QTE popup - schedule/claim, see routers/qte.ts.
+  .route("/qte", qteRouter);

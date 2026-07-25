@@ -9,6 +9,7 @@
 	const navItems = [
 		{ href: '/admin', label: 'ผู้ใช้งาน' },
 		{ href: '/admin/staff', label: 'สตาฟ' },
+		{ href: '/admin/groups', label: 'รหัสกลุ่ม' },
 		{ href: '/checkin', label: 'เช็คอิน' }
 	];
 </script>

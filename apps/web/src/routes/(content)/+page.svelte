@@ -2,7 +2,6 @@
 	import LoginWithGoogle from './login-with-google.svelte';
 	import { authClient } from '$lib/auth/client';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { flags } from '$lib/flags';
 	import { AirportBackdrop } from '$lib/components/festival';
 
 	const session = authClient.useSession();
@@ -17,7 +16,7 @@
 	</h1>
 	{#if $session.data?.user}
 		<Button
-			href={flags.isEnabled('game-playing') ? '/game' : '/menu'}
+			href="/menu"
 			class="w-full max-w-[280px] cursor-pointer"
 			size="lg"
 		>
