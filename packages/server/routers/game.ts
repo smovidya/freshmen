@@ -55,7 +55,7 @@ export const gameRouter = new Hono<{ Variables: Variables }>()
       revealed.map(async ({ date, cutoffAt }) => ({
         date,
         cutoffAt,
-        top10: await gameService.getDailyTop10(new Date(cutoffAt), db),
+        groups: await gameService.getDailyTop10PerGroup(new Date(cutoffAt), db),
       })),
     );
 

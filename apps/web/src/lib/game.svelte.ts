@@ -41,7 +41,10 @@ export class GameAPIClient {
 	// the chain - null on request failure (invalid/expired token included),
 	// so the caller can reconcile its optimistic display instead of trusting
 	// it and knows to fetch a fresh token before retrying.
-	async submitPop(count: number, token: string): Promise<{ applied: number; nextToken: string } | null> {
+	async submitPop(
+		count: number,
+		token: string
+	): Promise<{ applied: number; nextToken: string } | null> {
 		if (count === 0) {
 			return null;
 		}
@@ -81,6 +84,11 @@ export class GamePopper {
 	// invalidated by a failed request) - #flush fetches a fresh one on demand
 	// rather than the interval loop needing to track this itself.
 	#popToken: string | null = null;
+	// Downward-sync guards (see syncServerCount): a flush in flight or recently
+	// acknowledged means a lower polled balance is probably just a stale read
+	// that predates the credit, not a real decrease.
+	#flushInFlight = false;
+	#lastFlushAckAt = 0;
 
 	constructor(client: GameAPIClient) {
 		this.#client = client;
@@ -98,7 +106,11 @@ export class GamePopper {
 			() => {
 				this.#flush();
 			},
-			dev ? 1000 : 1000 * 5
+			// 10s (was 5s) in prod: each flush is a /game/pop POST fanning out to
+			// several D1 writes (pop_sessions, points_balances, rate limits) per
+			// player - halving the flush rate halves the write storm that was
+			// starving session lookups. Taps still show instantly (optimistic).
+			dev ? 1000 : 1000 * 10
 		);
 	}
 
@@ -110,6 +122,22 @@ export class GamePopper {
 	// different number there than here.
 	syncServerCount(balance: number) {
 		if (balance > this.#serverCount) {
+			this.#serverCount = balance;
+			localStorage.setItem('__pop_count', String(balance));
+			return;
+		}
+		// Also follow the balance DOWN, else this device's score diverges from
+		// every other client: shop purchases spend the balance, and optimistic
+		// credits the server rejected (e.g. during an outage) otherwise stick in
+		// localStorage forever. Only when it can't be a stale read racing a
+		// credit: no unflushed taps, no flush in flight, and the last accepted
+		// flush is older than the balance poll interval.
+		if (
+			balance < this.#serverCount &&
+			untrack(() => this.rawBatchedCount) === 0 &&
+			!this.#flushInFlight &&
+			Date.now() - this.#lastFlushAckAt > 20_000
+		) {
 			this.#serverCount = balance;
 			localStorage.setItem('__pop_count', String(balance));
 		}
@@ -127,44 +155,49 @@ export class GamePopper {
 	async #flush() {
 		const batched = untrack(() => this.rawBatchedCount);
 		if (batched === 0) return;
-
-		// No usable token (first-ever flush, or the last one was consumed by a
-		// failed/invalidated request) - fetch one before spending the batch.
-		// Leaves rawBatchedCount untouched on failure so the taps aren't lost,
-		// just retried on the next interval tick.
-		let token = this.#popToken;
-		if (!token) {
-			try {
-				token = await this.#client.getPopToken();
-				this.#popToken = token;
-			} catch (e) {
-				console.error(e);
-				return;
+		this.#flushInFlight = true;
+		try {
+			// No usable token (first-ever flush, or the last one was consumed by a
+			// failed/invalidated request) - fetch one before spending the batch.
+			// Leaves rawBatchedCount untouched on failure so the taps aren't lost,
+			// just retried on the next interval tick.
+			let token = this.#popToken;
+			if (!token) {
+				try {
+					token = await this.#client.getPopToken();
+					this.#popToken = token;
+				} catch (e) {
+					console.error(e);
+					return;
+				}
 			}
+
+			const multiplierAtFlush = untrack(() => this.multiplier);
+			const baseServerCount = untrack(() => this.#serverCount);
+			// Optimistic: assumes the server applies the full multiplier (true
+			// whenever the buff isn't at its cap yet and the throttle isn't hit)
+			// so the number doesn't dip while the request is in flight.
+			this.#serverCount = baseServerCount + batched * multiplierAtFlush;
+			this.rawBatchedCount = 0;
+
+			const result = await this.#client.submitPop(batched, token);
+			// Chain the next token regardless of outcome - null forces a fresh
+			// fetch next time (e.g. this one was rejected as invalid/expired).
+			this.#popToken = result?.nextToken ?? null;
+
+			// Server is authoritative - if the elapsed-time throttle or buff cap
+			// granted less than the optimistic guess (or the request failed
+			// outright), correct down now instead of leaving an inflated number
+			// until the next balance poll silently catches it.
+			const trueServerCount = baseServerCount + (result?.applied ?? 0);
+			if (trueServerCount < this.#serverCount) {
+				this.#serverCount = trueServerCount;
+			}
+			localStorage.setItem('__pop_count', String(untrack(() => this.displaySelfCount)));
+		} finally {
+			this.#flushInFlight = false;
+			this.#lastFlushAckAt = Date.now();
 		}
-
-		const multiplierAtFlush = untrack(() => this.multiplier);
-		const baseServerCount = untrack(() => this.#serverCount);
-		// Optimistic: assumes the server applies the full multiplier (true
-		// whenever the buff isn't at its cap yet and the throttle isn't hit)
-		// so the number doesn't dip while the request is in flight.
-		this.#serverCount = baseServerCount + batched * multiplierAtFlush;
-		this.rawBatchedCount = 0;
-
-		const result = await this.#client.submitPop(batched, token);
-		// Chain the next token regardless of outcome - null forces a fresh
-		// fetch next time (e.g. this one was rejected as invalid/expired).
-		this.#popToken = result?.nextToken ?? null;
-
-		// Server is authoritative - if the elapsed-time throttle or buff cap
-		// granted less than the optimistic guess (or the request failed
-		// outright), correct down now instead of leaving an inflated number
-		// until the next balance poll silently catches it.
-		const trueServerCount = baseServerCount + (result?.applied ?? 0);
-		if (trueServerCount < this.#serverCount) {
-			this.#serverCount = trueServerCount;
-		}
-		localStorage.setItem('__pop_count', String(untrack(() => this.displaySelfCount)));
 	}
 
 	destroy() {

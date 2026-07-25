@@ -12,7 +12,8 @@
 		groupNumber: string;
 		score: number;
 	};
-	type DailyLeaderboard = { date: string; cutoffAt: string; top10: DailyTopPlayer[] };
+	type DailyGroupTop10 = { groupNumber: string; top10: DailyTopPlayer[] };
+	type DailyLeaderboard = { date: string; cutoffAt: string; groups: DailyGroupTop10[] };
 
 	const client = apiClient();
 
@@ -53,32 +54,35 @@
 				<CardHeader>
 					<CardTitle>ผลตัดยอด {day.date} เวลา 17:00</CardTitle>
 				</CardHeader>
-				<CardContent>
-					{#if day.top10.length === 0}
+				<CardContent class="flex flex-col gap-6">
+					{#if day.groups.length === 0}
 						<p class="text-muted-foreground text-sm">ยังไม่มีข้อมูลคะแนน</p>
 					{:else}
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead class="w-10">#</TableHead>
-									<TableHead>ชื่อ</TableHead>
-									<TableHead>รหัสนิสิต</TableHead>
-									<TableHead>กรุ๊ป</TableHead>
-									<TableHead class="text-right">คะแนน</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{#each day.top10 as player, i (player.playerId)}
-									<TableRow>
-										<TableCell>{i + 1}</TableCell>
-										<TableCell>{player.playerName}</TableCell>
-										<TableCell>{player.ouid ?? '-'}</TableCell>
-										<TableCell>{player.groupNumber}</TableCell>
-										<TableCell class="text-right font-medium">{player.score}</TableCell>
-									</TableRow>
-								{/each}
-							</TableBody>
-						</Table>
+						{#each day.groups as group (group.groupNumber)}
+							<div>
+								<h3 class="mb-2 font-semibold">สายการบิน {group.groupNumber}</h3>
+								<Table>
+									<TableHeader>
+										<TableRow>
+											<TableHead class="w-10">#</TableHead>
+											<TableHead>ชื่อ</TableHead>
+											<TableHead>รหัสนิสิต</TableHead>
+											<TableHead class="text-right">คะแนน</TableHead>
+										</TableRow>
+									</TableHeader>
+									<TableBody>
+										{#each group.top10 as player, i (player.playerId)}
+											<TableRow>
+												<TableCell>{i + 1}</TableCell>
+												<TableCell>{player.playerName}</TableCell>
+												<TableCell>{player.ouid ?? '-'}</TableCell>
+												<TableCell class="text-right font-medium">{player.score}</TableCell>
+											</TableRow>
+										{/each}
+									</TableBody>
+								</Table>
+							</div>
+						{/each}
 					{/if}
 				</CardContent>
 			</Card>

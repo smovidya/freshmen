@@ -77,7 +77,11 @@ export class PointsStore {
 		return result;
 	}
 
-	startPolling(intervalMs = 5000) {
+	// 15s (was 5s): hundreds of concurrent players polling /points/self was a
+	// large share of the D1 read load that starved better-auth session lookups
+	// during the festival - taps still feel instant via GamePopper's optimistic
+	// count, this poll only reconciles the authoritative balance.
+	startPolling(intervalMs = 15_000) {
 		this.refresh();
 		this.#pollIntervalId = setInterval(() => this.refresh(), intervalMs);
 

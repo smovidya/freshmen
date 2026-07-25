@@ -32,6 +32,7 @@ export type FestivalDateTime = `${string}-${string}-${string}T${string}:${string
 // visible immediately after that day's own cutoff passes, not held back to a
 // later date.
 export const dailyLeaderboardCutoffs: { date: string; cutoffAt: FestivalDateTime }[] = [
+  { date: "2026-07-25", cutoffAt: "2026-07-25T17:00:00+07:00" },
   { date: "2026-07-26", cutoffAt: "2026-07-26T17:00:00+07:00" },
   { date: "2026-07-27", cutoffAt: "2026-07-27T17:00:00+07:00" },
 ];

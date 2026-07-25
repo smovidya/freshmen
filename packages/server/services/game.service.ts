@@ -281,7 +281,13 @@ export type DailyTopPlayer = {
 // pointsBalances table (which only ever holds the *current* total) - so the
 // staff-only daily cutoff leaderboard (packages/flags' dailyLeaderboardCutoffs)
 // needs no separate snapshot job, since every credit is already timestamped.
-export async function getDailyTop10(cutoffAt: Date, db: Db | Tx): Promise<DailyTopPlayer[]> {
+export type DailyGroupTop10 = { groupNumber: string; top10: DailyTopPlayer[] };
+
+// Top 10 *per group*, not global - one full per-user score scan (no LIMIT),
+// bucketed in JS. Rows arrive score-descending, so the first 10 seen per
+// group are that group's top 10. Staff-only and per-view, so the full scan
+// is acceptable; don't wire this into anything polled.
+export async function getDailyTop10PerGroup(cutoffAt: Date, db: Db | Tx): Promise<DailyGroupTop10[]> {
   const scoreSum = sql<number>`sum(${tables.pointsLedger.delta})`;
 
   const rows = await db
@@ -296,10 +302,21 @@ export async function getDailyTop10(cutoffAt: Date, db: Db | Tx): Promise<DailyT
     .innerJoin(user, eq(user.id, tables.pointsLedger.userId))
     .where(and(isNotNull(user.group), lte(tables.pointsLedger.createdAt, cutoffAt)))
     .groupBy(user.id)
-    .orderBy(desc(scoreSum))
-    .limit(10);
+    .orderBy(desc(scoreSum));
 
-  return rows.map((row) => ({ ...row, groupNumber: row.groupNumber! }));
+  const byGroup = new Map<string, DailyTopPlayer[]>();
+  for (const row of rows) {
+    const groupNumber = row.groupNumber!;
+    const list = byGroup.get(groupNumber) ?? [];
+    if (list.length < 10) {
+      list.push({ ...row, groupNumber });
+      byGroup.set(groupNumber, list);
+    }
+  }
+
+  return [...byGroup.entries()]
+    .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
+    .map(([groupNumber, top10]) => ({ groupNumber, top10 }));
 }
 
 export async function updateUserGroup(email: string, groupCode: string, db: Db | Tx) {

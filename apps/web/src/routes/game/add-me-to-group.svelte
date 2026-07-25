@@ -2,6 +2,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { apiClient, call } from '$lib/api';
+	import { authClient } from '$lib/auth/client';
 	import { toast } from 'svelte-sonner';
 
 	const api = apiClient();
@@ -27,6 +28,11 @@
 		}
 
 		toast.success('เข้าร่วมสายการบินสำเร็จ');
+		// The session user is served from better-auth's cookieCache (up to 5 min
+		// stale) - without this forced DB re-read the reloaded page's /whoami
+		// still has group: null, shows this form again, and a resubmit hits
+		// "คุณมีกลุ่มอยู่แล้ว".
+		await authClient.getSession({ query: { disableCookieCache: true } });
 		window.location.reload();
 	}
 </script>

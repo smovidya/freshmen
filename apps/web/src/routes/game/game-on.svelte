@@ -184,7 +184,11 @@
 		}, 200);
 
 		checkMilestones();
-		milestonePollIntervalId = setInterval(checkMilestones, 5000);
+		// 20s (was 5s): milestone crossings are rare one-shot events per player,
+		// but this poll is a D1 read (plus a write when one fires) for every
+		// active player - it was one of the top request sources during the
+		// festival load spike. A delayed bonus-minigame toast is fine.
+		milestonePollIntervalId = setInterval(checkMilestones, 20_000);
 
 		return () => {
 			window.removeEventListener('devicemotion', handleMotion);

@@ -103,6 +103,16 @@ export const createAuth = ({ env }: { env: any }) => {
         hd: "student.chula.ac.th",
       },
     },
+    session: {
+      // Serve session reads from a short-lived signed cookie instead of hitting
+      // D1 on every request - session-token selects were the single biggest
+      // failing query while the pop game write-storm saturated the database.
+      // Trade-off: revocation/bans take up to maxAge to propagate.
+      cookieCache: {
+        enabled: true,
+        maxAge: 5 * 60,
+      },
+    },
     user: {
       additionalFields: {
         ouid: {
