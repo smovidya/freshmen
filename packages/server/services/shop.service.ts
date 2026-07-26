@@ -1,8 +1,55 @@
-import { and, count, eq, gt, gte } from "drizzle-orm";
+import { and, eq, gt, lt, lte, sql } from "drizzle-orm";
 import { tables, type Db } from "@vidyafreshmen/db";
 import { TICKETED_GAME_TYPES } from "@vidyafreshmen/dto";
 import { startOfBangkokDay } from "./minigame/mystery-box";
 import { creditPoints, debitPoints } from "./points.service";
+
+// Minimum gap between any two shop actions (buy buff, buy ticket) from the
+// same user. The client's "busy" flag only stops double-clicking in a real
+// browser - a scripted client can fire requests as fast as it wants, so this
+// server-side cooldown is the actual guard. Single atomic UPSERT (same
+// setWhere idiom as points.service.ts's claimFreePoints), so no number of
+// concurrent requests can slip through: SQLite/D1 serializes conflicting
+// writes to the same primary key, and only one of them sees a lastActionAt
+// old enough to pass.
+const SHOP_ACTION_COOLDOWN_MS = 800;
+
+async function tryConsumeShopCooldown(userId: string, db: Db): Promise<boolean> {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - SHOP_ACTION_COOLDOWN_MS);
+  const updated = await db
+    .insert(tables.shopRateLimits)
+    .values({ userId, lastActionAt: now })
+    .onConflictDoUpdate({
+      target: tables.shopRateLimits.userId,
+      set: { lastActionAt: now },
+      setWhere: lte(tables.shopRateLimits.lastActionAt, cutoff),
+    })
+    .returning({ userId: tables.shopRateLimits.userId });
+  return updated.length > 0;
+}
+
+// Atomically claims one of `limit` daily slots for (userId, item) - the
+// RETURNING row count *is* the pass/fail signal, decided in one statement.
+// Unlike a separate COUNT-then-INSERT check, this can't be raced: the first
+// concurrent writer for a given day either inserts the row or wins the
+// conflict-update race, and every other concurrent writer's UPDATE is gated
+// by setWhere against the count that writer actually committed - never a
+// stale read. day is a Bangkok-calendar date string, so a new day is just a
+// new row (no reset job needed).
+async function tryConsumeDailyLimit(input: { userId: string; item: string; limit: number }, db: Db): Promise<boolean> {
+  const day = startOfBangkokDay().toISOString().slice(0, 10);
+  const claimed = await db
+    .insert(tables.shopDailyLimits)
+    .values({ userId: input.userId, item: input.item, day, count: 1 })
+    .onConflictDoUpdate({
+      target: [tables.shopDailyLimits.userId, tables.shopDailyLimits.item, tables.shopDailyLimits.day],
+      set: { count: sql`${tables.shopDailyLimits.count} + 1` },
+      setWhere: lt(tables.shopDailyLimits.count, input.limit),
+    })
+    .returning({ count: tables.shopDailyLimits.count });
+  return claimed.length > 0;
+}
 
 // D1 batch() is transactional. Fixed write sets use it directly; flows that
 // cross the shared point service retain idempotent compensation so a retry
@@ -109,6 +156,10 @@ export async function buyBuff(
   input: { userId: string; ouid: string; item: keyof typeof BUFF_CONFIG },
   db: Db,
 ) {
+  if (!(await tryConsumeShopCooldown(input.userId, db))) {
+    throw new Error("กดเร็วไปหน่อย รอสักครู่แล้วลองใหม่");
+  }
+
   const config = BUFF_CONFIG[input.item];
 
   const [existing] = await db
@@ -176,20 +227,15 @@ export async function buyTicket(
   input: { userId: string; ouid: string },
   db: Db,
 ) {
-  // Count-then-debit has the same bounded TOCTOU tolerance as
-  // friends.service.ts's slot check: a racing double-submit can land one
-  // ticket over the limit, never unboundedly many.
-  const [purchasedToday] = await db
-    .select({ n: count() })
-    .from(tables.shopRedemptions)
-    .where(
-      and(
-        eq(tables.shopRedemptions.userId, input.userId),
-        eq(tables.shopRedemptions.item, "minigame_ticket"),
-        gte(tables.shopRedemptions.createdAt, startOfBangkokDay()),
-      ),
-    );
-  if ((purchasedToday?.n ?? 0) >= TICKET_DAILY_LIMIT) {
+  if (!(await tryConsumeShopCooldown(input.userId, db))) {
+    throw new Error("กดเร็วไปหน่อย รอสักครู่แล้วลองใหม่");
+  }
+
+  // Atomic slot claim - see tryConsumeDailyLimit's comment. A rejected claim
+  // here never touched shopRedemptions or debited anything, so a spamming
+  // client just gets the same error repeatedly, never more tickets than
+  // TICKET_DAILY_LIMIT.
+  if (!(await tryConsumeDailyLimit({ userId: input.userId, item: "minigame_ticket", limit: TICKET_DAILY_LIMIT }, db))) {
     throw new Error(`ซื้อตั๋วได้สูงสุด ${TICKET_DAILY_LIMIT} ใบต่อวัน วันนี้ครบแล้ว พรุ่งนี้มาใหม่นะ`);
   }
 

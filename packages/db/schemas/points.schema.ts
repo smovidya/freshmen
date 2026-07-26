@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import { index, integer, primaryKey, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 import { user } from './auth.schema';
 
 const timestamps = {
@@ -174,4 +174,39 @@ export const milestoneTriggers = sqliteTable('milestone_triggers', {
 
 export const milestoneTriggersRelations = relations(milestoneTriggers, ({ one }) => ({
   user: one(user, { fields: [milestoneTriggers.userId], references: [user.id] }),
+}));
+
+// One row per user - tracks the server-observed time of a user's last
+// accepted shop action (buy buff / buy ticket). Same idiom and same purpose
+// as pop_rate_limits, applied to the shop routes: a spam-clicking or
+// scripted client can't fire purchases faster than SHOP_ACTION_COOLDOWN_MS
+// apart, regardless of what the client-side "busy" UI guard (trivially
+// bypassed by a non-browser client) does.
+export const shopRateLimits = sqliteTable('shop_rate_limits', {
+  userId: text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
+  lastActionAt: integer('last_action_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const shopRateLimitsRelations = relations(shopRateLimits, ({ one }) => ({
+  user: one(user, { fields: [shopRateLimits.userId], references: [user.id] }),
+}));
+
+// Atomic per-user/per-item/per-day purchase counter. The (userId, item, day)
+// primary key is the sole concurrency guard: a single INSERT .. ON CONFLICT
+// DO UPDATE .. WHERE count < limit RETURNING decides "did this request get a
+// slot" in one statement, so unlike a separate COUNT-then-INSERT check, no
+// number of concurrent requests can ever push count past the caller's limit.
+// day is a Bangkok-calendar date string ("2026-07-26") - a new day is simply
+// a new row, so no reset job is needed.
+export const shopDailyLimits = sqliteTable('shop_daily_limits', {
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  item: text('item').notNull(),
+  day: text('day').notNull(),
+  count: integer('count').notNull().default(0),
+}, (table) => [
+  primaryKey({ columns: [table.userId, table.item, table.day] }),
+]);
+
+export const shopDailyLimitsRelations = relations(shopDailyLimits, ({ one }) => ({
+  user: one(user, { fields: [shopDailyLimits.userId], references: [user.id] }),
 }));
