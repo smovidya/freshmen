@@ -11,7 +11,8 @@
 	import Volume2 from '@lucide/svelte/icons/volume-2';
 	import NumberFlow from '@number-flow/svelte';
 	import confetti from 'canvas-confetti';
-	import { WHEEL_OUTCOMES } from '@vidyafreshmen/dto';
+	import { WHEEL_OUTCOMES, ARCADE_GAMES, type ArcadeGameType } from '@vidyafreshmen/dto';
+	import WhackAMole from '$lib/components/game/arcade/whack-a-mole.svelte';
 
 	let { data } = $props();
 	const client = apiClient();
@@ -95,6 +96,80 @@
 			detail: reward.convertedFromBuff ? 'รางวัลบูสต์ไม่สูญเปล่า' : undefined,
 			points: reward.points
 		};
+	}
+
+	// --- arcade (fun-first batch: whack_a_mole built, rest arrive as
+	// components land here - no backend/router change needed per addition,
+	// see plan) ---
+	const ARCADE_COMPONENTS: Partial<Record<ArcadeGameType, typeof WhackAMole>> = {
+		whack_a_mole: WhackAMole
+	};
+	const ARCADE_TITLES: Record<ArcadeGameType, string> = {
+		fruit_slice: 'สไลซ์กระเป๋าเดินทาง',
+		whack_a_mole: 'ตีตุ่น',
+		flappy_runner: 'บินหลบสิ่งกีดขวาง',
+		merge_2048: 'รวมเลข 2048',
+		memory_match: 'จับคู่ความจำ',
+		stack_tower: 'ต่อตึกให้สูง',
+		color_switch: 'หลบสีให้ตรง',
+		balloon_pop: 'แตะบอลลูน',
+		slingshot_toss: 'สลิงช็อตเป้าเล็ง',
+		simon_says: 'จำลำดับตาม'
+	};
+
+	let arcadeStarted = $state(false);
+	let arcadePlayToken = $state('');
+	let arcadeRoundDurationMs = $state(
+		ARCADE_GAMES[data.gameType as ArcadeGameType]?.roundDurationMs ?? 30_000
+	);
+
+	async function startArcade() {
+		if (submitting) return;
+		submitting = true;
+		const type = gameType as ArcadeGameType;
+		arcadePlayToken ||= getOrCreatePlayToken(type);
+		try {
+			const response = await call(
+				client.minigame.arcade[':type'].start.$post({
+					param: { type },
+					json: { playToken: arcadePlayToken }
+				})
+			);
+			arcadeRoundDurationMs = response.roundDurationMs;
+			arcadeStarted = true;
+		} catch (error) {
+			toast.error(errorMessage(error, 'เริ่มเกมไม่สำเร็จ'));
+		} finally {
+			submitting = false;
+		}
+	}
+
+	async function submitArcade(rawScore: number) {
+		if (submitting) return;
+		submitting = true;
+		const type = gameType as ArcadeGameType;
+		try {
+			const response = await callWithTurnstile(
+				(turnstileToken) =>
+					client.minigame.arcade[':type'].submit.$post({
+						param: { type },
+						json: { playToken: arcadePlayToken, rawScore },
+						query: { turnstileToken }
+					}),
+				takeTurnstileToken
+			);
+			if (response.points > 0) celebrate();
+			result = {
+				title: response.points > 0 ? 'รับแต้มสำเร็จ' : 'รอบนี้ยังไม่ถึงเกณฑ์',
+				detail: `คะแนนในเกม: ${rawScore}`,
+				points: response.points
+			};
+			clearPlayToken(type);
+		} catch (error) {
+			toast.error(errorMessage(error, 'ส่งผลเกมไม่สำเร็จ กดอีกครั้งเพื่อรับผลเดิมได้'));
+		} finally {
+			submitting = false;
+		}
 	}
 
 	// --- alignment puzzle ---
@@ -481,7 +556,9 @@
 						? 'Beat Lock'
 						: gameType === 'wheel'
 							? 'Lucky Flight'
-							: 'Daily Cargo'}
+							: gameType === 'mystery_box'
+								? 'Daily Cargo'
+								: (ARCADE_TITLES[gameType as ArcadeGameType] ?? 'มินิเกม')}
 			</h1>
 		</div>
 		<div class="size-10"></div>
@@ -717,6 +794,29 @@
 						? 'รับครบแล้ววันนี้'
 						: 'เปิดกล่องฟรี'}
 			</button>
+		{:else if ARCADE_COMPONENTS[gameType as ArcadeGameType]}
+			{#if !arcadeStarted}
+				<section class="intro-card">
+					<div class="intro-icon">🎮</div>
+					<p class="eyebrow">ARCADE</p>
+					<h2>{ARCADE_TITLES[gameType as ArcadeGameType]}</h2>
+					<p>เล่นให้จบรอบ ยิ่งทำคะแนนในเกมได้เยอะ ยิ่งได้แต้มเยอะ</p>
+					<button class="primary-button" disabled={submitting} onclick={startArcade}>
+						{submitting ? 'กำลังเริ่ม...' : 'เริ่มเกม'}
+					</button>
+				</section>
+			{:else}
+				{@const ArcadeComponent = ARCADE_COMPONENTS[gameType as ArcadeGameType]!}
+				<ArcadeComponent durationMs={arcadeRoundDurationMs} onGameOver={submitArcade} />
+			{/if}
+		{:else}
+			<section class="intro-card">
+				<div class="intro-icon">🚧</div>
+				<p class="eyebrow">COMING SOON</p>
+				<h2>{ARCADE_TITLES[gameType as ArcadeGameType] ?? 'มินิเกม'}</h2>
+				<p>เกมนี้กำลังจะมาเร็ว ๆ นี้</p>
+				<a href="/game" class="primary-button">กลับไปเขย่าลูกแก้ว</a>
+			</section>
 		{/if}
 	</main>
 </div>
