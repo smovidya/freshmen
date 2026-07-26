@@ -230,25 +230,35 @@ async function computeCentralBoard(db: Db): Promise<CentralGroupTotal[]> {
   return rows.map((row) => ({ groupNumber: row.groupNumber, groupLabel: row.groupLabel, totalScore: row.totalScore }));
 }
 
-// `available_groups` also holds one or more non-competing staff pseudo-
-// groups (observed in practice: both "central" and "central-staff" rows
-// exist on staging, likely a legacy duplicate) - a public house-vs-house
-// scoreboard showing a "staff" bar would be confusing, not competitive.
-// An allowlist of the real airline numbers (mirrors packages/db/seed-available-groups.sql
-// and apps/web/src/lib/groups.ts, the canonical airline list) is more
-// robust here than blocklisting staff-variant ids one at a time, since any
-// future/renamed staff pseudo-group is excluded automatically instead of
-// silently leaking onto the public board until someone notices.
+// The real airline numbers (mirrors packages/db/seed-available-groups.sql and
+// apps/web/src/lib/groups.ts, the canonical airline list). Used directly for
+// airline-only views (final winner board); the public projector scoreboard
+// additionally ranks the "central-staff" pseudo-group alongside the airlines.
+// Allowlisting (rather than blocklisting) keeps any other stray pseudo-group -
+// e.g. the legacy "central" duplicate observed on staging - off both boards
+// automatically.
 const AIRLINE_GROUP_NUMBERS = new Set(["1", "3", "4", "5", "6", "7"]);
+const PUBLIC_SCOREBOARD_GROUP_NUMBERS = new Set([...AIRLINE_GROUP_NUMBERS, "central-staff"]);
 
-export type PublicScoreboard = { groups: CentralGroupTotal[] };
+export type Scoreboard = { groups: CentralGroupTotal[] };
 
-// Public/unauthenticated - reuses the same cached central-board computation
-// and cache entry the authenticated leaderboard drawer already populates, so
-// this adds no extra D1 load beyond what the drawer already causes.
-export async function getPublicScoreboard(db: Db, cache: SimpleCache): Promise<PublicScoreboard> {
+// Admin-only projector scoreboard (auth enforced in routers/game.ts) - reuses
+// the same cached central-board computation and cache entry the authenticated
+// leaderboard drawer already populates, so this adds no extra D1 load beyond
+// what the drawer already causes.
+export async function getScoreboard(db: Db, cache: SimpleCache): Promise<Scoreboard> {
   const central = await cached(cache, "https://internal.cache/game/leaderboard/central", () => computeCentralBoard(db));
-  return { groups: central.filter((g) => AIRLINE_GROUP_NUMBERS.has(g.groupNumber)) };
+  return { groups: central.filter((g) => PUBLIC_SCOREBOARD_GROUP_NUMBERS.has(g.groupNumber)) };
+}
+
+// Admin scoreboard drill-down: top 10 of any group (auth enforced in
+// routers/game.ts). Reuses the exact per-group cache entry the members' own
+// leaderboard drawer populates, so the projector polling this adds no extra
+// D1 load beyond one read per group per 5s TTL window.
+export async function getGroupTop10ForAdmin(groupNumber: string, db: Db, cache: SimpleCache): Promise<DisplayPlayer[]> {
+  return cached(cache, `https://internal.cache/game/leaderboard/group/${encodeURIComponent(groupNumber)}`, () =>
+    computeOwnGroupTop10(groupNumber, db),
+  );
 }
 
 // Own-group top10 is scoped by a server-derived groupNumber only (never a
