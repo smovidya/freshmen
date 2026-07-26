@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+
 	// Classic Simon: the game flashes a growing color sequence, player repeats
 	// it back. Difficulty ramps by construction (longer sequence each round)
 	// plus the flash/gap speed shrinks as the sequence grows, so late rounds
@@ -111,7 +113,12 @@
 	}
 
 	$effect(() => {
-		startNextRound();
+		// untrack: startNextRound synchronously reads/writes `sequence` -
+		// without this, that read registers as a dependency of this effect,
+		// so every later write to `sequence` (every round, forever) reruns
+		// the whole effect and restarts the round from scratch. Same trap in
+		// flappy-runner.svelte and slingshot-toss.svelte, fixed the same way.
+		untrack(() => startNextRound());
 		tickIntervalId = setInterval(() => {
 			remainingMs = Math.max(0, durationMs - (Date.now() - startedAt));
 			if (remainingMs <= 0) endRound();

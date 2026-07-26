@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+
 	// A power marker sweeps back and forth along a bar; tap to release the
 	// shot at the target zone. Ramp: each attempt sweeps faster and the
 	// target zone shrinks, so the first toss is forgiving and the last is a
@@ -99,7 +101,12 @@
 	}
 
 	$effect(() => {
-		newTarget();
+		// untrack: newTarget reads `attempts` synchronously - without this,
+		// every later write to `attempts` (every release) reruns this whole
+		// effect, resetting the target and stacking a second RAF loop on top
+		// of the existing one. Same trap in simon-says.svelte and
+		// flappy-runner.svelte, fixed the same way.
+		untrack(() => newTarget());
 		rafId = requestAnimationFrame(frame);
 		tickIntervalId = setInterval(() => {
 			remainingMs = Math.max(0, durationMs - (Date.now() - startedAt));

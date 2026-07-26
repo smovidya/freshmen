@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+
 	// Tap to hop, gravity pulls back down, dodge the gaps scrolling in from
 	// the right. Ramp over the run: obstacles scroll faster and the gap
 	// shrinks as more get passed, so the whole thing gets tighter and faster
@@ -121,7 +123,12 @@
 	}
 
 	$effect(() => {
-		spawnPipe(AREA_WIDTH + 80);
+		// untrack: spawnPipe reads+writes `pipes` synchronously - without
+		// this, every later write to `pipes` (every animation frame) reruns
+		// this whole effect, spawning an extra pipe and a second RAF loop on
+		// top of the existing one, every frame. Same trap in
+		// simon-says.svelte and slingshot-toss.svelte, fixed the same way.
+		untrack(() => spawnPipe(AREA_WIDTH + 80));
 		rafId = requestAnimationFrame(frame);
 		tickIntervalId = setInterval(() => {
 			remainingMs = Math.max(0, durationMs - (Date.now() - startedAt));
