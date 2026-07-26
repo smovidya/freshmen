@@ -1,7 +1,7 @@
 import { submitPopSchema } from "@vidyafreshmen/dto";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { requireGameOn, requireStaff, requireUser, type Variables } from "../core";
+import { requireAdmin, requireGameOn, requireStaff, requireUser, type Variables } from "../core";
 import * as gameService from "../services/game.service";
 import { qteRouter } from "./qte";
 
@@ -60,6 +60,14 @@ export const gameRouter = new Hono<{ Variables: Variables }>()
     );
 
     return c.json({ days });
+  })
+  // Admin-only anti-cheat report over anomaly_events (see game.service.ts's
+  // logAnomaly) - summary rollup per user, plus a per-user recent-event feed.
+  .get("/anomalies", requireUser, requireAdmin, async (c) => {
+    return c.json(await gameService.getAnomalySummaries(c.get("db")));
+  })
+  .get("/anomalies/:userId", requireUser, requireAdmin, async (c) => {
+    return c.json(await gameService.getUserAnomalyEvents(c.req.param("userId"), c.get("db")));
   })
   // Secret QTE popup - schedule/claim, see routers/qte.ts.
   .route("/qte", qteRouter);

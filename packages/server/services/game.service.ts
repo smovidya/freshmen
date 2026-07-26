@@ -271,6 +271,11 @@ export async function getMyGroupLeaderboard(groupNumber: string, db: Db, cache: 
 export type DailyTopPlayer = {
   playerId: string;
   playerName: string;
+  nickname: string | null;
+  department: string | null;
+  // Boeing code ("<group><subgroup 2-digit>", e.g. "105") - null for players
+  // without an onsite boeing assignment (staff, un-checked-in freshmen).
+  boeingCode: string | null;
   ouid: string | null;
   groupNumber: string;
   score: number;
@@ -296,10 +301,16 @@ export async function getDailyTop10PerGroup(cutoffAt: Date, db: Db | Tx): Promis
       playerName: user.name,
       ouid: user.ouid,
       groupNumber: user.group,
+      nickname: tables.students.nickname,
+      department: tables.students.department,
+      sgGroupNumber: tables.studentGroup.groupNumber,
+      sgSubgroupNumber: tables.studentGroup.subgroupNumber,
       score: scoreSum.as("score"),
     })
     .from(tables.pointsLedger)
     .innerJoin(user, eq(user.id, tables.pointsLedger.userId))
+    .leftJoin(tables.students, eq(tables.students.email, user.email))
+    .leftJoin(tables.studentGroup, eq(tables.studentGroup.studentId, tables.students.id))
     .where(and(isNotNull(user.group), lte(tables.pointsLedger.createdAt, cutoffAt)))
     .groupBy(user.id)
     .orderBy(desc(scoreSum));
@@ -309,7 +320,20 @@ export async function getDailyTop10PerGroup(cutoffAt: Date, db: Db | Tx): Promis
     const groupNumber = row.groupNumber!;
     const list = byGroup.get(groupNumber) ?? [];
     if (list.length < 10) {
-      list.push({ ...row, groupNumber });
+      list.push({
+        playerId: row.playerId,
+        playerName: row.playerName,
+        nickname: row.nickname,
+        department: row.department,
+        // Same format as boarding-pass.svelte's boingCode
+        boeingCode:
+          row.sgGroupNumber != null && row.sgSubgroupNumber != null
+            ? `${row.sgGroupNumber}${String(row.sgSubgroupNumber).padStart(2, "0")}`
+            : null,
+        ouid: row.ouid,
+        groupNumber,
+        score: row.score,
+      });
       byGroup.set(groupNumber, list);
     }
   }
@@ -317,6 +341,81 @@ export async function getDailyTop10PerGroup(cutoffAt: Date, db: Db | Tx): Promis
   return [...byGroup.entries()]
     .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
     .map(([groupNumber, top10]) => ({ groupNumber, top10 }));
+}
+
+export type AnomalyUserSummary = {
+  userId: string;
+  playerName: string;
+  ouid: string | null;
+  groupNumber: string | null;
+  total: number;
+  countsByType: Record<string, number>;
+  lastAt: Date;
+};
+
+// Admin anti-cheat report: per-user rollup of anomaly_events (invalid/replayed
+// pop tokens, rate clamps), worst offenders first. Aggregated per (user, type)
+// in SQL, folded to one row per user in JS.
+export async function getAnomalySummaries(db: Db): Promise<AnomalyUserSummary[]> {
+  const eventCount = sql<number>`count(*)`;
+  const lastAt = sql<number>`max(${tables.anomalyEvents.createdAt})`;
+  const rows = await db
+    .select({
+      userId: tables.anomalyEvents.userId,
+      type: tables.anomalyEvents.type,
+      playerName: user.name,
+      ouid: user.ouid,
+      groupNumber: user.group,
+      n: eventCount.as("n"),
+      lastAt: lastAt.as("last_at"),
+    })
+    .from(tables.anomalyEvents)
+    .innerJoin(user, eq(user.id, tables.anomalyEvents.userId))
+    .groupBy(tables.anomalyEvents.userId, tables.anomalyEvents.type);
+
+  const byUser = new Map<string, AnomalyUserSummary>();
+  for (const row of rows) {
+    const entry = byUser.get(row.userId) ?? {
+      userId: row.userId,
+      playerName: row.playerName,
+      ouid: row.ouid,
+      groupNumber: row.groupNumber,
+      total: 0,
+      countsByType: {},
+      lastAt: new Date(0),
+    };
+    entry.total += row.n;
+    entry.countsByType[row.type] = row.n;
+    // drizzle returns the raw integer (epoch seconds) for aggregated timestamp
+    // columns - the column's { mode: "timestamp" } mapping doesn't apply
+    // through max().
+    const rowLastAt = new Date(Number(row.lastAt) * 1000);
+    if (rowLastAt > entry.lastAt) entry.lastAt = rowLastAt;
+    byUser.set(row.userId, entry);
+  }
+
+  return [...byUser.values()].sort((a, b) => b.total - a.total);
+}
+
+export type AnomalyEventRow = {
+  id: string;
+  type: string;
+  detail: string | null;
+  createdAt: Date;
+};
+
+export async function getUserAnomalyEvents(userId: string, db: Db): Promise<AnomalyEventRow[]> {
+  return db
+    .select({
+      id: tables.anomalyEvents.id,
+      type: tables.anomalyEvents.type,
+      detail: tables.anomalyEvents.detail,
+      createdAt: tables.anomalyEvents.createdAt,
+    })
+    .from(tables.anomalyEvents)
+    .where(eq(tables.anomalyEvents.userId, userId))
+    .orderBy(desc(tables.anomalyEvents.createdAt))
+    .limit(100);
 }
 
 export async function updateUserGroup(email: string, groupCode: string, db: Db | Tx) {

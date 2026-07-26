@@ -8,6 +8,9 @@
 	type DailyTopPlayer = {
 		playerId: string;
 		playerName: string;
+		nickname: string | null;
+		department: string | null;
+		boeingCode: string | null;
 		ouid: string | null;
 		groupNumber: string;
 		score: number;
@@ -66,6 +69,9 @@
 										<TableRow>
 											<TableHead class="w-10">#</TableHead>
 											<TableHead>ชื่อ</TableHead>
+											<TableHead>ชื่อเล่น</TableHead>
+											<TableHead>ภาควิชา</TableHead>
+											<TableHead>โบอิ้ง</TableHead>
 											<TableHead>รหัสนิสิต</TableHead>
 											<TableHead class="text-right">คะแนน</TableHead>
 										</TableRow>
@@ -75,6 +81,9 @@
 											<TableRow>
 												<TableCell>{i + 1}</TableCell>
 												<TableCell>{player.playerName}</TableCell>
+												<TableCell>{player.nickname ?? '-'}</TableCell>
+												<TableCell>{player.department ?? '-'}</TableCell>
+												<TableCell>{player.boeingCode ?? '-'}</TableCell>
 												<TableCell>{player.ouid ?? '-'}</TableCell>
 												<TableCell class="text-right font-medium">{player.score}</TableCell>
 											</TableRow>
