@@ -1,4 +1,5 @@
 import { submitPopSchema } from "@vidyafreshmen/dto";
+import { winnerLeaderboardCutoff } from "@vidyafreshmen/flags";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { requireAdmin, requireGameOn, requireStaff, requireUser, type Variables } from "../core";
@@ -60,6 +61,13 @@ export const gameRouter = new Hono<{ Variables: Variables }>()
     );
 
     return c.json({ days });
+  })
+  // Staff-only final snapshot. Unlike the daily boards this cutoff is a
+  // one-off "as of now" capture and never advances, so the winners stay fixed.
+  .get("/winner-leaderboard", requireUser, requireStaff, async (c) => {
+    const cutoffAt = new Date(winnerLeaderboardCutoff);
+    const groups = await gameService.getWinnerTop10PerAirline(cutoffAt, c.get("db"));
+    return c.json({ cutoffAt, groups });
   })
   // Admin-only anti-cheat report over anomaly_events (see game.service.ts's
   // logAnomaly) - summary rollup per user, plus a per-user recent-event feed.

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { apiClient, call } from '$lib/api';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -150,9 +151,10 @@
 			<h1 class="text-2xl font-semibold">เช็คอินน้องใหม่</h1>
 			<p class="text-muted-foreground text-sm">สแกน QR หรือกรอกรหัสนิสิตเพื่อเช็คอิน</p>
 		</div>
-		<a href="/checkin/leaderboard" class="text-primary shrink-0 text-sm font-medium underline">
-			คะแนนสูงสุดรายวัน
-		</a>
+		<div class="flex shrink-0 flex-col items-end gap-1 text-sm font-medium">
+			<a href={resolve('/checkin/winner')} class="text-primary underline">ผลผู้ชนะ</a>
+			<a href={resolve('/checkin/leaderboard')} class="text-primary underline">คะแนนสูงสุดรายวัน</a>
+		</div>
 	</div>
 
 	<div class="space-y-2">

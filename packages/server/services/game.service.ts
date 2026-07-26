@@ -343,6 +343,13 @@ export async function getDailyTop10PerGroup(cutoffAt: Date, db: Db | Tx): Promis
     .map(([groupNumber, top10]) => ({ groupNumber, top10 }));
 }
 
+// Final winner view is airline-only: staff pseudo-groups may participate in
+// gameplay but are not part of the festival competition.
+export async function getWinnerTop10PerAirline(cutoffAt: Date, db: Db | Tx): Promise<DailyGroupTop10[]> {
+  const groups = await getDailyTop10PerGroup(cutoffAt, db);
+  return groups.filter((group) => AIRLINE_GROUP_NUMBERS.has(group.groupNumber));
+}
+
 export type AnomalyUserSummary = {
   userId: string;
   playerName: string;

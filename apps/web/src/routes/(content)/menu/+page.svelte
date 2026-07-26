@@ -8,7 +8,15 @@
 	} from '$lib/components/festival';
 	import { flags } from '$lib/flags';
 	import { getDisplayName } from '$lib/text-shuffle.svelte';
-	import { FileUser, ListOrdered, Megaphone, QrCode, ScanLine, Swords, Trophy } from 'lucide-svelte';
+	import {
+		FileUser,
+		ListOrdered,
+		Megaphone,
+		QrCode,
+		ScanLine,
+		Swords,
+		Trophy
+	} from 'lucide-svelte';
 
 	let { data } = $props();
 	const friends = $derived(
@@ -48,6 +56,14 @@
 				href="/checkin/leaderboard"
 				title="คะแนนสูงสุดรายวัน"
 				description="สำหรับสตาฟ: ดูผลตัดยอดคะแนน Top 10 เวลา 17:00 ของแต่ละวัน"
+				status="พร้อมใช้งาน"
+				icon={Trophy}
+				roles={['staff', 'admin']}
+			/>
+			<TaskCard
+				href="/checkin/winner"
+				title="อันดับผู้ชนะ"
+				description="สำหรับสตาฟ: ดูผล Top 10 ของแต่ละสายการบิน ณ เวลาตัดยอดผู้ชนะ"
 				status="พร้อมใช้งาน"
 				icon={Trophy}
 				roles={['staff', 'admin']}
