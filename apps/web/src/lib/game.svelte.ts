@@ -28,11 +28,20 @@ export class GameAPIClient {
 	// waited on it (GamePopper.init) don't need to change.
 	ready = true;
 
+	// Wired by the game screen: mints a fresh single-use Turnstile token for
+	// pop-session bootstraps. Required in production (routers/game.ts verifies
+	// it); resolves null on staging/local where no widget exists.
+	getTurnstileToken: (() => Promise<string | null>) | null = null;
+
 	// Single-use session token required by /game/pop, chained one-per-request
 	// (see game.service.ts) - fetched separately so GamePopper can bootstrap
-	// one before its first flush.
+	// one before its first flush. Each bootstrap is Turnstile-gated in
+	// production (bot prevention); chained tokens from /pop responses are not.
 	async getPopToken(): Promise<string> {
-		const { token } = await call(this.#client.game['pop-token'].$get());
+		const turnstileToken = (await this.getTurnstileToken?.()) ?? undefined;
+		const { token } = await call(
+			this.#client.game['pop-token'].$get({ query: { turnstileToken } })
+		);
 		return token;
 	}
 

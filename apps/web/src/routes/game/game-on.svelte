@@ -24,6 +24,7 @@
 	import FriendsBody from '$lib/components/game/friends-body.svelte';
 	import ItemsBody from '$lib/components/game/items-body.svelte';
 	import LeaderboardBody from '$lib/components/game/leaderboard-body.svelte';
+	import TurnstileWidget from '$lib/components/turnstile-widget.svelte';
 	import { PointsAPIClient, PointsStore } from '$lib/points.svelte';
 
 	let shopOpen = $state(false);
@@ -87,6 +88,14 @@
 	const ballImage = $derived(BALL_BY_GROUP[studentGroup] ?? CentralBall);
 
 	const popper = untrack(() => new GamePopper(client));
+
+	// Turnstile gates pop-session bootstraps in production (bot prevention,
+	// see routers/game.ts). The widget mints a single-use token on demand;
+	// takeToken resolves null on staging/local (no sitekey) or while the
+	// widget is still loading - the flush loop refetches later, by which time
+	// the widget is ready.
+	let turnstileWidget: TurnstileWidget | undefined = $state();
+	client.getTurnstileToken = async () => (await turnstileWidget?.takeToken()) ?? null;
 
 	when(
 		() => client.ready,
@@ -341,6 +350,10 @@
 				<span class="text-sm font-medium">อันดับคะแนน</span>
 			</button>
 		</div>
+
+		<!-- Interactive challenges (rare) render here so the player can tap
+		     them; the usual managed pass is invisible. -->
+		<TurnstileWidget bind:this={turnstileWidget} />
 	</div>
 </div>
 

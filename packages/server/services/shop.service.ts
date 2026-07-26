@@ -1,21 +1,33 @@
-import { and, eq, gt } from "drizzle-orm";
+import { and, count, eq, gt, gte } from "drizzle-orm";
 import { tables, type Db } from "@vidyafreshmen/db";
 import { TICKETED_GAME_TYPES } from "@vidyafreshmen/dto";
+import { startOfBangkokDay } from "./minigame/mystery-box";
 import { creditPoints, debitPoints } from "./points.service";
 
 // D1 batch() is transactional. Fixed write sets use it directly; flows that
 // cross the shared point service retain idempotent compensation so a retry
 // cannot charge twice or strand a purchase.
 
+// "buff_x100" is a legacy key (stored in active_buffs.buffType and pending
+// wheel plays) - it now grants x50, retuned after the score-inflation
+// incident. Buffs multiply shake pops only (see creditPoints /
+// BUFF_ELIGIBLE_SOURCES), so a 10s x50 is bounded by physical tap rate, not
+// by minigame jackpots.
 export const BUFF_CONFIG = {
   buff_x3: { cost: 300, multiplier: 3, durationMs: 30_000 },
-  buff_x100: { cost: 1000, multiplier: 100, durationMs: 10_000 },
+  buff_x100: { cost: 1000, multiplier: 50, durationMs: 10_000 },
 } as const;
 
 // Close to the wheel's direct-point expected value, so a paid random play is
 // entertainment rather than a disguised 500-point penalty.
 export const TICKET_COST = 150;
 export const TICKET_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+// Per-user daily purchase cap (Bangkok day). The ticket loop is profitable
+// for a scripted player (max minigame rewards exceed TICKET_COST), so without
+// a cap it's an infinite score pump - this bounds it linearly per day.
+// Milestone/QTE free tickets don't go through buyTicket and are uncounted.
+export const TICKET_DAILY_LIMIT = 20;
 
 export function getCatalog() {
   return {
@@ -164,6 +176,23 @@ export async function buyTicket(
   input: { userId: string; ouid: string },
   db: Db,
 ) {
+  // Count-then-debit has the same bounded TOCTOU tolerance as
+  // friends.service.ts's slot check: a racing double-submit can land one
+  // ticket over the limit, never unboundedly many.
+  const [purchasedToday] = await db
+    .select({ n: count() })
+    .from(tables.shopRedemptions)
+    .where(
+      and(
+        eq(tables.shopRedemptions.userId, input.userId),
+        eq(tables.shopRedemptions.item, "minigame_ticket"),
+        gte(tables.shopRedemptions.createdAt, startOfBangkokDay()),
+      ),
+    );
+  if ((purchasedToday?.n ?? 0) >= TICKET_DAILY_LIMIT) {
+    throw new Error(`ซื้อตั๋วได้สูงสุด ${TICKET_DAILY_LIMIT} ใบต่อวัน วันนี้ครบแล้ว พรุ่งนี้มาใหม่นะ`);
+  }
+
   const gameType =
     TICKETED_GAME_TYPES[
       Math.floor(Math.random() * TICKETED_GAME_TYPES.length)

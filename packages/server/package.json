@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "scripts": {
     "check-types": "tsc --noEmit",
-    "test": "bun test services/minigame"
+    "test": "bun test services"
   },
   "devDependencies": {
     "@types/bun": "latest"

@@ -1,6 +1,6 @@
 import { and, eq, gt, gte, isNull, lte, or, sql } from "drizzle-orm";
 import { tables, type Db } from "@vidyafreshmen/db";
-import { TICKETED_GAME_TYPES } from "@vidyafreshmen/dto";
+import { BUFF_ELIGIBLE_SOURCES, TICKETED_GAME_TYPES } from "@vidyafreshmen/dto";
 
 // Auto-pops a free bonus minigame the first time a user's balance reaches or
 // crosses each of these totals - see checkMilestones below. Fixed by the
@@ -22,6 +22,12 @@ function logTransaction(event: "points_credit" | "points_debit", attrs: Record<s
 // Drizzle's callback-style db.transaction() is not available on D1. D1
 // batch() is transactional, while conditional INSERT/UPDATE statements remain
 // the exactly-once gates for flows that must inspect data between writes.
+
+// Exported for tests - pure predicate, single source of truth for which
+// sources a buff multiplier may touch.
+export function isBuffEligibleSource(source: string): boolean {
+  return (BUFF_ELIGIBLE_SOURCES as readonly string[]).includes(source);
+}
 
 export type CreditInput = {
   userId: string;
@@ -71,10 +77,18 @@ export async function creditPoints(db: Db, input: CreditInput): Promise<number> 
   }
   const ledgerRowId = claimed[0]!.id;
 
-  const [buff] = await db
-    .select()
-    .from(tables.activeBuffs)
-    .where(and(eq(tables.activeBuffs.userId, input.userId), gt(tables.activeBuffs.expiresAt, new Date())));
+  // Buffs only ever multiply shake pops (BUFF_ELIGIBLE_SOURCES) - fixed-value
+  // rewards (minigames, referrals, free claims, refunds) credit their base
+  // amount. Skipping the lookup entirely for ineligible sources also saves a
+  // D1 SELECT on every such credit.
+  const buff = isBuffEligibleSource(input.source)
+    ? (
+        await db
+          .select()
+          .from(tables.activeBuffs)
+          .where(and(eq(tables.activeBuffs.userId, input.userId), gt(tables.activeBuffs.expiresAt, new Date())))
+      )[0]
+    : undefined;
 
   const applied = buff ? input.amount * buff.multiplier : input.amount;
 
@@ -106,6 +120,7 @@ export async function creditPoints(db: Db, input: CreditInput): Promise<number> 
     appliedAmount: applied,
     duplicate: false,
     buffMultiplier: buff ? buff.multiplier : null,
+    buffApplied: !!buff,
     balanceBefore: before,
     balanceAfter: before + applied,
   });

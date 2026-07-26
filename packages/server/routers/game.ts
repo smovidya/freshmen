@@ -1,9 +1,10 @@
-import { submitPopSchema } from "@vidyafreshmen/dto";
+import { popTokenQuerySchema, submitPopSchema } from "@vidyafreshmen/dto";
 import { winnerLeaderboardCutoff } from "@vidyafreshmen/flags";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { requireAdmin, requireGameOn, requireStaff, requireUser, type Variables } from "../core";
 import * as gameService from "../services/game.service";
+import { verifyTurnstileToken } from "../turnstile";
 import { qteRouter } from "./qte";
 
 // Re-exported for existing importers (routers/minigame.ts) - the middleware
@@ -11,8 +12,24 @@ import { qteRouter } from "./qte";
 export { requireGameOn };
 
 export const gameRouter = new Hono<{ Variables: Variables }>()
-  .get("/pop-token", requireGameOn, async (c) => {
+  // Bot gate: bootstrapping a pop session requires a Turnstile pass in
+  // production. Tokens chained through /pop responses stay Turnstile-free, so
+  // an honest client verifies once per continuous session (and again after
+  // the 5-min token TTL forces a re-bootstrap); a headless farm bot has to
+  // solve a challenge every session. Staging/local skip - the widget/sitekey
+  // only exist on the production domain (same gate as registration).
+  .get("/pop-token", requireGameOn, zValidator("query", popTokenQuerySchema), async (c) => {
     const user = c.get("user")!;
+    if (c.get("isProduction")) {
+      const ok = await verifyTurnstileToken({
+        token: c.req.valid("query").turnstileToken,
+        secret: c.get("turnstileSecret"),
+        remoteIp: c.req.header("cf-connecting-ip") ?? undefined,
+      });
+      if (!ok) {
+        return c.json({ error: "ยืนยันตัวตนไม่สำเร็จ กรุณารีเฟรชหน้าเกม" }, 403);
+      }
+    }
     const { token, expiresAt } = await gameService.issuePopToken(user.id, c.get("db"));
     return c.json({ token, expiresAt });
   })

@@ -85,7 +85,9 @@
 			onclick={() => buyBuff('buff_x3')}
 			class="flex flex-col items-start gap-1 rounded-xl bg-[#fdf886] p-4 text-left text-[#9a6418] disabled:opacity-50"
 		>
-			<span class="text-base font-medium">แต้ม x3 เป็นเวลา 30 วินาที</span>
+			<span class="text-base font-medium">
+				แต้ม x{catalog.buffs.buff_x3.multiplier} เป็นเวลา 30 วินาที
+			</span>
 			<span class="text-sm">{catalog.buffs.buff_x3.cost} แต้ม</span>
 		</button>
 
@@ -105,7 +107,9 @@
 			onclick={() => buyBuff('buff_x100')}
 			class="flex flex-col items-start gap-1 rounded-xl bg-[#fdf886] p-4 text-left text-[#9a6418] disabled:opacity-50"
 		>
-			<span class="text-base font-medium">แต้ม x100 เป็นเวลา 10 วินาที</span>
+			<span class="text-base font-medium">
+				แต้ม x{catalog.buffs.buff_x100.multiplier} เป็นเวลา 10 วินาที
+			</span>
 			<span class="text-sm">{catalog.buffs.buff_x100.cost} แต้ม</span>
 		</button>
 	{/if}

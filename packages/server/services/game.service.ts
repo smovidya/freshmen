@@ -1,4 +1,4 @@
-import { eq, and, isNotNull, isNull, gt, lte, desc, sql } from "drizzle-orm";
+import { eq, and, isNotNull, isNull, gt, lte, ne, desc, sql } from "drizzle-orm";
 import { tables, type Db, type Tx } from "@vidyafreshmen/db";
 import type { groupPreferenceSchema } from "@vidyafreshmen/dto";
 import type z from "zod/v4";
@@ -40,11 +40,30 @@ async function logAnomaly(db: Db, input: { userId: string; type: string; detail?
 // Issues the next single-use token in the chain - called both to bootstrap
 // a fresh game session and after every accepted /pop request so the client
 // always has a token ready for its next flush.
+//
+// Single-active-client rule: issuing a token voids every other outstanding
+// (unconsumed, unexpired) token this user holds, so exactly one token chain -
+// one device/tab - is ever live. A second client's next flush fails token
+// validation and forces a re-bootstrap (which in production costs a fresh
+// Turnstile solve, and in turn kills the first client's chain) - two devices
+// can only steal the session back and forth, never pop in parallel.
 export async function issuePopToken(userId: string, db: Db) {
   const [row] = await db
     .insert(tables.popSessions)
     .values({ userId, expiresAt: new Date(Date.now() + POP_TOKEN_TTL_MS) })
     .returning({ token: tables.popSessions.token, expiresAt: tables.popSessions.expiresAt });
+
+  await db
+    .update(tables.popSessions)
+    .set({ consumedAt: new Date() })
+    .where(
+      and(
+        eq(tables.popSessions.userId, userId),
+        isNull(tables.popSessions.consumedAt),
+        ne(tables.popSessions.token, row!.token),
+      ),
+    );
+
   return row!;
 }
 

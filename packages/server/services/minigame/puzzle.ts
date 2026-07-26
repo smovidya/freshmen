@@ -10,6 +10,13 @@ import { startTicketedPlay } from "./tickets";
 const TARGET_RANGE = 50;
 const MAX_DISTANCE = Math.sqrt(2) * TARGET_RANGE;
 
+// Bot guard: a human has to visually align and drag before submitting - a
+// script replaying the target coordinates submits near-instantly. Same
+// server-clock-as-broad-guard idiom as precision.ts's duration check; the
+// play stays "started" on rejection so an honest fast player just retries
+// without losing the ticket.
+export const PUZZLE_MIN_PLAY_MS = 3_000;
+
 export function scoreForAccuracy(accuracy: number) {
   if (accuracy >= 100) return 1000;
   if (accuracy >= 90) return 500;
@@ -78,6 +85,7 @@ export async function submit(
       serverState: tables.minigamePlays.serverState,
       resultPayload: tables.minigamePlays.resultPayload,
       pointsAwarded: tables.minigamePlays.pointsAwarded,
+      startedAt: tables.minigamePlays.startedAt,
     })
     .from(tables.minigamePlays)
     .where(
@@ -107,6 +115,10 @@ export async function submit(
     return result;
   }
   if (play.status !== "started") throw new Error("การเล่นนี้ยังไม่พร้อมส่ง");
+
+  if (Date.now() - play.startedAt.getTime() < PUZZLE_MIN_PLAY_MS) {
+    throw new Error("เร็วเกินไป ค่อย ๆ เล็งก่อนแล้วส่งใหม่อีกครั้ง");
+  }
 
   const { targetX, targetY } = JSON.parse(play.serverState!) as {
     targetX: number;
