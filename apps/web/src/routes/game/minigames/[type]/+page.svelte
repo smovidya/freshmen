@@ -15,6 +15,13 @@
 	import WhackAMole from '$lib/components/game/arcade/whack-a-mole.svelte';
 	import BalloonPop from '$lib/components/game/arcade/balloon-pop.svelte';
 	import FruitSlice from '$lib/components/game/arcade/fruit-slice.svelte';
+	import SimonSays from '$lib/components/game/arcade/simon-says.svelte';
+	import MemoryMatch from '$lib/components/game/arcade/memory-match.svelte';
+	import StackTower from '$lib/components/game/arcade/stack-tower.svelte';
+	import ColorSwitch from '$lib/components/game/arcade/color-switch.svelte';
+	import FlappyRunner from '$lib/components/game/arcade/flappy-runner.svelte';
+	import SlingshotToss from '$lib/components/game/arcade/slingshot-toss.svelte';
+	import Merge2048 from '$lib/components/game/arcade/merge-2048.svelte';
 
 	let { data } = $props();
 	const client = apiClient();
@@ -106,7 +113,14 @@
 	const ARCADE_COMPONENTS: Partial<Record<ArcadeGameType, typeof WhackAMole>> = {
 		whack_a_mole: WhackAMole,
 		balloon_pop: BalloonPop,
-		fruit_slice: FruitSlice
+		fruit_slice: FruitSlice,
+		simon_says: SimonSays,
+		memory_match: MemoryMatch,
+		stack_tower: StackTower,
+		color_switch: ColorSwitch,
+		flappy_runner: FlappyRunner,
+		slingshot_toss: SlingshotToss,
+		merge_2048: Merge2048
 	};
 	const ARCADE_TITLES: Record<ArcadeGameType, string> = {
 		fruit_slice: 'สไลซ์กระเป๋าเดินทาง',
