@@ -37,7 +37,7 @@ export class GameAPIClient {
 	}
 
 	// Returns the amount the server actually credited (post token check,
-	// elapsed-time throttle, and buff-cap accounting) plus the next token in
+	// elapsed-time throttle and active-buff accounting) plus the next token in
 	// the chain - null on request failure (invalid/expired token included),
 	// so the caller can reconcile its optimistic display instead of trusting
 	// it and knows to fetch a fresh token before retrying.
@@ -67,7 +67,7 @@ export class GamePopper {
 	flushIntervalId!: ReturnType<typeof setInterval>;
 	// Raw tap count since last flush - this (not the multiplied display value)
 	// is what gets sent to the server, since the server applies its own
-	// authoritative multiplier/cap accounting (packages/server/services/points.service.ts's
+	// authoritative multiplier accounting (packages/server/services/points.service.ts's
 	// creditPoints). Multiplying here too would double-apply the buff.
 	rawBatchedCount: number = $state(0);
 	#serverCount = $state(0);
@@ -175,7 +175,7 @@ export class GamePopper {
 			const multiplierAtFlush = untrack(() => this.multiplier);
 			const baseServerCount = untrack(() => this.#serverCount);
 			// Optimistic: assumes the server applies the full multiplier (true
-			// whenever the buff isn't at its cap yet and the throttle isn't hit)
+			// whenever a buff is active and the throttle isn't hit)
 			// so the number doesn't dip while the request is in flight.
 			this.#serverCount = baseServerCount + batched * multiplierAtFlush;
 			this.rawBatchedCount = 0;
@@ -185,8 +185,8 @@ export class GamePopper {
 			// fetch next time (e.g. this one was rejected as invalid/expired).
 			this.#popToken = result?.nextToken ?? null;
 
-			// Server is authoritative - if the elapsed-time throttle or buff cap
-			// granted less than the optimistic guess (or the request failed
+			// Server is authoritative - if the elapsed-time throttle granted
+			// less than the optimistic guess (or the request failed
 			// outright), correct down now instead of leaving an inflated number
 			// until the next balance poll silently catches it.
 			const trueServerCount = baseServerCount + (result?.applied ?? 0);

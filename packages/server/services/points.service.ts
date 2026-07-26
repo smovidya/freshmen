@@ -45,13 +45,10 @@ export type CreditInput = {
 //
 // Idempotency claim happens FIRST, via a placeholder (delta: 0) ledger row
 // inserted with onConflictDoNothing - that single atomic INSERT is what
-// decides "new event or duplicate", before active_buffs is touched at all.
-// A retried/duplicate (source, refId) loses that race, returns 0 immediately,
-// and never mutates grantedAmount - only the confirmed-unique winner
-// continues on to compute the buff-multiplied amount and back-fill this
-// row's real delta. (Previously the buff update ran before this check, so a
-// retry could consume buff cap headroom for a credit that then got rejected
-// as a duplicate - balance/buff drift with no corresponding real credit.)
+// decides "new event or duplicate". A retried/duplicate (source, refId)
+// loses that race and returns 0 immediately; only the confirmed-unique
+// winner continues on to compute the buff-multiplied amount and back-fill
+// this row's real delta.
 export async function creditPoints(db: Db, input: CreditInput): Promise<number> {
   const claimed = await db
     .insert(tables.pointsLedger)
@@ -85,19 +82,7 @@ export async function creditPoints(db: Db, input: CreditInput): Promise<number> 
     .from(tables.activeBuffs)
     .where(and(eq(tables.activeBuffs.userId, input.userId), gt(tables.activeBuffs.expiresAt, new Date())));
 
-  let applied = input.amount;
-  if (buff && buff.grantedAmount < buff.capAmount) {
-    applied = Math.min(input.amount * buff.multiplier, buff.capAmount - buff.grantedAmount);
-    // Optimistic lock on grantedAmount - if another concurrent credit already
-    // moved it since we read it, back off to unbuffered rather than risk a
-    // lost update (double-applying the multiplier headroom).
-    const updated = await db
-      .update(tables.activeBuffs)
-      .set({ grantedAmount: buff.grantedAmount + applied })
-      .where(and(eq(tables.activeBuffs.id, buff.id), eq(tables.activeBuffs.grantedAmount, buff.grantedAmount)))
-      .returning({ id: tables.activeBuffs.id });
-    if (updated.length === 0) applied = input.amount;
-  }
+  const applied = buff ? input.amount * buff.multiplier : input.amount;
 
   const before = await getBalance(input.userId, db);
 
@@ -332,7 +317,5 @@ export async function getActiveBuff(userId: string, db: Db) {
     buffType: buff.buffType,
     multiplier: buff.multiplier,
     expiresAt: buff.expiresAt,
-    grantedAmount: buff.grantedAmount,
-    capAmount: buff.capAmount,
   };
 }

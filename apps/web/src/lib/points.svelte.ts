@@ -4,8 +4,6 @@ export type ActiveBuff = {
 	buffType: string;
 	multiplier: number;
 	expiresAt: string;
-	grantedAmount: number;
-	capAmount: number;
 } | null;
 
 export type ClaimStatus = {
@@ -21,7 +19,10 @@ export class PointsAPIClient {
 	#client = apiClient();
 
 	async getSelf() {
-		return call(this.#client.points.self.$get()) as Promise<{ balance: number; activeBuff: ActiveBuff }>;
+		return call(this.#client.points.self.$get()) as Promise<{
+			balance: number;
+			activeBuff: ActiveBuff;
+		}>;
 	}
 
 	async getClaimStatus() {

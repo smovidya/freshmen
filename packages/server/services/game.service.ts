@@ -77,7 +77,7 @@ export type AddPopResult = { applied: number; nextToken: string };
 // shown here and on the leaderboard below.
 //
 // Returns the amount actually credited (after the token check, the
-// elapsed-time throttle, and creditPoints' own buff-cap accounting) plus the
+// elapsed-time throttle, and creditPoints' own active-buff accounting) plus the
 // next chained token, so the caller can tell the client the truth instead of
 // it optimistically guessing and silently correcting later.
 export async function addPop(

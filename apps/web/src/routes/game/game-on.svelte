@@ -1,5 +1,11 @@
 <script lang="ts">
-	import CrystalBall from '$lib/assets/game/crystal-ball.png';
+	import CentralBall from '$lib/assets/ci-2026/game/RN2026 game - 1.png';
+	import Group1Ball from '$lib/assets/ci-2026/game/group1.png';
+	import Group3Ball from '$lib/assets/ci-2026/game/group3.png';
+	import Group4Ball from '$lib/assets/ci-2026/game/group4.png';
+	import Group5Ball from '$lib/assets/ci-2026/game/group5.png';
+	import Group6Ball from '$lib/assets/ci-2026/game/group6.png';
+	import Group7Ball from '$lib/assets/ci-2026/game/group7.png';
 	import PopSound from '$lib/assets/game/pop-cat-original-meme_3ObdYkj.mp3';
 	import { GameAPIClient, GamePopper } from '$lib/game.svelte';
 	import { onMount, untrack } from 'svelte';
@@ -67,6 +73,18 @@
 		studentOuid = $bindable(''),
 		client
 	}: { studentGroup: string; studentOuid: string; client: GameAPIClient } = $props();
+
+	const BALL_BY_GROUP: Record<string, string> = {
+		'1': Group1Ball,
+		'3': Group3Ball,
+		'4': Group4Ball,
+		'5': Group5Ball,
+		'6': Group6Ball,
+		'7': Group7Ball,
+		central: CentralBall,
+		'central-staff': CentralBall
+	};
+	const ballImage = $derived(BALL_BY_GROUP[studentGroup] ?? CentralBall);
 
 	const popper = untrack(() => new GamePopper(client));
 
@@ -227,16 +245,24 @@
 					class:scale-95={poping}
 					style="transition: transform 0.15s ease-out;"
 				>
-					<div
-						class="crystal-ball size-full bg-contain bg-center bg-no-repeat"
+					<img
+						src={ballImage}
+						alt=""
+						aria-hidden="true"
+						width="300"
+						height="300"
+						fetchpriority="high"
+						draggable="false"
+						class="crystal-ball size-full object-contain"
 						class:shake-feedback={poping}
-						style="background-image: url({CrystalBall});"
-					></div>
+					/>
 					<span class="sr-only">เขย่าลูกแก้ว</span>
 				</button>
 
 				{#if needsMotionPermission}
-					<p class="text-center text-sm text-[#62748e]">แตะลูกแก้วเพื่ออนุญาตให้ใช้เซนเซอร์การเคลื่อนไหว</p>
+					<p class="text-center text-sm text-[#62748e]">
+						แตะลูกแก้วเพื่ออนุญาตให้ใช้เซนเซอร์การเคลื่อนไหว
+					</p>
 				{/if}
 
 				{#if dev}

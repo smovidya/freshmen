@@ -8,8 +8,8 @@ import { creditPoints, debitPoints } from "./points.service";
 // statements with compensating actions on failure, not a rollback block.
 
 export const BUFF_CONFIG = {
-  buff_x3: { cost: 300, multiplier: 3, durationMs: 30_000, cap: 450 },
-  buff_x100: { cost: 1000, multiplier: 100, durationMs: 10_000, cap: 5000 },
+  buff_x3: { cost: 300, multiplier: 3, durationMs: 30_000 },
+  buff_x100: { cost: 1000, multiplier: 100, durationMs: 10_000 },
 } as const;
 
 export const TICKET_COST = 500;
@@ -48,11 +48,13 @@ export async function grantBuff(
     multiplier: config.multiplier,
     startedAt,
     expiresAt,
-    capAmount: config.cap,
+    // Kept as a legacy storage field so this change needs no production
+    // migration. Point credits no longer read or enforce this value.
+    capAmount: 0,
     sourcePurchaseId: input.sourcePurchaseId,
   });
 
-  return { buffType: input.buffType, multiplier: config.multiplier, expiresAt, capAmount: config.cap };
+  return { buffType: input.buffType, multiplier: config.multiplier, expiresAt };
 }
 
 export async function buyBuff(

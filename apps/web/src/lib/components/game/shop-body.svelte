@@ -13,11 +13,12 @@
 	// case this ever gets reused somewhere without one to share - shop is
 	// drawer-only now, there's no standalone /game/shop route anymore.
 	let { points: sharedPoints }: { points?: PointsStore } = $props();
-	const points = sharedPoints ?? new PointsStore();
-	const ownsPoints = !sharedPoints;
+	const fallbackPoints = new PointsStore();
+	const points = $derived(sharedPoints ?? fallbackPoints);
+	const ownsPoints = $derived(!sharedPoints);
 
 	type Catalog = {
-		buffs: Record<string, { cost: number; multiplier: number; durationMs: number; cap: number }>;
+		buffs: Record<string, { cost: number; multiplier: number; durationMs: number }>;
 		ticket: { cost: number; gameTypes: readonly string[] };
 	};
 
@@ -72,8 +73,7 @@
 		<p class="text-[32px] font-semibold text-black">{points.balance}</p>
 		{#if points.activeBuff}
 			<p class="mt-1 text-sm text-[#9a6418]">
-				บัฟ x{points.activeBuff.multiplier} ใช้งานอยู่ ({points.activeBuff.grantedAmount}/{points.activeBuff
-					.capAmount})
+				บัฟ x{points.activeBuff.multiplier} ใช้งานอยู่
 			</p>
 		{/if}
 	</div>
