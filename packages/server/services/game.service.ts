@@ -1,8 +1,18 @@
-import { eq, and, isNotNull, isNull, gt, lte, ne, desc, sql } from "drizzle-orm";
+import {
+  eq,
+  and,
+  isNotNull,
+  isNull,
+  gt,
+  lte,
+  ne,
+  desc,
+  sql,
+} from "drizzle-orm";
 import { tables, type Db, type Tx } from "@vidyafreshmen/db";
 import type { groupPreferenceSchema } from "@vidyafreshmen/dto";
 import type z from "zod/v4";
-import { availableGroups, user } from '@vidyafreshmen/db/schemas';
+import { availableGroups, user } from "@vidyafreshmen/db/schemas";
 import type { SimpleCache } from "../core";
 import { creditPoints, getBalance } from "./points.service";
 
@@ -28,7 +38,10 @@ const POP_TOKEN_TTL_MS = 5 * 60 * 1000;
 // enough for staff to attribute suspicious score growth to a specific ouid
 // after the fact. Logging must never break the actual gameplay path, so
 // failures here are swallowed.
-async function logAnomaly(db: Db, input: { userId: string; type: string; detail?: unknown }) {
+export async function logAnomaly(
+  db: Db,
+  input: { userId: string; type: string; detail?: unknown },
+) {
   try {
     await db.insert(tables.anomalyEvents).values({
       userId: input.userId,
@@ -54,7 +67,10 @@ export async function issuePopToken(userId: string, db: Db) {
   const [row] = await db
     .insert(tables.popSessions)
     .values({ userId, expiresAt: new Date(Date.now() + POP_TOKEN_TTL_MS) })
-    .returning({ token: tables.popSessions.token, expiresAt: tables.popSessions.expiresAt });
+    .returning({
+      token: tables.popSessions.token,
+      expiresAt: tables.popSessions.expiresAt,
+    });
 
   await db
     .update(tables.popSessions)
@@ -75,7 +91,11 @@ export async function issuePopToken(userId: string, db: Db) {
 // means the token was missing, already consumed (replay), expired, or
 // someone else's - all treated identically as "invalid" to the caller so a
 // scripted replay attempt learns nothing about which.
-async function consumePopToken(userId: string, token: string, db: Db): Promise<boolean> {
+async function consumePopToken(
+  userId: string,
+  token: string,
+  db: Db,
+): Promise<boolean> {
   const updated = await db
     .update(tables.popSessions)
     .set({ consumedAt: new Date() })
@@ -107,7 +127,9 @@ const MOBILE_UA_PATTERN = /Mobi|Android|iPhone|iPad|iPod/i;
 
 function looksLikeDesktopClient(userAgent: string | undefined | null): boolean {
   if (!userAgent) return false;
-  return DESKTOP_UA_PATTERN.test(userAgent) && !MOBILE_UA_PATTERN.test(userAgent);
+  return (
+    DESKTOP_UA_PATTERN.test(userAgent) && !MOBILE_UA_PATTERN.test(userAgent)
+  );
 }
 
 export type AddPopResult = { applied: number; nextToken: string };
@@ -131,12 +153,20 @@ export async function addPop(
 ): Promise<AddPopResult> {
   const tokenValid = await consumePopToken(userId, token, db);
   if (!tokenValid) {
-    await logAnomaly(db, { userId, type: "pop_token_invalid", detail: { token } });
+    await logAnomaly(db, {
+      userId,
+      type: "pop_token_invalid",
+      detail: { token },
+    });
     throw new Error("เซสชันหมดอายุ กรุณาลองใหม่อีกครั้ง");
   }
 
   if (looksLikeDesktopClient(userAgent)) {
-    await logAnomaly(db, { userId, type: "pop_desktop_client", detail: { userAgent } });
+    await logAnomaly(db, {
+      userId,
+      type: "pop_desktop_client",
+      detail: { userAgent },
+    });
     const { token: nextToken } = await issuePopToken(userId, db);
     return { applied: 0, nextToken };
   }
@@ -149,8 +179,13 @@ export async function addPop(
     .where(eq(tables.popRateLimits.userId, userId));
 
   const lastPopAt = existing?.lastPopAt ?? null;
-  const elapsedMs = lastPopAt ? now.getTime() - lastPopAt.getTime() : Number.MAX_SAFE_INTEGER;
-  const maxAllowed = Math.max(0, Math.ceil((elapsedMs / 1000) * MAX_TAPS_PER_SECOND));
+  const elapsedMs = lastPopAt
+    ? now.getTime() - lastPopAt.getTime()
+    : Number.MAX_SAFE_INTEGER;
+  const maxAllowed = Math.max(
+    0,
+    Math.ceil((elapsedMs / 1000) * MAX_TAPS_PER_SECOND),
+  );
   const allowedAmount = Math.min(requestedAmount, maxAllowed);
 
   if (allowedAmount < requestedAmount) {
@@ -176,7 +211,9 @@ export async function addPop(
     .onConflictDoUpdate({
       target: tables.popRateLimits.userId,
       set: { lastPopAt: now },
-      setWhere: lastPopAt ? eq(tables.popRateLimits.lastPopAt, lastPopAt) : undefined,
+      setWhere: lastPopAt
+        ? eq(tables.popRateLimits.lastPopAt, lastPopAt)
+        : undefined,
     })
     .returning({ userId: tables.popRateLimits.userId });
 
@@ -186,7 +223,12 @@ export async function addPop(
     return { applied: 0, nextToken };
   }
 
-  const applied = await creditPoints(db, { userId, ouid, amount: allowedAmount, source: "shake_pop" });
+  const applied = await creditPoints(db, {
+    userId,
+    ouid,
+    amount: allowedAmount,
+    source: "shake_pop",
+  });
   return { applied, nextToken };
 }
 
@@ -194,8 +236,16 @@ export async function getSelfScore(userId: string, db: Db | Tx) {
   return getBalance(userId, db as Db);
 }
 
-export type DisplayPlayer = { playerId: string; displayName: string; score: number };
-export type CentralGroupTotal = { groupNumber: string; groupLabel: string; totalScore: number };
+export type DisplayPlayer = {
+  playerId: string;
+  displayName: string;
+  score: number;
+};
+export type CentralGroupTotal = {
+  groupNumber: string;
+  groupLabel: string;
+  totalScore: number;
+};
 export type MyGroupLeaderboard = {
   ownGroup: { groupNumber: string; groupLabel: string; top10: DisplayPlayer[] };
   central: CentralGroupTotal[];
@@ -212,7 +262,11 @@ function resolveDisplayName(row: {
   subgroupNumber: number | null;
   staffNickname: string | null;
 }): string {
-  if (row.studentNickname && row.groupNumber != null && row.subgroupNumber != null) {
+  if (
+    row.studentNickname &&
+    row.groupNumber != null &&
+    row.subgroupNumber != null
+  ) {
     return `${row.studentNickname}#${row.groupNumber}${String(row.subgroupNumber).padStart(2, "0")}`;
   }
   return row.studentNickname ?? row.staffNickname ?? row.userName;
@@ -227,19 +281,29 @@ function resolveDisplayName(row: {
 // regardless of how many drawers are open.
 const LEADERBOARD_CACHE_TTL_SECONDS = 5;
 
-async function cached<T>(cache: SimpleCache, cacheKeyUrl: string, compute: () => Promise<T>): Promise<T> {
+async function cached<T>(
+  cache: SimpleCache,
+  cacheKeyUrl: string,
+  compute: () => Promise<T>,
+): Promise<T> {
   const hit = await cache.match(cacheKeyUrl);
   if (hit) return hit.json();
 
   const value = await compute();
   const response = new Response(JSON.stringify(value), {
-    headers: { "Content-Type": "application/json", "Cache-Control": `max-age=${LEADERBOARD_CACHE_TTL_SECONDS}` },
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": `max-age=${LEADERBOARD_CACHE_TTL_SECONDS}`,
+    },
   });
   await cache.put(cacheKeyUrl, response);
   return value;
 }
 
-async function computeOwnGroupTop10(groupNumber: string, db: Db): Promise<DisplayPlayer[]> {
+async function computeOwnGroupTop10(
+  groupNumber: string,
+  db: Db,
+): Promise<DisplayPlayer[]> {
   const rows = await db
     .select({
       playerId: user.id,
@@ -253,13 +317,20 @@ async function computeOwnGroupTop10(groupNumber: string, db: Db): Promise<Displa
     .from(tables.pointsBalances)
     .innerJoin(user, eq(user.id, tables.pointsBalances.userId))
     .leftJoin(tables.students, eq(tables.students.email, user.email))
-    .leftJoin(tables.studentGroup, eq(tables.studentGroup.studentId, tables.students.id))
+    .leftJoin(
+      tables.studentGroup,
+      eq(tables.studentGroup.studentId, tables.students.id),
+    )
     .leftJoin(tables.staffs, eq(tables.staffs.userId, user.id))
     .where(eq(user.group, groupNumber))
     .orderBy(desc(tables.pointsBalances.balance))
     .limit(10);
 
-  return rows.map((row) => ({ playerId: row.playerId, displayName: resolveDisplayName(row), score: row.score }));
+  return rows.map((row) => ({
+    playerId: row.playerId,
+    displayName: resolveDisplayName(row),
+    score: row.score,
+  }));
 }
 
 // LEFT JOIN from availableGroups (not starting from pointsBalances) so a
@@ -268,14 +339,22 @@ async function computeOwnGroupTop10(groupNumber: string, db: Db): Promise<Displa
 async function computeCentralBoard(db: Db): Promise<CentralGroupTotal[]> {
   const totalScore = sql<number>`coalesce(sum(${tables.pointsBalances.balance}), 0)`;
   const rows = await db
-    .select({ groupNumber: availableGroups.number, groupLabel: availableGroups.name, totalScore: totalScore.as("totalScore") })
+    .select({
+      groupNumber: availableGroups.number,
+      groupLabel: availableGroups.name,
+      totalScore: totalScore.as("totalScore"),
+    })
     .from(availableGroups)
     .leftJoin(user, eq(user.group, availableGroups.number))
     .leftJoin(tables.pointsBalances, eq(tables.pointsBalances.userId, user.id))
     .groupBy(availableGroups.number)
     .orderBy(desc(totalScore));
 
-  return rows.map((row) => ({ groupNumber: row.groupNumber, groupLabel: row.groupLabel, totalScore: row.totalScore }));
+  return rows.map((row) => ({
+    groupNumber: row.groupNumber,
+    groupLabel: row.groupLabel,
+    totalScore: row.totalScore,
+  }));
 }
 
 // The real airline numbers (mirrors packages/db/seed-available-groups.sql and
@@ -286,7 +365,10 @@ async function computeCentralBoard(db: Db): Promise<CentralGroupTotal[]> {
 // e.g. the legacy "central" duplicate observed on staging - off both boards
 // automatically.
 const AIRLINE_GROUP_NUMBERS = new Set(["1", "3", "4", "5", "6", "7"]);
-const PUBLIC_SCOREBOARD_GROUP_NUMBERS = new Set([...AIRLINE_GROUP_NUMBERS, "central-staff"]);
+const PUBLIC_SCOREBOARD_GROUP_NUMBERS = new Set([
+  ...AIRLINE_GROUP_NUMBERS,
+  "central-staff",
+]);
 
 export type Scoreboard = { groups: CentralGroupTotal[] };
 
@@ -294,18 +376,35 @@ export type Scoreboard = { groups: CentralGroupTotal[] };
 // the same cached central-board computation and cache entry the authenticated
 // leaderboard drawer already populates, so this adds no extra D1 load beyond
 // what the drawer already causes.
-export async function getScoreboard(db: Db, cache: SimpleCache): Promise<Scoreboard> {
-  const central = await cached(cache, "https://internal.cache/game/leaderboard/central", () => computeCentralBoard(db));
-  return { groups: central.filter((g) => PUBLIC_SCOREBOARD_GROUP_NUMBERS.has(g.groupNumber)) };
+export async function getScoreboard(
+  db: Db,
+  cache: SimpleCache,
+): Promise<Scoreboard> {
+  const central = await cached(
+    cache,
+    "https://internal.cache/game/leaderboard/central",
+    () => computeCentralBoard(db),
+  );
+  return {
+    groups: central.filter((g) =>
+      PUBLIC_SCOREBOARD_GROUP_NUMBERS.has(g.groupNumber),
+    ),
+  };
 }
 
 // Admin scoreboard drill-down: top 10 of any group (auth enforced in
 // routers/game.ts). Reuses the exact per-group cache entry the members' own
 // leaderboard drawer populates, so the projector polling this adds no extra
 // D1 load beyond one read per group per 5s TTL window.
-export async function getGroupTop10ForAdmin(groupNumber: string, db: Db, cache: SimpleCache): Promise<DisplayPlayer[]> {
-  return cached(cache, `https://internal.cache/game/leaderboard/group/${encodeURIComponent(groupNumber)}`, () =>
-    computeOwnGroupTop10(groupNumber, db),
+export async function getGroupTop10ForAdmin(
+  groupNumber: string,
+  db: Db,
+  cache: SimpleCache,
+): Promise<DisplayPlayer[]> {
+  return cached(
+    cache,
+    `https://internal.cache/game/leaderboard/group/${encodeURIComponent(groupNumber)}`,
+    () => computeOwnGroupTop10(groupNumber, db),
   );
 }
 
@@ -314,16 +413,29 @@ export async function getGroupTop10ForAdmin(groupNumber: string, db: Db, cache: 
 // computeOwnGroupTop10 itself, not client-side filtering. The central board
 // has no such restriction (aggregate totals only, not individual-privacy-
 // sensitive).
-export async function getMyGroupLeaderboard(groupNumber: string, db: Db, cache: SimpleCache): Promise<MyGroupLeaderboard> {
+export async function getMyGroupLeaderboard(
+  groupNumber: string,
+  db: Db,
+  cache: SimpleCache,
+): Promise<MyGroupLeaderboard> {
   const [top10, central] = await Promise.all([
-    cached(cache, `https://internal.cache/game/leaderboard/group/${encodeURIComponent(groupNumber)}`, () =>
-      computeOwnGroupTop10(groupNumber, db),
+    cached(
+      cache,
+      `https://internal.cache/game/leaderboard/group/${encodeURIComponent(groupNumber)}`,
+      () => computeOwnGroupTop10(groupNumber, db),
     ),
-    cached(cache, "https://internal.cache/game/leaderboard/central", () => computeCentralBoard(db)),
+    cached(cache, "https://internal.cache/game/leaderboard/central", () =>
+      computeCentralBoard(db),
+    ),
   ]);
 
-  const ownGroupLabel = central.find((g) => g.groupNumber === groupNumber)?.groupLabel ?? groupNumber;
-  return { ownGroup: { groupNumber, groupLabel: ownGroupLabel, top10 }, central };
+  const ownGroupLabel =
+    central.find((g) => g.groupNumber === groupNumber)?.groupLabel ??
+    groupNumber;
+  return {
+    ownGroup: { groupNumber, groupLabel: ownGroupLabel, top10 },
+    central,
+  };
 }
 
 export type DailyTopPlayer = {
@@ -350,7 +462,10 @@ export type DailyGroupTop10 = { groupNumber: string; top10: DailyTopPlayer[] };
 // bucketed in JS. Rows arrive score-descending, so the first 10 seen per
 // group are that group's top 10. Staff-only and per-view, so the full scan
 // is acceptable; don't wire this into anything polled.
-export async function getDailyTop10PerGroup(cutoffAt: Date, db: Db | Tx): Promise<DailyGroupTop10[]> {
+export async function getDailyTop10PerGroup(
+  cutoffAt: Date,
+  db: Db | Tx,
+): Promise<DailyGroupTop10[]> {
   const scoreSum = sql<number>`sum(${tables.pointsLedger.delta})`;
 
   const rows = await db
@@ -368,8 +483,13 @@ export async function getDailyTop10PerGroup(cutoffAt: Date, db: Db | Tx): Promis
     .from(tables.pointsLedger)
     .innerJoin(user, eq(user.id, tables.pointsLedger.userId))
     .leftJoin(tables.students, eq(tables.students.email, user.email))
-    .leftJoin(tables.studentGroup, eq(tables.studentGroup.studentId, tables.students.id))
-    .where(and(isNotNull(user.group), lte(tables.pointsLedger.createdAt, cutoffAt)))
+    .leftJoin(
+      tables.studentGroup,
+      eq(tables.studentGroup.studentId, tables.students.id),
+    )
+    .where(
+      and(isNotNull(user.group), lte(tables.pointsLedger.createdAt, cutoffAt)),
+    )
     .groupBy(user.id)
     .orderBy(desc(scoreSum));
 
@@ -403,7 +523,10 @@ export async function getDailyTop10PerGroup(cutoffAt: Date, db: Db | Tx): Promis
 
 // Final winner view is airline-only: staff pseudo-groups may participate in
 // gameplay but are not part of the festival competition.
-export async function getWinnerTop10PerAirline(cutoffAt: Date, db: Db | Tx): Promise<DailyGroupTop10[]> {
+export async function getWinnerTop10PerAirline(
+  cutoffAt: Date,
+  db: Db | Tx,
+): Promise<DailyGroupTop10[]> {
   const groups = await getDailyTop10PerGroup(cutoffAt, db);
   return groups.filter((group) => AIRLINE_GROUP_NUMBERS.has(group.groupNumber));
 }
@@ -421,7 +544,9 @@ export type AnomalyUserSummary = {
 // Admin anti-cheat report: per-user rollup of anomaly_events (invalid/replayed
 // pop tokens, rate clamps), worst offenders first. Aggregated per (user, type)
 // in SQL, folded to one row per user in JS.
-export async function getAnomalySummaries(db: Db): Promise<AnomalyUserSummary[]> {
+export async function getAnomalySummaries(
+  db: Db,
+): Promise<AnomalyUserSummary[]> {
   const eventCount = sql<number>`count(*)`;
   const lastAt = sql<number>`max(${tables.anomalyEvents.createdAt})`;
   const rows = await db
@@ -469,7 +594,10 @@ export type AnomalyEventRow = {
   createdAt: Date;
 };
 
-export async function getUserAnomalyEvents(userId: string, db: Db): Promise<AnomalyEventRow[]> {
+export async function getUserAnomalyEvents(
+  userId: string,
+  db: Db,
+): Promise<AnomalyEventRow[]> {
   return db
     .select({
       id: tables.anomalyEvents.id,
@@ -483,10 +611,14 @@ export async function getUserAnomalyEvents(userId: string, db: Db): Promise<Anom
     .limit(100);
 }
 
-export async function updateUserGroup(email: string, groupCode: string, db: Db | Tx) {
+export async function updateUserGroup(
+  email: string,
+  groupCode: string,
+  db: Db | Tx,
+) {
   const studentUser = await db.query.user.findFirst({
     where: eq(user?.email, email),
-  })
+  });
 
   if (studentUser?.group) {
     throw new Error("คุณมีกลุ่มอยู่แล้ว");
@@ -494,16 +626,16 @@ export async function updateUserGroup(email: string, groupCode: string, db: Db |
 
   const group = await db.query.availableGroups.findFirst({
     where: eq(availableGroups.joinGroupPassword, groupCode),
-  })
+  });
 
   if (!group) {
-    throw new Error("ไม่พบกลุ่มนี้")
+    throw new Error("ไม่พบกลุ่มนี้");
   }
 
   await db
     .update(user)
     .set({
-      group: group.number
+      group: group.number,
     })
-    .where(eq(user.email, email))
+    .where(eq(user.email, email));
 }

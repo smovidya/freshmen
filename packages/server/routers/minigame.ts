@@ -1,4 +1,6 @@
 import {
+  ARCADE_GAME_TYPES,
+  arcadeSubmitSchema,
   mysteryBoxOpenSchema,
   minigameStartSchema,
   precisionSubmitSchema,
@@ -17,6 +19,7 @@ import * as puzzle from "../services/minigame/puzzle";
 import * as precision from "../services/minigame/precision";
 import * as wheel from "../services/minigame/wheel";
 import * as mysteryBox from "../services/minigame/mystery-box";
+import * as arcade from "../services/minigame/arcade";
 import {
   grantDevTicket,
   listUnusedTickets,
@@ -25,6 +28,10 @@ import { requireTurnstile } from "../turnstile-gate";
 
 const devGrantTicketSchema = z.object({
   gameType: z.enum(TICKETED_GAME_TYPES),
+});
+
+const arcadeTypeParamSchema = z.object({
+  type: z.enum(ARCADE_GAME_TYPES),
 });
 
 export const minigameRouter = new Hono<{ Variables: Variables }>()
@@ -133,6 +140,52 @@ export const minigameRouter = new Hono<{ Variables: Variables }>()
       return c.json(
         await wheel.claim(
           { userId: user.id, ouid: user.ouid!, playToken },
+          c.get("db"),
+        ),
+      );
+    },
+  )
+  // Fun-first arcade batch (see plan) - one generic route pair for all ten
+  // game types instead of a bespoke pair each, mirroring arcade.ts's single
+  // generic service. requireTurnstile gates submit only, same as the three
+  // above (start awards nothing on its own).
+  .post(
+    "/arcade/:type/start",
+    requireGameOn,
+    zValidator("param", arcadeTypeParamSchema),
+    zValidator("json", minigameStartSchema),
+    async (c) => {
+      const user = c.get("user")!;
+      const { type } = c.req.valid("param");
+      const { playToken } = c.req.valid("json");
+      return c.json(
+        await arcade.start(
+          { userId: user.id, gameType: type, playToken },
+          c.get("db"),
+        ),
+      );
+    },
+  )
+  .post(
+    "/arcade/:type/submit",
+    requireGameOn,
+    zValidator("param", arcadeTypeParamSchema),
+    zValidator("query", turnstileQuerySchema),
+    requireTurnstile,
+    zValidator("json", arcadeSubmitSchema),
+    async (c) => {
+      const user = c.get("user")!;
+      const { type } = c.req.valid("param");
+      const { playToken, rawScore } = c.req.valid("json");
+      return c.json(
+        await arcade.submit(
+          {
+            userId: user.id,
+            ouid: user.ouid!,
+            gameType: type,
+            playToken,
+            rawScore,
+          },
           c.get("db"),
         ),
       );
