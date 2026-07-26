@@ -13,8 +13,7 @@
 	import confetti from 'canvas-confetti';
 	import { WHEEL_OUTCOMES, ARCADE_GAMES, type ArcadeGameType } from '@vidyafreshmen/dto';
 	import WhackAMole from '$lib/components/game/arcade/whack-a-mole.svelte';
-	import BalloonPop from '$lib/components/game/arcade/balloon-pop.svelte';
-	import FruitSlice from '$lib/components/game/arcade/fruit-slice.svelte';
+	import QuickMath from '$lib/components/game/arcade/quick-math.svelte';
 	import SimonSays from '$lib/components/game/arcade/simon-says.svelte';
 	import MemoryMatch from '$lib/components/game/arcade/memory-match.svelte';
 	import StackTower from '$lib/components/game/arcade/stack-tower.svelte';
@@ -112,8 +111,7 @@
 	// see plan) ---
 	const ARCADE_COMPONENTS: Partial<Record<ArcadeGameType, typeof WhackAMole>> = {
 		whack_a_mole: WhackAMole,
-		balloon_pop: BalloonPop,
-		fruit_slice: FruitSlice,
+		quick_math: QuickMath,
 		simon_says: SimonSays,
 		memory_match: MemoryMatch,
 		stack_tower: StackTower,
@@ -123,14 +121,13 @@
 		merge_2048: Merge2048
 	};
 	const ARCADE_TITLES: Record<ArcadeGameType, string> = {
-		fruit_slice: 'สไลซ์กระเป๋าเดินทาง',
+		quick_math: 'เลขไว',
 		whack_a_mole: 'ตีตุ่น',
-		flappy_runner: 'บินหลบสิ่งกีดขวาง',
+		flappy_runner: 'Flappy Bird',
 		merge_2048: 'รวมเลข 2048',
 		memory_match: 'จับคู่ความจำ',
 		stack_tower: 'ต่อตึกให้สูง',
 		color_switch: 'หลบสีให้ตรง',
-		balloon_pop: 'แตะบอลลูน',
 		slingshot_toss: 'สลิงช็อตเป้าเล็ง',
 		simon_says: 'จำลำดับตาม'
 	};
@@ -622,7 +619,6 @@
 				<section class="intro-card">
 					<div class="intro-icon">◎</div>
 					<p class="eyebrow">ALIGNMENT TEST</p>
-					<h2>ลากสัญลักษณ์ทึบ<br />ให้ซ้อนกับเงา</h2>
 					<p>ตำแหน่งเป้าหมายมองเห็นได้จริง คะแนนขึ้นกับระยะห่างตอนกดยืนยัน</p>
 					<button class="primary-button" disabled={submitting} onclick={startPuzzle}>
 						{submitting ? 'กำลังเตรียม...' : 'ใช้ตั๋วและเริ่มเกม'}

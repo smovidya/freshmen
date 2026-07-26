@@ -16,14 +16,13 @@ export const CLASSIC_TICKETED_GAME_TYPES = [
 // one generic start/submit implementation (services/minigame/arcade.ts)
 // instead of a bespoke service file each.
 export const ARCADE_GAME_TYPES = [
-  "fruit_slice",
+  "quick_math",
   "whack_a_mole",
   "flappy_runner",
   "merge_2048",
   "memory_match",
   "stack_tower",
   "color_switch",
-  "balloon_pop",
   "slingshot_toss",
   "simon_says",
 ] as const;
@@ -56,10 +55,14 @@ export type ArcadeGameConfig = {
 };
 
 export const ARCADE_GAMES: Record<ArcadeGameType, ArcadeGameConfig> = {
-  fruit_slice: {
-    roundDurationMs: 30_000,
-    maxRawScore: 200,
-    thresholds: { bronze: 15, silver: 30, gold: 50, perfect: 80 },
+  // Lives-based, not a pure fixed-round timer: 3 hearts, lose one whenever a
+  // falling problem reaches the floor unanswered, game ends at 0 hearts.
+  // roundDurationMs here is just the overall safety-net cap (see arcade.ts's
+  // submit-time clamp), not the normal end condition.
+  quick_math: {
+    roundDurationMs: 90_000,
+    maxRawScore: 60,
+    thresholds: { bronze: 5, silver: 10, gold: 18, perfect: 28 },
   },
   whack_a_mole: {
     roundDurationMs: 30_000,
@@ -90,11 +93,6 @@ export const ARCADE_GAMES: Record<ArcadeGameType, ArcadeGameConfig> = {
     roundDurationMs: 120_000,
     maxRawScore: 100,
     thresholds: { bronze: 8, silver: 18, gold: 30, perfect: 50 },
-  },
-  balloon_pop: {
-    roundDurationMs: 30_000,
-    maxRawScore: 100,
-    thresholds: { bronze: 10, silver: 20, gold: 32, perfect: 48 },
   },
   slingshot_toss: {
     roundDurationMs: 30_000,

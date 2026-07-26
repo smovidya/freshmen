@@ -28,14 +28,13 @@
 		precision: 'Beat Lock — แตะตามจังหวะ',
 		wheel: 'วงล้อสุ่ม',
 		mystery_box: 'กล่องสุ่มของรางวัล',
-		fruit_slice: 'สไลซ์กระเป๋าเดินทาง',
+		quick_math: 'เลขไว',
 		whack_a_mole: 'ตีตุ่น',
-		flappy_runner: 'บินหลบสิ่งกีดขวาง',
+		flappy_runner: 'Flappy Bird',
 		merge_2048: 'รวมเลข 2048',
 		memory_match: 'จับคู่ความจำ',
 		stack_tower: 'ต่อตึกให้สูง',
 		color_switch: 'หลบสีให้ตรง',
-		balloon_pop: 'แตะบอลลูน',
 		slingshot_toss: 'สลิงช็อตเป้าเล็ง',
 		simon_says: 'จำลำดับตาม'
 	};

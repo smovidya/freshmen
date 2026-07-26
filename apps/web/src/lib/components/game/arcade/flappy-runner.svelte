@@ -38,6 +38,9 @@
 	let passedCount = $state(0);
 	let remainingMs = $state(durationMs);
 	let ended = false;
+	// Bird hovers in place (no gravity, pipes hold still) until the first
+	// tap - so a fresh round doesn't drop the player before they're ready.
+	let flying = false;
 
 	let nextId = 0;
 	let rafId = 0;
@@ -74,6 +77,11 @@
 		if (!lastFrameAt) lastFrameAt = now;
 		const dt = Math.min(0.05, (now - lastFrameAt) / 1000);
 		lastFrameAt = now;
+
+		if (!flying) {
+			rafId = requestAnimationFrame(frame);
+			return;
+		}
 
 		velocity += GRAVITY * dt;
 		birdY += velocity * dt;
@@ -119,6 +127,7 @@
 
 	function hop() {
 		if (ended) return;
+		flying = true;
 		velocity = JUMP_VELOCITY;
 	}
 
