@@ -10,22 +10,27 @@
 
 	const GAME_LABELS: Record<string, string> = {
 		puzzle: 'เลื่อนภาพให้ตรง',
-		precision: 'กดเลขให้ได้ 10.00',
-		wheel: 'วงล้อสุ่ม',
-		quiz: 'ตอบคำถามไว ๆ',
+		precision: 'Beat Lock — แตะตามจังหวะ',
+		wheel: 'Lucky Flight — วงล้อรางวัล',
 		mystery_box: 'กล่องสุ่มของรางวัล'
 	};
 
 	type Ticket = { id: string; gameType: string; createdAt: string; expiresAt: string };
 
 	let tickets = $state<Ticket[] | null>(null);
+	let mysteryStatus = $state<{ played: number; remaining: number; limit: number } | null>(null);
 	let claiming = $state(false);
 	let nowTick = $state(Date.now());
 	let tickIntervalId: ReturnType<typeof setInterval>;
 
 	async function load() {
 		try {
-			tickets = await call(client.minigame.tickets.$get());
+			const [loadedTickets, loadedMysteryStatus] = await Promise.all([
+				call(client.minigame.tickets.$get()),
+				call(client.minigame.mystery_box.status.$get())
+			]);
+			tickets = loadedTickets;
+			mysteryStatus = loadedMysteryStatus;
 		} catch (e) {
 			toast.error('โหลดไอเทมไม่สำเร็จ');
 		}
@@ -37,7 +42,12 @@
 		tickIntervalId = setInterval(() => {
 			nowTick = Date.now();
 			const status = points.claimStatus;
-			if (status && !status.available && status.nextClaimAt && new Date(status.nextClaimAt).getTime() <= nowTick) {
+			if (
+				status &&
+				!status.available &&
+				status.nextClaimAt &&
+				new Date(status.nextClaimAt).getTime() <= nowTick
+			) {
 				points.refreshClaimStatus();
 			}
 		}, 200);
@@ -81,10 +91,14 @@
 </script>
 
 <div class="flex w-full flex-col gap-4">
-	<div class="flex w-full items-center justify-between gap-3 rounded-xl border border-[#cad5e2] bg-white p-4">
+	<div
+		class="flex w-full items-center justify-between gap-3 rounded-xl border border-[#cad5e2] bg-white p-4"
+	>
 		<div>
 			<p class="font-medium text-black">เช็คอินรับแต้มฟรี</p>
-			<p class="text-sm text-[#62748e]">รับ {points.claimStatus?.amount ?? 500} แต้ม ทุก 3 ชั่วโมง</p>
+			<p class="text-sm text-[#62748e]">
+				รับ {points.claimStatus?.amount ?? 500} แต้ม ทุก 3 ชั่วโมง
+			</p>
 		</div>
 		{#if points.claimStatus?.available}
 			<button
@@ -96,13 +110,36 @@
 				รับเลย
 			</button>
 		{:else if points.claimStatus}
-			<span class="shrink-0 rounded-full bg-black/5 px-3 py-2 text-sm font-medium tabular-nums text-black/60">
+			<span
+				class="shrink-0 rounded-full bg-black/5 px-3 py-2 text-sm font-medium text-black/60 tabular-nums"
+			>
 				{claimCountdownLabel}
 			</span>
 		{/if}
 	</div>
 
 	<div class="flex w-full flex-col gap-2">
+		<button
+			type="button"
+			disabled={!mysteryStatus || mysteryStatus.remaining === 0}
+			onclick={() => play('mystery_box')}
+			class="flex items-center justify-between rounded-xl border-2 border-black bg-[#56cfe1] p-3 text-left shadow-[3px_3px_0_#111827] transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-50"
+		>
+			<span>
+				<span class="block font-bold text-black">Daily Cargo</span>
+				<span class="block text-xs font-medium text-black/60">
+					{mysteryStatus
+						? `เหลือ ${mysteryStatus.remaining}/${mysteryStatus.limit} ครั้งวันนี้`
+						: 'กำลังตรวจสิทธิ์...'}
+				</span>
+			</span>
+			<span
+				class="rounded-full border border-black bg-white px-3 py-1 text-sm font-bold text-black"
+			>
+				{mysteryStatus?.remaining ? 'เปิด' : 'ครบแล้ว'}
+			</span>
+		</button>
+
 		{#if tickets && tickets.length === 0}
 			<p class="py-6 text-center text-sm text-[#62748e]">ยังไม่มีตั๋วมินิเกม ซื้อได้จากร้านค้า</p>
 		{/if}
@@ -112,8 +149,11 @@
 				onclick={() => play(ticket.gameType)}
 				class="flex items-center justify-between rounded-xl bg-white p-3 text-left shadow-sm"
 			>
-				<span class="font-medium text-black">{GAME_LABELS[ticket.gameType] ?? ticket.gameType}</span>
-				<span class="rounded-full bg-[#fdf886] px-3 py-1 text-sm font-medium text-[#9a6418]">เล่น</span>
+				<span class="font-medium text-black">{GAME_LABELS[ticket.gameType] ?? ticket.gameType}</span
+				>
+				<span class="rounded-full bg-[#fdf886] px-3 py-1 text-sm font-medium text-[#9a6418]"
+					>เล่น</span
+				>
 			</button>
 		{/each}
 	</div>

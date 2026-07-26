@@ -44,7 +44,7 @@
 			const pending = await pointsClient.claimPendingMilestones();
 			const milestone = pending[0];
 			if (milestone) {
-				toast.success(`🎉 คุณทำแต้มถึง ${milestone.threshold}! รับมินิเกมโบนัสฟรี!`);
+				toast.success(`คุณทำแต้มถึง ${milestone.threshold}! รับมินิเกมโบนัสฟรี!`);
 				await goto(`/game/minigames/${milestone.gameType}`);
 			}
 		} catch {

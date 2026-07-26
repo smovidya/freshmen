@@ -1,7 +1,6 @@
 import { and, desc, eq, gt } from "drizzle-orm";
 import { tables, type Db } from "@vidyafreshmen/db";
 import { TICKETED_GAME_TYPES } from "@vidyafreshmen/dto";
-import { grantFreeTicket } from "./minigame/tickets";
 
 // Visible countdown window client-side is 30s - a little slack on top so a
 // slow network round-trip on claim doesn't strand a user who tapped in time.
@@ -33,19 +32,31 @@ export async function scheduleQte(userId: string, db: Db): Promise<QteSession> {
   const [session] = await db
     .insert(tables.qteSessions)
     .values({ userId, expiresAt })
-    .returning({ id: tables.qteSessions.id, expiresAt: tables.qteSessions.expiresAt });
+    .returning({
+      id: tables.qteSessions.id,
+      expiresAt: tables.qteSessions.expiresAt,
+    });
 
   return session!;
 }
 
-// D1 has no transactions - the conditional UPDATE below is the entire
-// validity gate (belongs to this user, still pending, not expired). Zero
-// rows back covers "already claimed", "expired", and "never existed"
-// identically, same idiom as minigame_tickets/minigame_plays elsewhere.
-export async function claimQte(input: { userId: string; sessionId: string }, db: Db) {
-  const updated = await db
-    .update(tables.qteSessions)
-    .set({ status: "claimed" })
+// The read validates ownership and expiry; the D1 batch below commits the
+// claimed status and ticket together. sourcePurchaseId makes a lost response
+// replay-safe without granting a second ticket.
+export async function claimQte(
+  input: { userId: string; sessionId: string },
+  db: Db,
+) {
+  const sourcePurchaseId = `qte-${input.sessionId}`;
+  const [replayedTicket] = await db
+    .select({ gameType: tables.minigameTickets.gameType })
+    .from(tables.minigameTickets)
+    .where(eq(tables.minigameTickets.sourcePurchaseId, sourcePurchaseId));
+  if (replayedTicket) return { gameType: replayedTicket.gameType };
+
+  const [session] = await db
+    .select({ id: tables.qteSessions.id })
+    .from(tables.qteSessions)
     .where(
       and(
         eq(tables.qteSessions.id, input.sessionId),
@@ -53,14 +64,43 @@ export async function claimQte(input: { userId: string; sessionId: string }, db:
         eq(tables.qteSessions.status, "pending"),
         gt(tables.qteSessions.expiresAt, new Date()),
       ),
-    )
-    .returning({ id: tables.qteSessions.id });
+    );
 
-  if (updated.length === 0) {
+  if (!session) {
     throw new Error("หมดเวลาแล้ว ลองรอบถัดไปนะ");
   }
 
-  const gameType = TICKETED_GAME_TYPES[Math.floor(Math.random() * TICKETED_GAME_TYPES.length)]!;
-  await grantFreeTicket(input.userId, gameType, db);
+  const gameType =
+    TICKETED_GAME_TYPES[
+      Math.floor(Math.random() * TICKETED_GAME_TYPES.length)
+    ]!;
+  try {
+    await db.batch([
+      db
+        .update(tables.qteSessions)
+        .set({ status: "claimed" })
+        .where(
+          and(
+            eq(tables.qteSessions.id, input.sessionId),
+            eq(tables.qteSessions.userId, input.userId),
+            eq(tables.qteSessions.status, "pending"),
+            gt(tables.qteSessions.expiresAt, new Date()),
+          ),
+        ),
+      db.insert(tables.minigameTickets).values({
+        userId: input.userId,
+        gameType,
+        sourcePurchaseId,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      }),
+    ]);
+  } catch (error) {
+    const [wonRace] = await db
+      .select({ gameType: tables.minigameTickets.gameType })
+      .from(tables.minigameTickets)
+      .where(eq(tables.minigameTickets.sourcePurchaseId, sourcePurchaseId));
+    if (wonRace) return { gameType: wonRace.gameType };
+    throw error;
+  }
   return { gameType };
 }

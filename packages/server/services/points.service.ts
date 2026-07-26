@@ -19,15 +19,9 @@ function logTransaction(event: "points_credit" | "points_debit", attrs: Record<s
   console.log(JSON.stringify({ event, timestamp: new Date().toISOString(), ...attrs }));
 }
 
-// NOTE: D1 does not support drizzle's db.transaction() - the underlying
-// binding rejects BEGIN/SAVEPOINT at runtime ("please use
-// state.storage.transaction() instead"). Every function here is built from
-// a sequence of independently-atomic single statements instead: each
-// mutation that must be exactly-once or exactly-conditional uses a
-// conditional UPDATE/INSERT ... WHERE ... RETURNING as its own atomicity
-// gate (0 rows back = guard failed, safe to bail out), same idiom the rest
-// of this codebase already relies on (e.g. game.service.ts's onConflictDoUpdate
-// upserts) rather than cross-statement rollback.
+// Drizzle's callback-style db.transaction() is not available on D1. D1
+// batch() is transactional, while conditional INSERT/UPDATE statements remain
+// the exactly-once gates for flows that must inspect data between writes.
 
 export type CreditInput = {
   userId: string;
@@ -174,9 +168,8 @@ export type DebitInput = {
 // Buff multiplier never applies to spending - only to earning. The
 // idempotency insert happens first (cheap, always safe to attempt), then a
 // single conditional UPDATE does the affordability check + decrement
-// atomically (WHERE balance >= amount) - if that guard fails we compensate
-// by deleting the ledger row we just inserted, since there's no transaction
-// to roll it back for us.
+// atomically (WHERE balance >= amount) - if that guard fails we remove the
+// idempotency claim so a later attempt can succeed after the balance changes.
 export async function debitPoints(db: Db, input: DebitInput): Promise<void> {
   const inserted = await db
     .insert(tables.pointsLedger)

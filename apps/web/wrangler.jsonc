@@ -70,6 +70,7 @@
 		// <NAME> --env staging` - not committed here).
 		"staging": {
 			"name": "vidyafreshmen-staging",
+			"account_id": "e2069f9cc14d2fe64afc9d04ed6576bd",
 			"routes": [
 				{
 					"pattern": "staging.freshmen.vidyachula.org",

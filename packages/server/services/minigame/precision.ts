@@ -1,93 +1,197 @@
 import { and, eq } from "drizzle-orm";
 import { tables, type Db } from "@vidyafreshmen/db";
 import { creditPoints } from "../points.service";
-import { consumeTicket } from "./tickets";
+import { startTicketedPlay } from "./tickets";
 
-const TARGET_VALUE = 10.0;
-const CYCLE_MAX = 20;
-// 1 displayed unit = 1 real second - "หยุดที่ 10.00" means stop the counter
-// at 10 real seconds elapsed, a literal stopwatch, not an arbitrary fast
-// cycle. (Previously 3700ms/20 units = 185ms/unit, making even a generous
-// tolerance a few-millisecond window - unwinnable by human reaction time.)
-const CYCLE_PERIOD_MS = CYCLE_MAX * 1000;
+export const RHYTHM_CONFIG = {
+  bpm: 120,
+  beatIntervalMs: 500,
+  countInBeats: 4,
+  scoringBeats: 8,
+  hitWindowMs: 180,
+} as const;
 
-// Tiered like puzzle's accuracy bands - a single all-or-nothing ±0.02s
-// window (~20ms) is still far tighter than human stop-reaction precision;
-// these widths are generous enough to be winnable while still rewarding
-// genuine precision with the top prize.
-const REWARD_TIERS = [
-  { maxDiffSeconds: 0.05, points: 500 },
-  { maxDiffSeconds: 0.15, points: 300 },
-  { maxDiffSeconds: 0.35, points: 150 },
-  { maxDiffSeconds: 0.7, points: 50 },
-];
+type RhythmScore = {
+  points: number;
+  perfect: number;
+  great: number;
+  good: number;
+  misses: number;
+  averageOffsetMs: number;
+};
 
-function scoreForDiff(diffSeconds: number): number {
-  for (const tier of REWARD_TIERS) {
-    if (diffSeconds <= tier.maxDiffSeconds) return tier.points;
+export function scoreRhythmTaps(
+  tapOffsetsMs: number[],
+  config = RHYTHM_CONFIG,
+): RhythmScore {
+  const targets = Array.from(
+    { length: config.scoringBeats },
+    (_, index) => (config.countInBeats + index) * config.beatIntervalMs,
+  );
+  const available = tapOffsetsMs
+    .filter(Number.isFinite)
+    .map((value, index) => ({ value, index }));
+  const used = new Set<number>();
+  const result: RhythmScore = {
+    points: 0,
+    perfect: 0,
+    great: 0,
+    good: 0,
+    misses: 0,
+    averageOffsetMs: 0,
+  };
+  const offsets: number[] = [];
+
+  for (const target of targets) {
+    let best: { index: number; diff: number } | null = null;
+    for (const tap of available) {
+      if (used.has(tap.index)) continue;
+      const diff = Math.abs(tap.value - target);
+      if (!best || diff < best.diff) best = { index: tap.index, diff };
+    }
+
+    if (!best || best.diff > config.hitWindowMs) {
+      result.misses += 1;
+      continue;
+    }
+
+    used.add(best.index);
+    offsets.push(best.diff);
+    if (best.diff <= 50) {
+      result.perfect += 1;
+      result.points += 75;
+    } else if (best.diff <= 100) {
+      result.great += 1;
+      result.points += 50;
+    } else {
+      result.good += 1;
+      result.points += 25;
+    }
   }
-  return 0;
+
+  result.averageOffsetMs =
+    offsets.length === 0
+      ? config.hitWindowMs
+      : offsets.reduce((sum, value) => sum + value, 0) / offsets.length;
+  return result;
 }
 
-// The number the client displays is purely cosmetic - both client and server
-// derive it from the same deterministic formula, but only the server's own
-// elapsed-time measurement (its own clock, from request arrival) is ever
-// trusted for scoring. A client can't "report" a better elapsed time than
-// what actually passed on the wire.
-function valueAtElapsedMs(elapsedMs: number): number {
-  return (elapsedMs / (CYCLE_PERIOD_MS / CYCLE_MAX)) % CYCLE_MAX;
+export async function start(
+  input: { userId: string; playToken: string },
+  db: Db,
+) {
+  const play = await startTicketedPlay(
+    {
+      userId: input.userId,
+      gameType: "precision",
+      playToken: input.playToken,
+      serverState: JSON.stringify(RHYTHM_CONFIG),
+    },
+    db,
+  );
+  const config = JSON.parse(play.serverState!) as typeof RHYTHM_CONFIG;
+  return { playToken: play.playToken, ...config };
 }
 
-export async function start(userId: string, db: Db) {
-  const ticketId = await consumeTicket(userId, "precision", db);
-  const playToken = crypto.randomUUID();
-  const serverStartAt = Date.now();
-
-  await db.insert(tables.minigamePlays).values({
-    userId,
-    gameType: "precision",
-    ticketId,
-    playToken,
-    serverState: JSON.stringify({ serverStartAt }),
+async function ensurePrecisionCredit(
+  input: { userId: string; ouid: string; playId: string; points: number },
+  db: Db,
+) {
+  await creditPoints(db, {
+    userId: input.userId,
+    ouid: input.ouid,
+    amount: input.points,
+    source: "minigame:precision",
+    refId: input.playId,
   });
-
-  return { playToken, cyclePeriodMs: CYCLE_PERIOD_MS, cycleMax: CYCLE_MAX };
 }
 
-export async function submit(input: { userId: string; ouid: string; playToken: string }, db: Db) {
+export async function submit(
+  input: {
+    userId: string;
+    ouid: string;
+    playToken: string;
+    tapOffsetsMs: number[];
+    clientDurationMs: number;
+  },
+  db: Db,
+) {
   const [play] = await db
-    .update(tables.minigamePlays)
-    .set({ status: "submitted", submittedAt: new Date() })
+    .select({
+      id: tables.minigamePlays.id,
+      status: tables.minigamePlays.status,
+      serverState: tables.minigamePlays.serverState,
+      resultPayload: tables.minigamePlays.resultPayload,
+      startedAt: tables.minigamePlays.startedAt,
+    })
+    .from(tables.minigamePlays)
     .where(
       and(
         eq(tables.minigamePlays.playToken, input.playToken),
         eq(tables.minigamePlays.userId, input.userId),
+        eq(tables.minigamePlays.gameType, "precision"),
+      ),
+    );
+
+  if (!play) throw new Error("ไม่พบการเล่นนี้");
+  if (play.status === "submitted" && play.resultPayload) {
+    const result = JSON.parse(play.resultPayload) as RhythmScore;
+    await ensurePrecisionCredit(
+      {
+        userId: input.userId,
+        ouid: input.ouid,
+        playId: play.id,
+        points: result.points,
+      },
+      db,
+    );
+    return result;
+  }
+  if (play.status !== "started") throw new Error("การเล่นนี้ยังไม่พร้อมส่ง");
+
+  const config = JSON.parse(play.serverState!) as typeof RHYTHM_CONFIG;
+  const expectedDurationMs =
+    (config.countInBeats + config.scoringBeats) * config.beatIntervalMs;
+  const serverElapsedMs = Date.now() - play.startedAt.getTime();
+
+  // Exact grading is intentionally based on the same local clock that drove
+  // the metronome audio. Server wall time is only a broad anti-impossible-play
+  // guard, so mobile network latency cannot move a visible tap into a miss.
+  if (
+    input.clientDurationMs < expectedDurationMs - 1_000 ||
+    input.clientDurationMs > expectedDurationMs + 5_000 ||
+    serverElapsedMs + 2_500 < input.clientDurationMs
+  ) {
+    throw new Error("ข้อมูลจังหวะไม่สมบูรณ์ กรุณาลองด้วยตั๋วใบใหม่");
+  }
+
+  const result = scoreRhythmTaps(input.tapOffsetsMs, config);
+  const updated = await db
+    .update(tables.minigamePlays)
+    .set({
+      status: "submitted",
+      submittedAt: new Date(),
+      resultPayload: JSON.stringify(result),
+      pointsAwarded: result.points,
+    })
+    .where(
+      and(
+        eq(tables.minigamePlays.id, play.id),
         eq(tables.minigamePlays.status, "started"),
       ),
     )
-    .returning({ id: tables.minigamePlays.id, serverState: tables.minigamePlays.serverState });
+    .returning({ id: tables.minigamePlays.id });
 
-  if (!play) throw new Error("การเล่นนี้ไม่ถูกต้องหรือถูกส่งไปแล้ว");
+  if (updated.length === 0) return submit(input, db);
 
-  const { serverStartAt } = JSON.parse(play.serverState!) as { serverStartAt: number };
-  const elapsedMs = Date.now() - serverStartAt;
-  const value = valueAtElapsedMs(elapsedMs);
-  const diffSeconds = Math.abs(value - TARGET_VALUE);
-  const points = scoreForDiff(diffSeconds);
-  const hit = points > 0;
-
-  await db
-    .update(tables.minigamePlays)
-    .set({ resultPayload: JSON.stringify({ value, hit }), pointsAwarded: points })
-    .where(eq(tables.minigamePlays.id, play.id));
-
-  await creditPoints(db, {
-    userId: input.userId,
-    ouid: input.ouid,
-    amount: points,
-    source: "minigame:precision",
-    refId: play.id,
-  });
-
-  return { value, hit, points };
+  await ensurePrecisionCredit(
+    {
+      userId: input.userId,
+      ouid: input.ouid,
+      playId: play.id,
+      points: result.points,
+    },
+    db,
+  );
+  return result;
 }

@@ -25,9 +25,8 @@
 
 	const MINIGAME_LABELS: Record<(typeof GAME_TYPES)[number], string> = {
 		puzzle: 'เลื่อนภาพให้ตรง',
-		precision: 'กดเลขให้ได้ 10.00',
+		precision: 'Beat Lock — แตะตามจังหวะ',
 		wheel: 'วงล้อสุ่ม',
-		quiz: 'ตอบคำถามไว ๆ',
 		mystery_box: 'กล่องสุ่มของรางวัล'
 	};
 
@@ -118,7 +117,9 @@
 					<button
 						class={cn(
 							'rounded-t-md px-3 py-1.5 text-xs font-medium',
-							panel === 'minigames' ? 'bg-zinc-800 text-amber-400' : 'text-zinc-400 hover:text-zinc-200'
+							panel === 'minigames'
+								? 'bg-zinc-800 text-amber-400'
+								: 'text-zinc-400 hover:text-zinc-200'
 						)}
 						onclick={() => (panel = 'minigames')}
 					>
