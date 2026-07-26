@@ -158,7 +158,16 @@ export class GamePopper {
 	}
 
 	pop() {
-		this.rawBatchedCount += POINTS_PER_POP;
+		// +/-2 around POINTS_PER_POP so each shake lands on a slightly different
+		// number instead of always the same round 10 - purely a feel change
+		// (server-side throttle ceilings were already sized with headroom past
+		// this, no retuning needed there) and, since the client-reported amount
+		// was never trusted for anti-cheat purposes to begin with (the
+		// elapsed-time throttle in addPop is what actually bounds this), doesn't
+		// change the abuse story either way.
+		const variance = 2;
+		const amount = POINTS_PER_POP + Math.floor(Math.random() * (variance * 2 + 1)) - variance;
+		this.rawBatchedCount += amount;
 		localStorage.setItem('__pop_count', String(untrack(() => this.displaySelfCount)));
 	}
 
