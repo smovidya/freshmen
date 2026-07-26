@@ -4,6 +4,7 @@ import {
   precisionSubmitSchema,
   puzzleSubmitSchema,
   TICKETED_GAME_TYPES,
+  turnstileQuerySchema,
   wheelClaimSchema,
   wheelPlaySchema,
 } from "@vidyafreshmen/dto";
@@ -20,6 +21,7 @@ import {
   grantDevTicket,
   listUnusedTickets,
 } from "../services/minigame/tickets";
+import { requireTurnstile } from "../turnstile-gate";
 
 const devGrantTicketSchema = z.object({
   gameType: z.enum(TICKETED_GAME_TYPES),
@@ -59,9 +61,13 @@ export const minigameRouter = new Hono<{ Variables: Variables }>()
       );
     },
   )
+  // requireTurnstile gates every credit-producing submit/claim/open below -
+  // not the paired start/play calls, which award nothing on their own.
   .post(
     "/puzzle/submit",
     requireGameOn,
+    zValidator("query", turnstileQuerySchema),
+    requireTurnstile,
     zValidator("json", puzzleSubmitSchema),
     async (c) => {
       const user = c.get("user")!;
@@ -89,6 +95,8 @@ export const minigameRouter = new Hono<{ Variables: Variables }>()
   .post(
     "/precision/submit",
     requireGameOn,
+    zValidator("query", turnstileQuerySchema),
+    requireTurnstile,
     zValidator("json", precisionSubmitSchema),
     async (c) => {
       const user = c.get("user")!;
@@ -116,6 +124,8 @@ export const minigameRouter = new Hono<{ Variables: Variables }>()
   .post(
     "/wheel/claim",
     requireGameOn,
+    zValidator("query", turnstileQuerySchema),
+    requireTurnstile,
     zValidator("json", wheelClaimSchema),
     async (c) => {
       const user = c.get("user")!;
@@ -135,6 +145,8 @@ export const minigameRouter = new Hono<{ Variables: Variables }>()
   .post(
     "/mystery_box/open",
     requireGameOn,
+    zValidator("query", turnstileQuerySchema),
+    requireTurnstile,
     zValidator("json", mysteryBoxOpenSchema),
     async (c) => {
       const user = c.get("user")!;

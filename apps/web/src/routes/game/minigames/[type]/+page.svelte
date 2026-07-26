@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { apiClient, call, ApiError } from '$lib/api';
+	import { apiClient, call, callWithTurnstile, ApiError } from '$lib/api';
 	import { onDestroy, onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import { Toaster } from '$lib/components/ui/sonner';
+	import TurnstileWidget from '$lib/components/turnstile-widget.svelte';
 	import CrystalBall from '$lib/assets/game/crystal-ball.png';
 	import House from '@lucide/svelte/icons/house';
 	import Package from '@lucide/svelte/icons/package';
@@ -15,6 +16,15 @@
 	let { data } = $props();
 	const client = apiClient();
 	const gameType = $derived(data.gameType);
+
+	// Separate widget instance from game-on.svelte's - this is a different
+	// route, so Svelte component state isn't shared across the navigation.
+	// Gates puzzle/precision submit, wheel claim, mystery box open
+	// (routers/minigame.ts's requireTurnstile) - most calls never actually
+	// need a fresh solve since the server reuses a recent verification
+	// (turnstile-gate.ts), so this widget usually sits invisible/idle.
+	let turnstileWidget: TurnstileWidget | undefined = $state();
+	const takeTurnstileToken = () => turnstileWidget?.takeToken() ?? Promise.resolve(null);
 
 	type GameResult = {
 		title: string;
@@ -139,10 +149,13 @@
 		if (submitting) return;
 		submitting = true;
 		try {
-			const response = await call(
-				client.minigame.puzzle.submit.$post({
-					json: { playToken: puzzlePlayToken, x: offsetX, y: offsetY }
-				})
+			const response = await callWithTurnstile(
+				(turnstileToken) =>
+					client.minigame.puzzle.submit.$post({
+						json: { playToken: puzzlePlayToken, x: offsetX, y: offsetY },
+						query: { turnstileToken }
+					}),
+				takeTurnstileToken
 			);
 			if (response.points > 0) celebrate();
 			result = {
@@ -201,14 +214,17 @@
 		submitting = true;
 		rhythmPhase = 'finished';
 		try {
-			const response = await call(
-				client.minigame.precision.submit.$post({
-					json: {
-						playToken: rhythmPlayToken,
-						tapOffsetsMs: [...tapOffsetsMs],
-						clientDurationMs
-					}
-				})
+			const response = await callWithTurnstile(
+				(turnstileToken) =>
+					client.minigame.precision.submit.$post({
+						json: {
+							playToken: rhythmPlayToken,
+							tapOffsetsMs: [...tapOffsetsMs],
+							clientDurationMs
+						},
+						query: { turnstileToken }
+					}),
+				takeTurnstileToken
 			);
 			if (response.points > 0) celebrate();
 			result = {
@@ -334,8 +350,13 @@
 		if (submitting || !wheelPlayToken) return;
 		submitting = true;
 		try {
-			const reward = await call(
-				client.minigame.wheel.claim.$post({ json: { playToken: wheelPlayToken } })
+			const reward = await callWithTurnstile(
+				(turnstileToken) =>
+					client.minigame.wheel.claim.$post({
+						json: { playToken: wheelPlayToken },
+						query: { turnstileToken }
+					}),
+				takeTurnstileToken
 			);
 			wheelAwaitingClaim = false;
 			applyChanceResult(reward);
@@ -394,8 +415,13 @@
 			// Reveal animation runs before the request, so a time-limited buff
 			// begins only when the player can actually use it.
 			await new Promise((resolve) => setTimeout(resolve, 900));
-			const reward = await call(
-				client.minigame.mystery_box.open.$post({ json: { playToken: mysteryPlayToken } })
+			const reward = await callWithTurnstile(
+				(turnstileToken) =>
+					client.minigame.mystery_box.open.$post({
+						json: { playToken: mysteryPlayToken },
+						query: { turnstileToken }
+					}),
+				takeTurnstileToken
 			);
 			applyChanceResult(reward);
 		} catch (error) {
@@ -430,6 +456,10 @@
 <svelte:head>
 	<title>มินิเกม · ศึกเขย่าลูกแก้ว</title>
 </svelte:head>
+
+<!-- Interactive challenges (rare) render here so the player can tap them;
+     the usual managed pass is invisible. -->
+<TurnstileWidget bind:this={turnstileWidget} />
 
 <div class="min-h-screen w-full bg-[#f3f2fb] text-[#101828]">
 	<header class="mx-auto flex w-full max-w-md items-center gap-4 px-4 py-4">

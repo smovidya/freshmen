@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { apiClient, call, ApiError } from '$lib/api';
+	import { apiClient, call, callWithTurnstile, ApiError } from '$lib/api';
 	import { PointsStore } from '$lib/points.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -12,7 +12,17 @@
 	// balance. points stays optional (falls back to owning its own store) in
 	// case this ever gets reused somewhere without one to share - shop is
 	// drawer-only now, there's no standalone /game/shop route anymore.
-	let { points: sharedPoints }: { points?: PointsStore } = $props();
+	//
+	// getTurnstileToken reuses game-on.svelte's already-mounted widget (see
+	// its client.getTurnstileToken wiring) - ticket purchases are gated by
+	// requireTurnstile server-side (routers/shop.ts), but most calls never
+	// actually need a fresh solve since the server reuses a recent
+	// verification (turnstile-gate.ts). Falls back to a no-token resolver so
+	// this component still works if ever reused somewhere without a widget.
+	let {
+		points: sharedPoints,
+		getTurnstileToken = async () => null
+	}: { points?: PointsStore; getTurnstileToken?: () => Promise<string | null> } = $props();
 	const fallbackPoints = new PointsStore();
 	const points = $derived(sharedPoints ?? fallbackPoints);
 	const ownsPoints = $derived(!sharedPoints);
@@ -56,7 +66,10 @@
 		if (busy) return;
 		busy = true;
 		try {
-			const result = await call(client.shop.ticket.$post());
+			const result = await callWithTurnstile(
+				(turnstileToken) => client.shop.ticket.$post({ query: { turnstileToken } }),
+				getTurnstileToken
+			);
 			toast.success('ได้รับตั๋วมินิเกมแล้ว!');
 			await goto(`/game/minigames/${result.gameType}`);
 		} catch (e) {

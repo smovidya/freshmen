@@ -1,10 +1,11 @@
-import { popTokenQuerySchema, submitPopSchema } from "@vidyafreshmen/dto";
+import { submitPopSchema, turnstileQuerySchema } from "@vidyafreshmen/dto";
 import { winnerLeaderboardCutoff } from "@vidyafreshmen/flags";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { requireAdmin, requireGameOn, requireStaff, requireUser, type Variables } from "../core";
 import * as gameService from "../services/game.service";
 import { verifyTurnstileToken } from "../turnstile";
+import { recordTurnstileVerification } from "../turnstile-gate";
 import { qteRouter } from "./qte";
 
 // Re-exported for existing importers (routers/minigame.ts) - the middleware
@@ -18,7 +19,7 @@ export const gameRouter = new Hono<{ Variables: Variables }>()
   // the 5-min token TTL forces a re-bootstrap); a headless farm bot has to
   // solve a challenge every session. Staging/local skip - the widget/sitekey
   // only exist on the production domain (same gate as registration).
-  .get("/pop-token", requireGameOn, zValidator("query", popTokenQuerySchema), async (c) => {
+  .get("/pop-token", requireGameOn, zValidator("query", turnstileQuerySchema), async (c) => {
     const user = c.get("user")!;
     if (c.get("isProduction")) {
       const ok = await verifyTurnstileToken({
@@ -29,6 +30,10 @@ export const gameRouter = new Hono<{ Variables: Variables }>()
       if (!ok) {
         return c.json({ error: "ยืนยันตัวตนไม่สำเร็จ กรุณารีเฟรชหน้าเกม" }, 403);
       }
+      // Also feeds requireTurnstile's shared "recently verified" state
+      // (turnstile-gate.ts), so ticket purchases and minigame submits right
+      // after a pop session bootstraps don't demand a second challenge.
+      await recordTurnstileVerification(user.id, c.get("db"));
     }
     const { token, expiresAt } = await gameService.issuePopToken(user.id, c.get("db"));
     return c.json({ token, expiresAt });

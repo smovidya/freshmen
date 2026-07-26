@@ -13,8 +13,12 @@ export const submitPopSchema = z.object({
   token: z.string().uuid()
 });
 
-// Turnstile pass for bootstrapping a pop session - required (and verified)
-// in production only; staging/local have no widget so the field stays unset.
-export const popTokenQuerySchema = z.object({
+// Turnstile pass, accepted as a query param alongside whatever body schema a
+// route already has (pop-token bootstrap, ticket purchase, minigame submits)
+// - required (and verified) in production only; staging/local have no widget
+// so the field stays unset. Optional here because most calls don't need a
+// fresh solve at all (requireTurnstile in turnstile-gate.ts first checks
+// whether this user verified recently before demanding one).
+export const turnstileQuerySchema = z.object({
   turnstileToken: z.string().optional()
 });

@@ -210,3 +210,19 @@ export const shopDailyLimits = sqliteTable('shop_daily_limits', {
 export const shopDailyLimitsRelations = relations(shopDailyLimits, ({ one }) => ({
   user: one(user, { fields: [shopDailyLimits.userId], references: [user.id] }),
 }));
+
+// One row per user - the shared "proved human recently" signal behind
+// requireTurnstile (packages/server/turnstile-gate.ts). Every successful
+// Turnstile verification (pop-session bootstrap, ticket purchase, minigame
+// submit) upserts this row, and any of those gated actions can reuse a
+// recent-enough verification instead of demanding a fresh solve every time -
+// same idea as a browser session cookie, scoped to "recently proved you're
+// not a script" rather than "recently logged in".
+export const turnstileVerifications = sqliteTable('turnstile_verifications', {
+  userId: text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
+  verifiedAt: integer('verified_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const turnstileVerificationsRelations = relations(turnstileVerifications, ({ one }) => ({
+  user: one(user, { fields: [turnstileVerifications.userId], references: [user.id] }),
+}));

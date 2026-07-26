@@ -374,7 +374,10 @@
 			<Drawer.Title>ร้านค้า</Drawer.Title>
 		</Drawer.Header>
 		<div class="max-h-[70vh] overflow-y-auto px-4 pb-6">
-			<ShopBody {points} />
+			<ShopBody
+				{points}
+				getTurnstileToken={() => client.getTurnstileToken?.() ?? Promise.resolve(null)}
+			/>
 		</div>
 	</Drawer.Content>
 </Drawer.Root>
