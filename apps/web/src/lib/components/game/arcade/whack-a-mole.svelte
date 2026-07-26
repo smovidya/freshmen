@@ -1,11 +1,19 @@
 <script lang="ts">
-	// Fixed 3x3 grid; a mole pops up in a random empty-looking cell for a short
-	// window and hides again whether tapped or not. rawScore = hits landed in
-	// the round - reported once at game-over via onGameOver, same "one final
-	// number" trust model as every other arcade game (see plan/arcade.ts).
+	// Fixed 3x3 grid; moles pop up in random empty cells for a shrinking
+	// window and hide again whether tapped or not. Ramps up over the round
+	// (more moles at once, each visible for less time) so it's not just "tap
+	// the one obvious mole" the whole way through. rawScore = hits landed -
+	// reported once at game-over via onGameOver, same "one final number"
+	// trust model as every other arcade game (see plan/arcade.ts).
 	const GRID_SIZE = 9;
-	const MOLE_VISIBLE_MS = 700;
-	const SPAWN_INTERVAL_MS = 550;
+	const TICK_MS = 150;
+
+	// Difficulty ramp, keyed by how far through the round we are (0 at start,
+	// 1 at the buzzer): concurrent moles 1 -> 3, each visible 700ms -> 320ms.
+	const MIN_CONCURRENT_MOLES = 1;
+	const MAX_CONCURRENT_MOLES = 3;
+	const MOLE_VISIBLE_START_MS = 700;
+	const MOLE_VISIBLE_END_MS = 320;
 
 	let {
 		durationMs,
@@ -16,51 +24,76 @@
 	} = $props();
 
 	let hits = $state(0);
-	let activeCell = $state(-1);
+	let activeCells = $state(new Set<number>());
 	let remainingMs = $state(durationMs);
 	let ended = $state(false);
 
-	let spawnIntervalId: ReturnType<typeof setInterval> | undefined;
-	let hideTimeoutId: ReturnType<typeof setTimeout> | undefined;
+	const hideTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
 	let tickIntervalId: ReturnType<typeof setInterval> | undefined;
 	const startedAt = Date.now();
 
-	function spawnMole() {
-		activeCell = Math.floor(Math.random() * GRID_SIZE);
-		clearTimeout(hideTimeoutId);
-		hideTimeoutId = setTimeout(() => {
-			activeCell = -1;
-		}, MOLE_VISIBLE_MS);
+	function hideMole(cell: number) {
+		activeCells.delete(cell);
+		activeCells = new Set(activeCells);
+		hideTimeouts.delete(cell);
+	}
+
+	function spawnMole(visibleMs: number) {
+		const emptyCells = Array.from({ length: GRID_SIZE }, (_, i) => i).filter(
+			(cell) => !activeCells.has(cell)
+		);
+		if (emptyCells.length === 0) return;
+		const cell = emptyCells[Math.floor(Math.random() * emptyCells.length)]!;
+		activeCells.add(cell);
+		activeCells = new Set(activeCells);
+		hideTimeouts.set(
+			cell,
+			setTimeout(() => hideMole(cell), visibleMs)
+		);
 	}
 
 	function whack(cell: number) {
-		if (ended || cell !== activeCell) return;
+		if (ended || !activeCells.has(cell)) return;
 		hits += 1;
-		activeCell = -1;
-		clearTimeout(hideTimeoutId);
+		clearTimeout(hideTimeouts.get(cell));
+		hideMole(cell);
 	}
 
 	function endRound() {
 		if (ended) return;
 		ended = true;
-		activeCell = -1;
-		clearInterval(spawnIntervalId);
+		activeCells = new Set();
 		clearInterval(tickIntervalId);
-		clearTimeout(hideTimeoutId);
+		for (const timeoutId of hideTimeouts.values()) clearTimeout(timeoutId);
+		hideTimeouts.clear();
 		onGameOver(hits);
 	}
 
 	$effect(() => {
-		spawnIntervalId = setInterval(spawnMole, SPAWN_INTERVAL_MS);
 		tickIntervalId = setInterval(() => {
-			remainingMs = Math.max(0, durationMs - (Date.now() - startedAt));
-			if (remainingMs <= 0) endRound();
-		}, 100);
+			const elapsed = Date.now() - startedAt;
+			remainingMs = Math.max(0, durationMs - elapsed);
+			if (remainingMs <= 0) {
+				endRound();
+				return;
+			}
+
+			const progress = Math.min(1, elapsed / durationMs);
+			const targetMoles =
+				MIN_CONCURRENT_MOLES +
+				Math.floor(progress * (MAX_CONCURRENT_MOLES - MIN_CONCURRENT_MOLES + 1));
+			const visibleMs =
+				MOLE_VISIBLE_START_MS - progress * (MOLE_VISIBLE_START_MS - MOLE_VISIBLE_END_MS);
+
+			while (activeCells.size < Math.min(targetMoles, GRID_SIZE - 1)) {
+				spawnMole(visibleMs);
+			}
+		}, TICK_MS);
 
 		return () => {
-			clearInterval(spawnIntervalId);
 			clearInterval(tickIntervalId);
-			clearTimeout(hideTimeoutId);
+			for (const timeoutId of hideTimeouts.values()) clearTimeout(timeoutId);
+			hideTimeouts.clear();
 		};
 	});
 </script>
@@ -77,7 +110,7 @@
 				onclick={() => whack(cell)}
 				class="aspect-square rounded-2xl border-2 border-black bg-[#c7f9cc] text-3xl shadow-[3px_3px_0_#111827] transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
 			>
-				{activeCell === cell ? '🐹' : ''}
+				{activeCells.has(cell) ? '🐹' : ''}
 			</button>
 		{/each}
 	</div>
