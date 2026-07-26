@@ -10,6 +10,7 @@
 		{ href: '/admin', label: 'ผู้ใช้งาน' },
 		{ href: '/admin/staff', label: 'สตาฟ' },
 		{ href: '/admin/groups', label: 'รหัสกลุ่ม' },
+		{ href: '/admin/transfer', label: 'ย้ายกลุ่ม' },
 		{ href: '/admin/anomalies', label: 'พฤติกรรมผิดปกติ' },
 		{ href: '/checkin', label: 'เช็คอิน' }
 	];

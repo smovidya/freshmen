@@ -1,8 +1,13 @@
-import { updateGroupPasswordSchema } from "@vidyafreshmen/dto";
+import { transferUserGroupSchema, updateGroupPasswordSchema } from "@vidyafreshmen/dto";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { requireAdmin, requireUser, type Variables } from "../core";
-import { listGroupsForAdmin, updateGroupPassword } from "../services/group.service";
+import {
+  listGroupsForAdmin,
+  searchUsersForTransfer,
+  transferUserGroup,
+  updateGroupPassword,
+} from "../services/group.service";
 
 // Admin-only: lets staff-admins rotate a group's (including the Central
 // Staff pseudo-group's) join code without touching SQL directly - see
@@ -16,4 +21,15 @@ export const groupsRouter = new Hono<{ Variables: Variables }>()
     const { password } = c.req.valid("json");
     await updateGroupPassword(c.req.param("id"), password, c.get("db"));
     return c.json({ ok: true });
+  })
+  // Admin transfer tool (/admin/transfer): find a person, then move them to
+  // another group. Points follow the player automatically - see
+  // transferUserGroup's comment.
+  .get("/transfer/search", requireUser, requireAdmin, async (c) => {
+    const q = c.req.query("q") ?? "";
+    if (q.trim().length < 2) return c.json({ results: [] });
+    return c.json({ results: await searchUsersForTransfer(q, c.get("db")) });
+  })
+  .post("/transfer", requireUser, requireAdmin, zValidator("json", transferUserGroupSchema), async (c) => {
+    return c.json(await transferUserGroup(c.req.valid("json"), c.get("db")));
   });
