@@ -102,7 +102,6 @@ export class GamePopper {
 
 	constructor(client: GameAPIClient) {
 		this.#client = client;
-		this.#serverCount = parseInt(localStorage.getItem('__pop_count') ?? '0') || 0;
 	}
 
 	async init() {
@@ -130,16 +129,20 @@ export class GamePopper {
 	// second independent fetch of the exact same points balance, which could
 	// land out of step with the shop drawer's PointsStore poll and show a
 	// different number there than here.
+	//
+	// No localStorage caching (removed - a stale/wrong cached number could
+	// persist across reloads and show forever instead of self-correcting).
+	// The server's polled balance is the only source of truth for display;
+	// this class only ever holds it in memory for the current page load.
 	syncServerCount(balance: number) {
 		if (balance > this.#serverCount) {
 			this.#serverCount = balance;
-			localStorage.setItem('__pop_count', String(balance));
 			return;
 		}
 		// Also follow the balance DOWN, else this device's score diverges from
 		// every other client: shop purchases spend the balance, and optimistic
-		// credits the server rejected (e.g. during an outage) otherwise stick in
-		// localStorage forever. Only when it can't be a stale read racing a
+		// credits the server rejected (e.g. during an outage) otherwise stick
+		// displayed forever. Only when it can't be a stale read racing a
 		// credit: no unflushed taps, no flush in flight, and the last accepted
 		// flush is older than the balance poll interval.
 		if (
@@ -149,7 +152,6 @@ export class GamePopper {
 			Date.now() - this.#lastFlushAckAt > 20_000
 		) {
 			this.#serverCount = balance;
-			localStorage.setItem('__pop_count', String(balance));
 		}
 	}
 
@@ -168,7 +170,6 @@ export class GamePopper {
 		const variance = 2;
 		const amount = POINTS_PER_POP + Math.floor(Math.random() * (variance * 2 + 1)) - variance;
 		this.rawBatchedCount += amount;
-		localStorage.setItem('__pop_count', String(untrack(() => this.displaySelfCount)));
 	}
 
 	async #flush() {
@@ -212,7 +213,6 @@ export class GamePopper {
 			if (trueServerCount < this.#serverCount) {
 				this.#serverCount = trueServerCount;
 			}
-			localStorage.setItem('__pop_count', String(untrack(() => this.displaySelfCount)));
 		} finally {
 			this.#flushInFlight = false;
 			this.#lastFlushAckAt = Date.now();

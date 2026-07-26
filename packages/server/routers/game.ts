@@ -42,7 +42,14 @@ export const gameRouter = new Hono<{ Variables: Variables }>()
     const user = c.get("user")!;
     const { pop, token } = c.req.valid("json");
 
-    const { applied, nextToken } = await gameService.addPop(user.id, user.ouid!, pop, token, c.get("db"));
+    const { applied, nextToken } = await gameService.addPop(
+      user.id,
+      user.ouid!,
+      pop,
+      token,
+      c.req.header("user-agent"),
+      c.get("db"),
+    );
 
     return c.json({ ok: true, applied, nextToken });
   })

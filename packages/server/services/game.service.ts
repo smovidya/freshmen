@@ -91,6 +91,25 @@ async function consumePopToken(userId: string, token: string, db: Db): Promise<b
   return updated.length > 0;
 }
 
+// Shake gameplay requires a phone physically moving in someone's hand - a
+// request whose User-Agent plainly identifies a desktop/laptop browser can't
+// be a genuine tap, it's a script or a devtools console taped to /pop.
+// Rejecting it with a visible error would teach the attacker exactly which
+// header to spoof next, so this stays silent: treated identically to the
+// existing "elapsed-time throttle allowed zero this tick" path below (fresh
+// token, applied: 0, no error, no distinguishing signal in the response).
+// Positive-match on desktop OS strings (not "absence of mobile markers") to
+// keep the false-positive rate low - an unusual-but-genuine mobile UA that
+// this doesn't recognize just falls through to the normal throttle instead
+// of getting silently zeroed.
+const DESKTOP_UA_PATTERN = /Windows NT|Macintosh|X11; Linux|CrOS/i;
+const MOBILE_UA_PATTERN = /Mobi|Android|iPhone|iPad|iPod/i;
+
+function looksLikeDesktopClient(userAgent: string | undefined | null): boolean {
+  if (!userAgent) return false;
+  return DESKTOP_UA_PATTERN.test(userAgent) && !MOBILE_UA_PATTERN.test(userAgent);
+}
+
 export type AddPopResult = { applied: number; nextToken: string };
 
 // Unified with the shop/minigame/friends economy - there is only one score
@@ -107,12 +126,19 @@ export async function addPop(
   ouid: string,
   requestedAmount: number,
   token: string,
+  userAgent: string | undefined | null,
   db: Db,
 ): Promise<AddPopResult> {
   const tokenValid = await consumePopToken(userId, token, db);
   if (!tokenValid) {
     await logAnomaly(db, { userId, type: "pop_token_invalid", detail: { token } });
     throw new Error("เซสชันหมดอายุ กรุณาลองใหม่อีกครั้ง");
+  }
+
+  if (looksLikeDesktopClient(userAgent)) {
+    await logAnomaly(db, { userId, type: "pop_desktop_client", detail: { userAgent } });
+    const { token: nextToken } = await issuePopToken(userId, db);
+    return { applied: 0, nextToken };
   }
 
   const now = new Date();
