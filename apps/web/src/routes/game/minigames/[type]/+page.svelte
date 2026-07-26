@@ -13,6 +13,8 @@
 	import confetti from 'canvas-confetti';
 	import { WHEEL_OUTCOMES, ARCADE_GAMES, type ArcadeGameType } from '@vidyafreshmen/dto';
 	import WhackAMole from '$lib/components/game/arcade/whack-a-mole.svelte';
+	import BalloonPop from '$lib/components/game/arcade/balloon-pop.svelte';
+	import FruitSlice from '$lib/components/game/arcade/fruit-slice.svelte';
 
 	let { data } = $props();
 	const client = apiClient();
@@ -102,7 +104,9 @@
 	// components land here - no backend/router change needed per addition,
 	// see plan) ---
 	const ARCADE_COMPONENTS: Partial<Record<ArcadeGameType, typeof WhackAMole>> = {
-		whack_a_mole: WhackAMole
+		whack_a_mole: WhackAMole,
+		balloon_pop: BalloonPop,
+		fruit_slice: FruitSlice
 	};
 	const ARCADE_TITLES: Record<ArcadeGameType, string> = {
 		fruit_slice: 'สไลซ์กระเป๋าเดินทาง',
