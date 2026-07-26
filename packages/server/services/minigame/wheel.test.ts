@@ -13,8 +13,8 @@ describe("wheel configuration", () => {
   });
 
   test("maps point slices to their advertised reward", () => {
-    expect(pointsForOutcome("pts_100")).toBe(100);
-    expect(pointsForOutcome("pts_1000")).toBe(1000);
+    expect(pointsForOutcome("pts_100")).toBe(1_000);
+    expect(pointsForOutcome("pts_1000")).toBe(10_000);
     expect(pointsForOutcome("buff_x100")).toBe(0);
   });
 });

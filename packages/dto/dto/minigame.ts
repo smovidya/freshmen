@@ -27,16 +27,19 @@ export const wheelClaimSchema = minigameStartSchema;
 
 export const mysteryBoxOpenSchema = minigameStartSchema;
 
-// The "buff_x100" key is legacy naming kept for stored rows (active_buffs,
-// unclaimed wheel plays' serverState) - since the score-inflation incident it
-// is an x50 (see BUFF_CONFIG in shop.service.ts), and buffs multiply shake
-// pops only (BUFF_ELIGIBLE_SOURCES in dto/game.ts).
+// Outcome keys (pts_100, buff_x100, ...) are legacy naming kept for stored
+// rows (active_buffs, unclaimed wheel plays' serverState) - labels carry the
+// true current values, which have moved on twice since: buff_x100 grants x50
+// (post score-inflation-incident retune; buffs multiply shake pops only, see
+// BUFF_ELIGIBLE_SOURCES in dto/game.ts), and every currency amount (this
+// wheel's payouts included - see pointsForOutcome in services/minigame/wheel.ts)
+// was rescaled x10 for bigger, faster-feeling numbers.
 export const WHEEL_OUTCOMES = [
   { key: "skull", label: "MISS", color: "#3f3f46", weight: 10 },
-  { key: "pts_100", label: "100", color: "#fde68a", weight: 30 },
-  { key: "pts_200", label: "200", color: "#fdba74", weight: 25 },
-  { key: "pts_300", label: "300", color: "#fca5a5", weight: 20 },
-  { key: "pts_1000", label: "1000", color: "#f87171", weight: 5 },
+  { key: "pts_100", label: "1000", color: "#fde68a", weight: 30 },
+  { key: "pts_200", label: "2000", color: "#fdba74", weight: 25 },
+  { key: "pts_300", label: "3000", color: "#fca5a5", weight: 20 },
+  { key: "pts_1000", label: "10000", color: "#f87171", weight: 5 },
   { key: "buff_x3", label: "x3", color: "#86efac", weight: 7 },
   { key: "buff_x100", label: "x50", color: "#67e8f9", weight: 3 },
 ] as const;

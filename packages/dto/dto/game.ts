@@ -1,6 +1,20 @@
 import z from "zod/v4";
 
-export const MAX_POP_PER_REQUEST = 110;
+// Points credited per detected shake gesture on the client (game.svelte.ts's
+// GamePopper.pop()) - rescaled from 1 alongside every other currency amount
+// in the economy, so pops feel proportionally as generous as everything
+// else. The physical shake rate is unchanged (still gated client-side by
+// SHAKE_COOLDOWN_MS in game-on.svelte, ~2.5/s) - only the value of each one
+// went up.
+export const POINTS_PER_POP = 10;
+
+// Ceiling on points reportable in a single /game/pop request. Scales with
+// POINTS_PER_POP - the real bot-guard is game.service.ts's elapsed-time
+// throttle (MAX_TAPS_PER_SECOND), which bounds *physical* tap plausibility;
+// this just needs enough headroom that legitimate flushes (many pops
+// batched over the ~10s client flush interval) never get clamped by request
+// size before the rate throttle even applies.
+export const MAX_POP_PER_REQUEST = 1_100;
 
 // The only credit sources the active-buff multiplier applies to. Everything
 // else (minigames, referrals, free claims, refunds) credits its base amount -

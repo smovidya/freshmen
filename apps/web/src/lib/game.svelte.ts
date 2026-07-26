@@ -2,6 +2,7 @@ import { apiClient, call } from './api';
 import { toast } from 'svelte-sonner';
 import { dev } from '$app/environment';
 import { untrack } from 'svelte';
+import { POINTS_PER_POP } from '@vidyafreshmen/dto';
 
 export type DisplayPlayer = {
 	playerId: string;
@@ -157,7 +158,7 @@ export class GamePopper {
 	}
 
 	pop() {
-		this.rawBatchedCount += 1;
+		this.rawBatchedCount += POINTS_PER_POP;
 		localStorage.setItem('__pop_count', String(untrack(() => this.displaySelfCount)));
 	}
 

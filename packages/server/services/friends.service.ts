@@ -14,7 +14,7 @@ export const FRIEND_CODE_REFRESH_COOLDOWN_MS = 10 * 60 * 1000;
 // has its own 10-slot cap on the adder's side, and its own 1-10 popularity
 // ladder on the target's side (see rewardRank below). Cross-airline adds pay
 // out 1.5x on top of this base value.
-const REWARD_LADDER = [2000, 1700, 1400, 1000, 800, 600, 400, 300, 200, 100];
+const REWARD_LADDER = [20_000, 17_000, 14_000, 10_000, 8_000, 6_000, 4_000, 3_000, 2_000, 1_000];
 
 function generateCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(FRIEND_CODE_LENGTH));

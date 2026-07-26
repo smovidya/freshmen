@@ -26,10 +26,10 @@ const MAX_DISTANCE = Math.sqrt(2) * TARGET_RANGE;
 export const PUZZLE_MIN_PLAY_MS = 4_000;
 
 export function scoreForAccuracy(accuracy: number) {
-  if (accuracy >= 100) return 1000;
-  if (accuracy >= 90) return 500;
-  if (accuracy >= 70) return 300;
-  if (accuracy >= 50) return 100;
+  if (accuracy >= 100) return 10_000;
+  if (accuracy >= 90) return 5_000;
+  if (accuracy >= 70) return 3_000;
+  if (accuracy >= 50) return 1_000;
   return 0;
 }
 

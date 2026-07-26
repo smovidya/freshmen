@@ -37,7 +37,7 @@
 	let milestonePollIntervalId: ReturnType<typeof setInterval> | undefined;
 
 	// Auto-opens a free bonus minigame the moment the server notices the
-	// score crossed 67/676/6767 (packages/server/services/points.service.ts's
+	// score crossed 670/6760/67670 (packages/server/services/points.service.ts's
 	// checkMilestones) - claimPendingMilestones both reads and marks-notified
 	// in one call, so this never re-fires for the same threshold.
 	async function checkMilestones() {

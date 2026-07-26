@@ -7,12 +7,15 @@ import type { SimpleCache } from "../core";
 import { creditPoints, getBalance } from "./points.service";
 
 // Generous upper bound on physical human tap rate (two-thumb frantic
-// tapping). Bounds accepted raw taps by server-observed elapsed time since
-// this user's last accepted pop, same idiom as minigame/precision.ts trusting
-// only its own clock - a scripted/held-down request loop can't claim more
-// taps than could plausibly have happened between requests, regardless of
-// what the client batches and reports.
-const MAX_TAPS_PER_SECOND = 15;
+// tapping), expressed in points/second now that each tap is worth
+// POINTS_PER_POP (dto/game.ts) instead of 1 - 15 taps/s x 10 points/tap, same
+// physical-plausibility bound as before the economy rescale, just in the
+// unit addPop actually deals in. Bounds accepted points by server-observed
+// elapsed time since this user's last accepted pop, same idiom as
+// minigame/precision.ts trusting only its own clock - a scripted/held-down
+// request loop can't claim more than could plausibly have happened between
+// requests, regardless of what the client batches and reports.
+const MAX_TAPS_PER_SECOND = 150;
 
 // Single-use pop-session token TTL - generous relative to the ~5s client
 // flush cadence so an occasional missed/delayed flush (backgrounded tab,

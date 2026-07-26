@@ -20,16 +20,21 @@ export function rollWeighted<T extends string>(weights: Record<T, number>): T {
   return entries[entries.length - 1]![0];
 }
 
+// Outcome keys (pts_100 etc.) are legacy identifiers kept for stored rows
+// (minigame_plays.serverState) - actual payouts are 10x the key's face value
+// after the economy-wide rescale, same "key stays, value moves" precedent as
+// buff_x100 (see shop.service.ts). WHEEL_OUTCOMES' display labels carry the
+// true current payout.
 export function pointsForOutcome(outcome: WheelOutcome): number {
   switch (outcome) {
     case "pts_100":
-      return 100;
-    case "pts_200":
-      return 200;
-    case "pts_300":
-      return 300;
-    case "pts_1000":
       return 1000;
+    case "pts_200":
+      return 2000;
+    case "pts_300":
+      return 3000;
+    case "pts_1000":
+      return 10000;
     default:
       return 0;
   }

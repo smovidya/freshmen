@@ -97,7 +97,7 @@
 		<div>
 			<p class="font-medium text-black">เช็คอินรับแต้มฟรี</p>
 			<p class="text-sm text-[#62748e]">
-				รับ {points.claimStatus?.amount ?? 500} แต้ม ทุก 3 ชั่วโมง
+				รับ {points.claimStatus?.amount ?? 5000} แต้ม ทุก 3 ชั่วโมง
 			</p>
 		</div>
 		{#if points.claimStatus?.available}

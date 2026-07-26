@@ -3,9 +3,11 @@ import { tables, type Db } from "@vidyafreshmen/db";
 import { BUFF_ELIGIBLE_SOURCES, TICKETED_GAME_TYPES } from "@vidyafreshmen/dto";
 
 // Auto-pops a free bonus minigame the first time a user's balance reaches or
-// crosses each of these totals - see checkMilestones below. Fixed by the
-// organizer's ask, not derived from anything else.
-const SCORE_MILESTONES = [67, 676, 6767];
+// crosses each of these totals - see checkMilestones below. 10x the
+// organizer's original 67/676/6767 ask, rescaled along with every other
+// currency amount in the economy so the milestones still land at roughly the
+// same felt pace relative to how fast balances now grow.
+const SCORE_MILESTONES = [670, 6760, 67670];
 
 // One structured JSON line per game economy transaction (every credit/debit
 // through this file - pops, shop purchases, minigame wins, friend rewards,
@@ -129,8 +131,8 @@ export async function creditPoints(db: Db, input: CreditInput): Promise<number> 
 }
 
 // Fires once per user per threshold - grants a free ticket for a random
-// ticketed minigame the moment a credit leaves the balance at or above 67 /
-// 676 / 6767. Deliberately NOT gated on "crossed from below this time" - a
+// ticketed minigame the moment a credit leaves the balance at or above one of
+// SCORE_MILESTONES. Deliberately NOT gated on "crossed from below this time" - a
 // user whose balance was already past a threshold before this feature (or
 // this specific threshold) existed would otherwise never trigger it again,
 // since they'd never "cross" it a second time. onConflictDoNothing on
@@ -256,7 +258,7 @@ export async function getBalance(userId: string, db: Db) {
   return row?.balance ?? 0;
 }
 
-export const FREE_CLAIM_AMOUNT = 500;
+export const FREE_CLAIM_AMOUNT = 5_000;
 export const FREE_CLAIM_INTERVAL_MS = 3 * 60 * 60 * 1000;
 
 export async function getClaimStatus(userId: string, db: Db) {

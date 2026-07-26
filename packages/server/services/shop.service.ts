@@ -61,13 +61,15 @@ async function tryConsumeDailyLimit(input: { userId: string; item: string; limit
 // BUFF_ELIGIBLE_SOURCES), so a 10s x50 is bounded by physical tap rate, not
 // by minigame jackpots.
 export const BUFF_CONFIG = {
-  buff_x3: { cost: 300, multiplier: 3, durationMs: 30_000 },
-  buff_x100: { cost: 1000, multiplier: 50, durationMs: 10_000 },
+  buff_x3: { cost: 3_000, multiplier: 3, durationMs: 30_000 },
+  buff_x100: { cost: 10_000, multiplier: 50, durationMs: 10_000 },
 } as const;
 
 // Close to the wheel's direct-point expected value, so a paid random play is
-// entertainment rather than a disguised 500-point penalty.
-export const TICKET_COST = 150;
+// entertainment rather than a disguised penalty. Multiplier (not the
+// absolute cost) is what has to stay proportional to the wheel's rescaled
+// payouts - both moved x10 together, so the relationship is unchanged.
+export const TICKET_COST = 1_500;
 export const TICKET_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 // Per-user daily purchase cap (Bangkok day). The ticket loop is profitable

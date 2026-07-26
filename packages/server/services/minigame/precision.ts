@@ -59,13 +59,13 @@ export function scoreRhythmTaps(
     offsets.push(best.diff);
     if (best.diff <= 50) {
       result.perfect += 1;
-      result.points += 75;
+      result.points += 750;
     } else if (best.diff <= 100) {
       result.great += 1;
-      result.points += 50;
+      result.points += 500;
     } else {
       result.good += 1;
-      result.points += 25;
+      result.points += 250;
     }
   }
 
