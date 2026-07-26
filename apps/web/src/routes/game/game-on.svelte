@@ -61,6 +61,22 @@
 	let nowTick = $state(Date.now());
 	let tickIntervalId: ReturnType<typeof setInterval> | undefined;
 
+	// Display-only: scores stop counting toward final standings at this
+	// instant, but gameplay itself isn't gated here (packages/flags's
+	// game-playing window runs later, to 23:59:59) - after this passes the
+	// page just relabels shaking as for-fun, no backend change.
+	const SCORE_CUTOFF_AT = new Date('2026-07-27T15:00:00+07:00').getTime();
+	const msUntilScoreCutoff = $derived(Math.max(0, SCORE_CUTOFF_AT - nowTick));
+	const pastScoreCutoff = $derived(nowTick >= SCORE_CUTOFF_AT);
+
+	function formatCountdown(ms: number): string {
+		const totalSeconds = Math.floor(ms / 1000);
+		const hours = Math.floor(totalSeconds / 3600);
+		const minutes = Math.floor((totalSeconds % 3600) / 60);
+		const seconds = totalSeconds % 60;
+		return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+	}
+
 	const buffRemainingFraction = $derived.by(() => {
 		const buff = points.activeBuff;
 		if (!buff) return 0;
@@ -242,7 +258,18 @@
 		<div class="flex w-full flex-col items-center gap-6">
 			<div class="flex w-full flex-col gap-4 text-center">
 				<h1 class="text-[32px] font-medium text-black">เขย่าเพื่อรับแต้ม</h1>
-				<p class="text-base text-[#62748e]">รับแต้มโดยการเขย่าโทรศัพท์ เขย่าเลย!</p>
+				{#if pastScoreCutoff}
+					<p class="text-base text-[#62748e]">
+						ปิดรับคะแนนจริงแล้ว ตอนนี้เขย่าเพื่อความสนุกล้วน ๆ ไม่มีผลกับอันดับแล้วนะ
+					</p>
+				{:else}
+					<p class="text-base text-[#62748e]">รับแต้มโดยการเขย่าโทรศัพท์ เขย่าเลย!</p>
+					<span
+						class="mx-auto rounded-full bg-black/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-[#62748e] tabular-nums"
+					>
+						เหลือเวลา {formatCountdown(msUntilScoreCutoff)} ก่อนปิดรับคะแนน
+					</span>
+				{/if}
 			</div>
 
 			<div class="flex w-full flex-col items-center gap-8">
