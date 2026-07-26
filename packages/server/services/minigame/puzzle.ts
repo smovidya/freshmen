@@ -15,7 +15,15 @@ const MAX_DISTANCE = Math.sqrt(2) * TARGET_RANGE;
 // server-clock-as-broad-guard idiom as precision.ts's duration check; the
 // play stays "started" on rejection so an honest fast player just retries
 // without losing the ticket.
-export const PUZZLE_MIN_PLAY_MS = 3_000;
+//
+// This raises the cost of forging a play, it does not eliminate it: start()
+// deliberately hands the exact target back to the client (a visible-target
+// drag is the actual gameplay), so a script that waits this long and then
+// submits that exact coordinate still scores a guaranteed max every time.
+// Fully closing that needs either grading something the server independently
+// observes (not client-reported x/y) or hiding the target and redesigning
+// the interaction - out of scope for this hardening pass, tracked separately.
+export const PUZZLE_MIN_PLAY_MS = 4_000;
 
 export function scoreForAccuracy(accuracy: number) {
   if (accuracy >= 100) return 1000;

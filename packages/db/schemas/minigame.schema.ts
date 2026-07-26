@@ -78,6 +78,18 @@ export const qteSessions = sqliteTable('qte_sessions', {
   index('idx_qte_sessions_user_created').on(table.userId, table.createdAt),
 ]);
 
+// One row per user - atomic gate for scheduleQte's 19-minute cadence. Replaces
+// a SELECT-most-recent-then-INSERT check (raceable: N concurrent schedule
+// calls could all read "no recent session" before any commits, each minting
+// its own free-ticket-bearing session) with the same single-UPSERT idiom used
+// by shop_rate_limits/pop_rate_limits - the conflict-update's WHERE clause is
+// the only "am I too early" decision, made atomically against whatever the
+// winning concurrent writer actually committed, never a stale read.
+export const qteScheduleLimits = sqliteTable('qte_schedule_limits', {
+  userId: text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
+  lastScheduledAt: integer('last_scheduled_at', { mode: 'timestamp' }).notNull(),
+});
+
 export const minigameTicketsRelations = relations(minigameTickets, ({ one, many }) => ({
   user: one(user, { fields: [minigameTickets.userId], references: [user.id] }),
   plays: many(minigamePlays),

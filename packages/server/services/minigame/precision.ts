@@ -157,10 +157,21 @@ export async function submit(
   // Exact grading is intentionally based on the same local clock that drove
   // the metronome audio. Server wall time is only a broad anti-impossible-play
   // guard, so mobile network latency cannot move a visible tap into a miss.
+  //
+  // Bounds tightened after an adversarial review found a script could claim
+  // the minimum allowed clientDurationMs while only waiting ~2.5s real time,
+  // then submit exact target offsets for a guaranteed max score. Narrower
+  // bounds (a few hundred ms of legitimate timer/network jitter, not several
+  // seconds) push the forced real wait close to the true ~6s track length.
+  // This raises the cost of forging a play; it does not eliminate it - taps
+  // are still entirely client-reported, with no independent server signal of
+  // when they actually happened. Closing that gap for real needs the server
+  // to timestamp each tap itself (a different game design), tracked
+  // separately from this hardening pass.
   if (
-    input.clientDurationMs < expectedDurationMs - 1_000 ||
-    input.clientDurationMs > expectedDurationMs + 5_000 ||
-    serverElapsedMs + 2_500 < input.clientDurationMs
+    input.clientDurationMs < expectedDurationMs - 300 ||
+    input.clientDurationMs > expectedDurationMs + 2_000 ||
+    serverElapsedMs + 400 < input.clientDurationMs
   ) {
     throw new Error("ข้อมูลจังหวะไม่สมบูรณ์ กรุณาลองด้วยตั๋วใบใหม่");
   }

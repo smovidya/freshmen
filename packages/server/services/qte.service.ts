@@ -1,4 +1,4 @@
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, eq, gt, lte } from "drizzle-orm";
 import { tables, type Db } from "@vidyafreshmen/db";
 import { TICKETED_GAME_TYPES } from "@vidyafreshmen/dto";
 
@@ -16,15 +16,31 @@ const QTE_MIN_INTERVAL_MS = 19 * 60 * 1000;
 
 export type QteSession = { id: string; expiresAt: Date };
 
-export async function scheduleQte(userId: string, db: Db): Promise<QteSession> {
-  const [recent] = await db
-    .select({ createdAt: tables.qteSessions.createdAt })
-    .from(tables.qteSessions)
-    .where(eq(tables.qteSessions.userId, userId))
-    .orderBy(desc(tables.qteSessions.createdAt))
-    .limit(1);
+// Atomic cadence gate: a single UPSERT on qte_schedule_limits (one row per
+// user) replaces what used to be a SELECT-most-recent-session-then-INSERT
+// check. That older shape was raceable - N concurrent schedule calls could
+// all read "no recent session" before any of them committed, each minting
+// its own free-ticket-bearing session. Here, the conflict-update's WHERE
+// clause is evaluated against whatever the winning concurrent writer actually
+// committed (never a stale read), so at most one caller per QTE_MIN_INTERVAL_MS
+// window ever proceeds to create a session, at any concurrency level.
+async function tryConsumeQteCooldown(userId: string, db: Db): Promise<boolean> {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - QTE_MIN_INTERVAL_MS);
+  const claimed = await db
+    .insert(tables.qteScheduleLimits)
+    .values({ userId, lastScheduledAt: now })
+    .onConflictDoUpdate({
+      target: tables.qteScheduleLimits.userId,
+      set: { lastScheduledAt: now },
+      setWhere: lte(tables.qteScheduleLimits.lastScheduledAt, cutoff),
+    })
+    .returning({ userId: tables.qteScheduleLimits.userId });
+  return claimed.length > 0;
+}
 
-  if (recent && Date.now() - recent.createdAt.getTime() < QTE_MIN_INTERVAL_MS) {
+export async function scheduleQte(userId: string, db: Db): Promise<QteSession> {
+  if (!(await tryConsumeQteCooldown(userId, db))) {
     throw new Error("ยังไม่ถึงเวลาของกิจกรรมพิเศษรอบถัดไป");
   }
 
