@@ -34,8 +34,11 @@
 		return `${groupNumber}${String(subgroupNumber).padStart(2, '0')}`;
 	}
 
-	// Checkpoint ids encode their day as e.g. "25july-morning" (see packages/db/seed-checkin.sql) —
-	// pick today's (Asia/Bangkok) checkpoint, falling back to the first one if none match.
+	// Checkpoint *names* (not ids - ids are prefixed "checkpoint-", e.g.
+	// "checkpoint-25july-morning", so matching against id never worked) encode
+	// their day as e.g. "25july-morning" (see packages/db/seed-checkin.sql) -
+	// pick today's (Asia/Bangkok) checkpoint, falling back to the first one if
+	// none match.
 	function pickDefaultCheckpoint(cps: Checkpoint[]): string {
 		if (cps.length === 0) return '';
 		const parts = new Intl.DateTimeFormat('en-US', {
@@ -46,7 +49,7 @@
 		const day = parts.find((p) => p.type === 'day')?.value ?? '';
 		const month = (parts.find((p) => p.type === 'month')?.value ?? '').toLowerCase();
 		const todayPrefix = `${day}${month}`;
-		return (cps.find((cp) => cp.id.toLowerCase().startsWith(todayPrefix)) ?? cps[0]!).id;
+		return (cps.find((cp) => cp.name.toLowerCase().startsWith(todayPrefix)) ?? cps[0]!).id;
 	}
 
 	const client = apiClient();
