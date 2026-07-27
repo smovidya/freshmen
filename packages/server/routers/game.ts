@@ -64,17 +64,18 @@ export const gameRouter = new Hono<{ Variables: Variables }>()
     const leaderboard = await gameService.getMyGroupLeaderboard(user.group!, c.get("db"), c.get("cache"));
     return c.json(leaderboard);
   })
-  // Admin-only: powers the staff-room projector /scoreboard display (the
-  // projector machine is logged in as an admin). Not requireGameOn - the
-  // display must work outside the game-playing window too. Path keeps the
-  // historical "-public" suffix so the RPC client key stays stable.
-  .get("/scoreboard-public", requireUser, requireAdmin, async (c) => {
+  // Open to any signed-in user - powers the /scoreboard display (originally
+  // staff-room-projector-only, now public within the app). Not
+  // requireGameOn - the display must work outside the game-playing window
+  // too. Path keeps the historical "-public" suffix so the RPC client key
+  // stays stable.
+  .get("/scoreboard-public", requireUser, async (c) => {
     const scoreboard = await gameService.getScoreboard(c.get("db"), c.get("cache"));
     return c.json(scoreboard);
   })
-  // Admin scoreboard drill-down: top 10 players of one group, for the
-  // click-to-expand rows on the projector /scoreboard display.
-  .get("/scoreboard-top10/:groupNumber", requireUser, requireAdmin, async (c) => {
+  // Scoreboard drill-down: top 10 players of one group, for the
+  // click-to-expand rows on the /scoreboard display.
+  .get("/scoreboard-top10/:groupNumber", requireUser, async (c) => {
     const top10 = await gameService.getGroupTop10ForAdmin(c.req.param("groupNumber"), c.get("db"), c.get("cache"));
     return c.json({ top10 });
   })
