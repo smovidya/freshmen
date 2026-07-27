@@ -12,7 +12,8 @@
 		{ href: '/admin/groups', label: 'รหัสกลุ่ม' },
 		{ href: '/admin/transfer', label: 'ย้ายกลุ่ม' },
 		{ href: '/admin/anomalies', label: 'พฤติกรรมผิดปกติ' },
-		{ href: '/checkin', label: 'เช็คอิน' }
+		{ href: '/checkin', label: 'เช็คอิน' },
+		{ href: '/checkin/winner', label: 'ผลผู้ชนะ' }
 	];
 </script>
 
