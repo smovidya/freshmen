@@ -40,10 +40,10 @@ export type ArcadeGameType = (typeof ARCADE_GAME_TYPES)[number];
 // submit-time plausibility clamp (a sanity bound, not real anti-cheat - see
 // arcade.ts).
 export const ARCADE_REWARD_LADDER = {
-  bronze: 1_000,
-  silver: 3_000,
-  gold: 5_000,
-  perfect: 10_000,
+  bronze: 10_000,
+  silver: 30_000,
+  gold: 50_000,
+  perfect: 100_000,
 } as const;
 
 export type ArcadeGameConfig = {
@@ -133,10 +133,10 @@ export const mysteryBoxOpenSchema = minigameStartSchema;
 // was rescaled x10 for bigger, faster-feeling numbers.
 export const WHEEL_OUTCOMES = [
   { key: "skull", label: "MISS", color: "#3f3f46", weight: 10 },
-  { key: "pts_100", label: "1000", color: "#fde68a", weight: 30 },
-  { key: "pts_200", label: "2000", color: "#fdba74", weight: 25 },
-  { key: "pts_300", label: "3000", color: "#fca5a5", weight: 20 },
-  { key: "pts_1000", label: "10000", color: "#f87171", weight: 5 },
+  { key: "pts_100", label: "10000", color: "#fde68a", weight: 30 },
+  { key: "pts_200", label: "20000", color: "#fdba74", weight: 25 },
+  { key: "pts_300", label: "30000", color: "#fca5a5", weight: 20 },
+  { key: "pts_1000", label: "100000", color: "#f87171", weight: 5 },
   { key: "buff_x3", label: "x3", color: "#86efac", weight: 7 },
   { key: "buff_x100", label: "x50", color: "#67e8f9", weight: 3 },
 ] as const;

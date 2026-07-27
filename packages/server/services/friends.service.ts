@@ -14,7 +14,10 @@ export const FRIEND_CODE_REFRESH_COOLDOWN_MS = 10 * 60 * 1000;
 // has its own 10-slot cap on the adder's side, and its own 1-10 popularity
 // ladder on the target's side (see rewardRank below). Cross-airline adds pay
 // out 1.5x on top of this base value.
-const REWARD_LADDER = [20_000, 17_000, 14_000, 10_000, 8_000, 6_000, 4_000, 3_000, 2_000, 1_000];
+const REWARD_LADDER = [
+  200_000, 170_000, 140_000, 100_000, 80_000, 60_000, 40_000, 30_000, 20_000,
+  10_000,
+];
 
 function generateCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(FRIEND_CODE_LENGTH));
@@ -31,7 +34,10 @@ async function assignNewCode(userId: string, db: Db): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateCode();
     try {
-      await db.update(user).set({ friendCode: code, friendCodeUpdatedAt: new Date() }).where(eq(user.id, userId));
+      await db
+        .update(user)
+        .set({ friendCode: code, friendCodeUpdatedAt: new Date() })
+        .where(eq(user.id, userId));
       return code;
     } catch (err) {
       if (attempt === 4) throw err;
@@ -40,13 +46,22 @@ async function assignNewCode(userId: string, db: Db): Promise<string> {
   throw new Error("Failed to generate friend code");
 }
 
-export async function ensureFriendCode(userId: string, db: Db): Promise<string> {
-  const [row] = await db.select({ friendCode: user.friendCode }).from(user).where(eq(user.id, userId));
+export async function ensureFriendCode(
+  userId: string,
+  db: Db,
+): Promise<string> {
+  const [row] = await db
+    .select({ friendCode: user.friendCode })
+    .from(user)
+    .where(eq(user.id, userId));
   if (row?.friendCode) return row.friendCode;
   return assignNewCode(userId, db);
 }
 
-export async function refreshFriendCode(userId: string, db: Db): Promise<{ code: string }> {
+export async function refreshFriendCode(
+  userId: string,
+  db: Db,
+): Promise<{ code: string }> {
   const [row] = await db
     .select({ friendCodeUpdatedAt: user.friendCodeUpdatedAt })
     .from(user)
@@ -55,7 +70,9 @@ export async function refreshFriendCode(userId: string, db: Db): Promise<{ code:
   if (row?.friendCodeUpdatedAt) {
     const elapsedMs = Date.now() - row.friendCodeUpdatedAt.getTime();
     if (elapsedMs < FRIEND_CODE_REFRESH_COOLDOWN_MS) {
-      const remainingSec = Math.ceil((FRIEND_CODE_REFRESH_COOLDOWN_MS - elapsedMs) / 1000);
+      const remainingSec = Math.ceil(
+        (FRIEND_CODE_REFRESH_COOLDOWN_MS - elapsedMs) / 1000,
+      );
       throw new Error(`กรุณารออีก ${remainingSec} วินาทีก่อนขอโค้ดใหม่`);
     }
   }
@@ -64,16 +81,23 @@ export async function refreshFriendCode(userId: string, db: Db): Promise<{ code:
   return { code };
 }
 
-export async function addFriend(input: { adderUserId: string; adderOuid: string; code: string }, db: Db) {
+export async function addFriend(
+  input: { adderUserId: string; adderOuid: string; code: string },
+  db: Db,
+) {
   const [target] = await db
     .select({ id: user.id, group: user.group })
     .from(user)
     .where(eq(user.friendCode, input.code));
 
   if (!target) throw new Error("ไม่พบรหัสเพื่อนนี้");
-  if (target.id === input.adderUserId) throw new Error("ไม่สามารถเพิ่มตัวเองเป็นเพื่อนได้");
+  if (target.id === input.adderUserId)
+    throw new Error("ไม่สามารถเพิ่มตัวเองเป็นเพื่อนได้");
 
-  const [adder] = await db.select({ group: user.group }).from(user).where(eq(user.id, input.adderUserId));
+  const [adder] = await db
+    .select({ group: user.group })
+    .from(user)
+    .where(eq(user.id, input.adderUserId));
   const sameGroup = Boolean(adder?.group) && adder!.group === target.group;
 
   // Count-then-insert has a small TOCTOU race under rapid double-submits from
@@ -84,7 +108,12 @@ export async function addFriend(input: { adderUserId: string; adderOuid: string;
   const [outgoingRow] = await db
     .select({ outgoingCount: count() })
     .from(tables.friendEdges)
-    .where(and(eq(tables.friendEdges.adderUserId, input.adderUserId), eq(tables.friendEdges.sameGroup, sameGroup)));
+    .where(
+      and(
+        eq(tables.friendEdges.adderUserId, input.adderUserId),
+        eq(tables.friendEdges.sameGroup, sameGroup),
+      ),
+    );
   const outgoingCount = outgoingRow?.outgoingCount ?? 0;
 
   if (outgoingCount >= MAX_FRIENDS_PER_BUCKET) {
@@ -101,11 +130,18 @@ export async function addFriend(input: { adderUserId: string; adderOuid: string;
   const [incomingRow] = await db
     .select({ incomingCount: count() })
     .from(tables.friendEdges)
-    .where(and(eq(tables.friendEdges.targetUserId, target.id), eq(tables.friendEdges.sameGroup, sameGroup)));
+    .where(
+      and(
+        eq(tables.friendEdges.targetUserId, target.id),
+        eq(tables.friendEdges.sameGroup, sameGroup),
+      ),
+    );
   const incomingCount = incomingRow?.incomingCount ?? 0;
 
   const rewardRank = Math.min(incomingCount + 1, REWARD_LADDER.length);
-  const rewardPoints = Math.round(REWARD_LADDER[rewardRank - 1]! * (sameGroup ? 1 : 1.5));
+  const rewardPoints = Math.round(
+    REWARD_LADDER[rewardRank - 1]! * (sameGroup ? 1 : 1.5),
+  );
 
   const inserted = await db
     .insert(tables.friendEdges)
@@ -116,7 +152,9 @@ export async function addFriend(input: { adderUserId: string; adderOuid: string;
       rewardRank,
       rewardPoints,
     })
-    .onConflictDoNothing({ target: [tables.friendEdges.adderUserId, tables.friendEdges.targetUserId] })
+    .onConflictDoNothing({
+      target: [tables.friendEdges.adderUserId, tables.friendEdges.targetUserId],
+    })
     .returning({ id: tables.friendEdges.id });
 
   if (inserted.length === 0) {

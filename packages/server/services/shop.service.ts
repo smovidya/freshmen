@@ -14,7 +14,10 @@ import { creditPoints, debitPoints } from "./points.service";
 // old enough to pass.
 const SHOP_ACTION_COOLDOWN_MS = 800;
 
-async function tryConsumeShopCooldown(userId: string, db: Db): Promise<boolean> {
+async function tryConsumeShopCooldown(
+  userId: string,
+  db: Db,
+): Promise<boolean> {
   const now = new Date();
   const cutoff = new Date(now.getTime() - SHOP_ACTION_COOLDOWN_MS);
   const updated = await db
@@ -37,13 +40,20 @@ async function tryConsumeShopCooldown(userId: string, db: Db): Promise<boolean> 
 // by setWhere against the count that writer actually committed - never a
 // stale read. day is a Bangkok-calendar date string, so a new day is just a
 // new row (no reset job needed).
-async function tryConsumeDailyLimit(input: { userId: string; item: string; limit: number }, db: Db): Promise<boolean> {
+async function tryConsumeDailyLimit(
+  input: { userId: string; item: string; limit: number },
+  db: Db,
+): Promise<boolean> {
   const day = startOfBangkokDay().toISOString().slice(0, 10);
   const claimed = await db
     .insert(tables.shopDailyLimits)
     .values({ userId: input.userId, item: input.item, day, count: 1 })
     .onConflictDoUpdate({
-      target: [tables.shopDailyLimits.userId, tables.shopDailyLimits.item, tables.shopDailyLimits.day],
+      target: [
+        tables.shopDailyLimits.userId,
+        tables.shopDailyLimits.item,
+        tables.shopDailyLimits.day,
+      ],
       set: { count: sql`${tables.shopDailyLimits.count} + 1` },
       setWhere: lt(tables.shopDailyLimits.count, input.limit),
     })
@@ -61,15 +71,15 @@ async function tryConsumeDailyLimit(input: { userId: string; item: string; limit
 // BUFF_ELIGIBLE_SOURCES), so a 10s x50 is bounded by physical tap rate, not
 // by minigame jackpots.
 export const BUFF_CONFIG = {
-  buff_x3: { cost: 3_000, multiplier: 3, durationMs: 30_000 },
-  buff_x100: { cost: 10_000, multiplier: 50, durationMs: 10_000 },
+  buff_x3: { cost: 30_000, multiplier: 3, durationMs: 30_000 },
+  buff_x100: { cost: 100_000, multiplier: 50, durationMs: 10_000 },
 } as const;
 
 // Close to the wheel's direct-point expected value, so a paid random play is
 // entertainment rather than a disguised penalty. Multiplier (not the
 // absolute cost) is what has to stay proportional to the wheel's rescaled
 // payouts - both moved x10 together, so the relationship is unchanged.
-export const TICKET_COST = 1_500;
+export const TICKET_COST = 15_000;
 export const TICKET_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 // Per-user daily purchase cap (Bangkok day). The ticket loop is profitable
@@ -237,8 +247,19 @@ export async function buyTicket(
   // here never touched shopRedemptions or debited anything, so a spamming
   // client just gets the same error repeatedly, never more tickets than
   // TICKET_DAILY_LIMIT.
-  if (!(await tryConsumeDailyLimit({ userId: input.userId, item: "minigame_ticket", limit: TICKET_DAILY_LIMIT }, db))) {
-    throw new Error(`ซื้อตั๋วได้สูงสุด ${TICKET_DAILY_LIMIT} ใบต่อวัน วันนี้ครบแล้ว พรุ่งนี้มาใหม่นะ`);
+  if (
+    !(await tryConsumeDailyLimit(
+      {
+        userId: input.userId,
+        item: "minigame_ticket",
+        limit: TICKET_DAILY_LIMIT,
+      },
+      db,
+    ))
+  ) {
+    throw new Error(
+      `ซื้อตั๋วได้สูงสุด ${TICKET_DAILY_LIMIT} ใบต่อวัน วันนี้ครบแล้ว พรุ่งนี้มาใหม่นะ`,
+    );
   }
 
   const gameType =

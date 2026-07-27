@@ -6,7 +6,7 @@ import z from "zod/v4";
 // else. The physical shake rate is unchanged (still gated client-side by
 // SHAKE_COOLDOWN_MS in game-on.svelte, ~2.5/s) - only the value of each one
 // went up.
-export const POINTS_PER_POP = 10;
+export const POINTS_PER_POP = 100;
 
 // Ceiling on points reportable in a single /game/pop request. Scales with
 // POINTS_PER_POP - the real bot-guard is game.service.ts's elapsed-time
@@ -14,7 +14,7 @@ export const POINTS_PER_POP = 10;
 // this just needs enough headroom that legitimate flushes (many pops
 // batched over the ~10s client flush interval) never get clamped by request
 // size before the rate throttle even applies.
-export const MAX_POP_PER_REQUEST = 1_100;
+export const MAX_POP_PER_REQUEST = 11_000;
 
 // The only credit sources the active-buff multiplier applies to. Everything
 // else (minigames, referrals, free claims, refunds) credits its base amount -
@@ -24,7 +24,7 @@ export const BUFF_ELIGIBLE_SOURCES = ["shake_pop"] as const;
 
 export const submitPopSchema = z.object({
   pop: z.number().int().min(1).max(MAX_POP_PER_REQUEST),
-  token: z.string().uuid()
+  token: z.string().uuid(),
 });
 
 // Turnstile pass, accepted as a query param alongside whatever body schema a
@@ -34,5 +34,5 @@ export const submitPopSchema = z.object({
 // fresh solve at all (requireTurnstile in turnstile-gate.ts first checks
 // whether this user verified recently before demanding one).
 export const turnstileQuerySchema = z.object({
-  turnstileToken: z.string().optional()
+  turnstileToken: z.string().optional(),
 });

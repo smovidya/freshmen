@@ -28,13 +28,13 @@ export function rollWeighted<T extends string>(weights: Record<T, number>): T {
 export function pointsForOutcome(outcome: WheelOutcome): number {
   switch (outcome) {
     case "pts_100":
-      return 1000;
-    case "pts_200":
-      return 2000;
-    case "pts_300":
-      return 3000;
-    case "pts_1000":
       return 10000;
+    case "pts_200":
+      return 20000;
+    case "pts_300":
+      return 30000;
+    case "pts_1000":
+      return 100000;
     default:
       return 0;
   }

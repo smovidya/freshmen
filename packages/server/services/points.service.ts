@@ -7,7 +7,7 @@ import { BUFF_ELIGIBLE_SOURCES, TICKETED_GAME_TYPES } from "@vidyafreshmen/dto";
 // organizer's original 67/676/6767 ask, rescaled along with every other
 // currency amount in the economy so the milestones still land at roughly the
 // same felt pace relative to how fast balances now grow.
-const SCORE_MILESTONES = [670, 6760, 67670];
+const SCORE_MILESTONES = [6_700, 67_600, 676_700];
 
 // One structured JSON line per game economy transaction (every credit/debit
 // through this file - pops, shop purchases, minigame wins, friend rewards,
@@ -17,8 +17,13 @@ const SCORE_MILESTONES = [670, 6760, 67670];
 // Logs dashboard - no extra SDK or binding needed, this is the whole
 // integration. Keep this the single call site so every transaction type gets
 // logged uniformly rather than sprinkling console.log across every caller.
-function logTransaction(event: "points_credit" | "points_debit", attrs: Record<string, unknown>) {
-  console.log(JSON.stringify({ event, timestamp: new Date().toISOString(), ...attrs }));
+function logTransaction(
+  event: "points_credit" | "points_debit",
+  attrs: Record<string, unknown>,
+) {
+  console.log(
+    JSON.stringify({ event, timestamp: new Date().toISOString(), ...attrs }),
+  );
 }
 
 // Drizzle's callback-style db.transaction() is not available on D1. D1
@@ -51,7 +56,10 @@ export type CreditInput = {
 // loses that race and returns 0 immediately; only the confirmed-unique
 // winner continues on to compute the buff-multiplied amount and back-fill
 // this row's real delta.
-export async function creditPoints(db: Db, input: CreditInput): Promise<number> {
+export async function creditPoints(
+  db: Db,
+  input: CreditInput,
+): Promise<number> {
   const claimed = await db
     .insert(tables.pointsLedger)
     .values({
@@ -61,7 +69,9 @@ export async function creditPoints(db: Db, input: CreditInput): Promise<number> 
       source: input.source,
       refId: input.refId ?? null,
     })
-    .onConflictDoNothing({ target: [tables.pointsLedger.source, tables.pointsLedger.refId] })
+    .onConflictDoNothing({
+      target: [tables.pointsLedger.source, tables.pointsLedger.refId],
+    })
     .returning({ id: tables.pointsLedger.id });
 
   if (claimed.length === 0) {
@@ -88,7 +98,12 @@ export async function creditPoints(db: Db, input: CreditInput): Promise<number> 
         await db
           .select()
           .from(tables.activeBuffs)
-          .where(and(eq(tables.activeBuffs.userId, input.userId), gt(tables.activeBuffs.expiresAt, new Date())))
+          .where(
+            and(
+              eq(tables.activeBuffs.userId, input.userId),
+              gt(tables.activeBuffs.expiresAt, new Date()),
+            ),
+          )
       )[0]
     : undefined;
 
@@ -96,7 +111,10 @@ export async function creditPoints(db: Db, input: CreditInput): Promise<number> 
 
   const before = await getBalance(input.userId, db);
 
-  await db.update(tables.pointsLedger).set({ delta: applied }).where(eq(tables.pointsLedger.id, ledgerRowId));
+  await db
+    .update(tables.pointsLedger)
+    .set({ delta: applied })
+    .where(eq(tables.pointsLedger.id, ledgerRowId));
 
   await db
     .insert(tables.pointsBalances)
@@ -110,7 +128,10 @@ export async function creditPoints(db: Db, input: CreditInput): Promise<number> 
     });
 
   if (applied > 0) {
-    await checkMilestones(db, { userId: input.userId, after: before + applied });
+    await checkMilestones(db, {
+      userId: input.userId,
+      after: before + applied,
+    });
   }
 
   logTransaction("points_credit", {
@@ -140,15 +161,26 @@ export async function creditPoints(db: Db, input: CreditInput): Promise<number> 
 // only ever fires once per user per threshold, whichever credit happens to
 // be the first to notice); the client polls claimPendingMilestones to
 // auto-open the granted game.
-async function checkMilestones(db: Db, input: { userId: string; after: number }) {
+async function checkMilestones(
+  db: Db,
+  input: { userId: string; after: number },
+) {
   for (const threshold of SCORE_MILESTONES) {
     if (input.after < threshold) continue;
 
-    const gameType = TICKETED_GAME_TYPES[Math.floor(Math.random() * TICKETED_GAME_TYPES.length)]!;
+    const gameType =
+      TICKETED_GAME_TYPES[
+        Math.floor(Math.random() * TICKETED_GAME_TYPES.length)
+      ]!;
     const [trigger] = await db
       .insert(tables.milestoneTriggers)
       .values({ userId: input.userId, threshold, gameType })
-      .onConflictDoNothing({ target: [tables.milestoneTriggers.userId, tables.milestoneTriggers.threshold] })
+      .onConflictDoNothing({
+        target: [
+          tables.milestoneTriggers.userId,
+          tables.milestoneTriggers.threshold,
+        ],
+      })
       .returning({ id: tables.milestoneTriggers.id });
 
     if (!trigger) continue;
@@ -166,7 +198,12 @@ export async function claimPendingMilestones(userId: string, db: Db) {
   return db
     .update(tables.milestoneTriggers)
     .set({ notifiedAt: new Date() })
-    .where(and(eq(tables.milestoneTriggers.userId, userId), isNull(tables.milestoneTriggers.notifiedAt)))
+    .where(
+      and(
+        eq(tables.milestoneTriggers.userId, userId),
+        isNull(tables.milestoneTriggers.notifiedAt),
+      ),
+    )
     .returning({
       id: tables.milestoneTriggers.id,
       threshold: tables.milestoneTriggers.threshold,
@@ -197,7 +234,9 @@ export async function debitPoints(db: Db, input: DebitInput): Promise<void> {
       source: input.source,
       refId: input.refId ?? null,
     })
-    .onConflictDoNothing({ target: [tables.pointsLedger.source, tables.pointsLedger.refId] })
+    .onConflictDoNothing({
+      target: [tables.pointsLedger.source, tables.pointsLedger.refId],
+    })
     .returning({ id: tables.pointsLedger.id });
 
   if (inserted.length === 0) {
@@ -219,11 +258,21 @@ export async function debitPoints(db: Db, input: DebitInput): Promise<void> {
       balance: sql`${tables.pointsBalances.balance} - ${input.amount}`,
       updatedAt: new Date(),
     })
-    .where(and(eq(tables.pointsBalances.userId, input.userId), gte(tables.pointsBalances.balance, input.amount)))
-    .returning({ id: tables.pointsBalances.userId, balance: tables.pointsBalances.balance });
+    .where(
+      and(
+        eq(tables.pointsBalances.userId, input.userId),
+        gte(tables.pointsBalances.balance, input.amount),
+      ),
+    )
+    .returning({
+      id: tables.pointsBalances.userId,
+      balance: tables.pointsBalances.balance,
+    });
 
   if (updated.length === 0) {
-    await db.delete(tables.pointsLedger).where(eq(tables.pointsLedger.id, inserted[0]!.id));
+    await db
+      .delete(tables.pointsLedger)
+      .where(eq(tables.pointsLedger.id, inserted[0]!.id));
     logTransaction("points_debit", {
       userId: input.userId,
       ouid: input.ouid,
@@ -258,7 +307,7 @@ export async function getBalance(userId: string, db: Db) {
   return row?.balance ?? 0;
 }
 
-export const FREE_CLAIM_AMOUNT = 5_000;
+export const FREE_CLAIM_AMOUNT = 50_000;
 export const FREE_CLAIM_INTERVAL_MS = 3 * 60 * 60 * 1000;
 
 export async function getClaimStatus(userId: string, db: Db) {
@@ -269,7 +318,9 @@ export async function getClaimStatus(userId: string, db: Db) {
 
   const lastClaimedAt = row?.lastClaimedAt ?? null;
   // No row / never claimed = eligible right now (first-access freebie).
-  const nextClaimAt = lastClaimedAt ? new Date(lastClaimedAt.getTime() + FREE_CLAIM_INTERVAL_MS) : null;
+  const nextClaimAt = lastClaimedAt
+    ? new Date(lastClaimedAt.getTime() + FREE_CLAIM_INTERVAL_MS)
+    : null;
   const available = !nextClaimAt || nextClaimAt.getTime() <= Date.now();
 
   return {
@@ -286,7 +337,10 @@ export async function getClaimStatus(userId: string, db: Db) {
 // update entirely otherwise, so RETURNING comes back empty and we know the
 // claim was too early. No separate "check cooldown" step needed/possible to
 // race around.
-export async function claimFreePoints(input: { userId: string; ouid: string }, db: Db) {
+export async function claimFreePoints(
+  input: { userId: string; ouid: string },
+  db: Db,
+) {
   const now = new Date();
   const cutoff = new Date(now.getTime() - FREE_CLAIM_INTERVAL_MS);
 
@@ -296,7 +350,10 @@ export async function claimFreePoints(input: { userId: string; ouid: string }, d
     .onConflictDoUpdate({
       target: tables.freeClaims.userId,
       set: { lastClaimedAt: now },
-      setWhere: or(isNull(tables.freeClaims.lastClaimedAt), lte(tables.freeClaims.lastClaimedAt, cutoff)),
+      setWhere: or(
+        isNull(tables.freeClaims.lastClaimedAt),
+        lte(tables.freeClaims.lastClaimedAt, cutoff),
+      ),
     })
     .returning({ userId: tables.freeClaims.userId });
 
@@ -319,7 +376,12 @@ export async function getActiveBuff(userId: string, db: Db) {
   const [buff] = await db
     .select()
     .from(tables.activeBuffs)
-    .where(and(eq(tables.activeBuffs.userId, userId), gt(tables.activeBuffs.expiresAt, new Date())));
+    .where(
+      and(
+        eq(tables.activeBuffs.userId, userId),
+        gt(tables.activeBuffs.expiresAt, new Date()),
+      ),
+    );
 
   if (!buff) return null;
 

@@ -167,7 +167,7 @@ export class GamePopper {
 		// was never trusted for anti-cheat purposes to begin with (the
 		// elapsed-time throttle in addPop is what actually bounds this), doesn't
 		// change the abuse story either way.
-		const variance = 2;
+		const variance = 20;
 		const amount = POINTS_PER_POP + Math.floor(Math.random() * (variance * 2 + 1)) - variance;
 		this.rawBatchedCount += amount;
 	}

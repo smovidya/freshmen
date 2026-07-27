@@ -25,7 +25,7 @@ import { creditPoints, getBalance } from "./points.service";
 // minigame/precision.ts trusting only its own clock - a scripted/held-down
 // request loop can't claim more than could plausibly have happened between
 // requests, regardless of what the client batches and reports.
-const MAX_TAPS_PER_SECOND = 150;
+const MAX_TAPS_PER_SECOND = 1500;
 
 // Single-use pop-session token TTL - generous relative to the ~5s client
 // flush cadence so an occasional missed/delayed flush (backgrounded tab,
