@@ -41,13 +41,17 @@
 		return next;
 	}
 
+	// Must exist before the first spawnTile call below - spawnTile reads it
+	// via blockerChance(), and the initial grid is built by calling spawnTile
+	// synchronously during $state's initializer.
+	const startedAt = Date.now();
+
 	let grid = $state(spawnTile(spawnTile(emptyGrid())));
 	let highestTile = $state(2);
 	let remainingMs = $state(durationMs);
 	let ended = false;
 
 	let tickIntervalId: ReturnType<typeof setInterval> | undefined;
-	const startedAt = Date.now();
 
 	function collapseSegment(segment: number[]): { result: number[]; gained: number } {
 		const values = segment.filter((v) => v !== 0);
