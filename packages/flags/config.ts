@@ -14,7 +14,7 @@ export const features = {
   },
   "game-playing": {
     start: "2026-07-25T09:00:00+07:00",
-    end: "2026-07-27T23:59:59+07:00",
+    end: "2026-07-27T12:43:00+07:00",
   },
   "game-allow-non-freshmen": true,
   "game-bonus-rotation": true
