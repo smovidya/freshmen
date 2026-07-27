@@ -39,7 +39,7 @@ export const dailyLeaderboardCutoffs: { date: string; cutoffAt: FestivalDateTime
 
 // Frozen staff-only winner board. Scores are rebuilt from the append-only
 // ledger at this exact instant, so later gameplay cannot change the result.
-export const winnerLeaderboardCutoff: FestivalDateTime = "2026-07-26T10:57:37+07:00";
+export const winnerLeaderboardCutoff: FestivalDateTime = "2026-07-27T15:00:00+07:00";
 
 /**
  * Represents an event/activity that runs during a specific time window.
