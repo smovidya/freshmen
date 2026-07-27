@@ -36,7 +36,7 @@
 		stack_tower: 'ต่อตึกให้สูง',
 		color_switch: 'หลบสีให้ตรง',
 		slingshot_toss: 'สลิงช็อตเป้าเล็ง',
-		simon_says: 'จำลำดับตาม'
+		simon_says: 'จำได้อ้ะป่าว'
 	};
 
 	let launching = $state<string | null>(null);
