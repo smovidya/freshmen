@@ -100,10 +100,10 @@
 		<span class="font-black" style="color: {COLORS[targetIndex]!.bg}">■</span>
 		อยู่ตรงหมุด
 	</p>
-	<div class="relative size-56">
+	<div class="relative mx-auto size-56">
 		<div
-			class="absolute top-1/2 left-1/2 size-full -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-4 border-black"
-			style="transform: translate(-50%, -50%) rotate({angle}deg);"
+			class="absolute inset-0 overflow-hidden rounded-full border-4 border-black"
+			style="transform: rotate({angle}deg);"
 		>
 			{#each COLORS as color, i (i)}
 				<div
