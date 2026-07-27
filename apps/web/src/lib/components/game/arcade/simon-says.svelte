@@ -146,10 +146,12 @@
 				type="button"
 				disabled={phase !== 'input'}
 				onclick={() => tapColor(index)}
-				class="aspect-square rounded-2xl border-2 border-black shadow-[3px_3px_0_#111827] transition-opacity"
-				style="background: {color.bg}; opacity: {flashIndex === index || tapFlash === index
-					? 1
-					: 0.55};"
+				class="aspect-square rounded-2xl border-2 border-black shadow-[3px_3px_0_#111827] transition-all"
+				style="background: {flashIndex === index || tapFlash === index
+					? color.bg
+					: '#9ca3af'}; filter: {flashIndex === index || tapFlash === index
+					? 'none'
+					: 'grayscale(1) brightness(0.85)'};"
 				aria-label={color.label}
 			></button>
 		{/each}
