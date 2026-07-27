@@ -116,12 +116,7 @@
 									{/if}
 								</TableCell>
 								<TableCell>
-									<p class="font-medium">{player.nickname ?? player.playerName}</p>
-									{#if player.nickname}
-										<p class="text-muted-foreground text-xs print:text-black">
-											{player.playerName}
-										</p>
-									{/if}
+									<p class="font-medium">{player.nickname ?? '-'}</p>
 								</TableCell>
 								<TableCell>{player.department ?? '-'}</TableCell>
 								<TableCell>{player.boeingCode ?? '-'}</TableCell>
