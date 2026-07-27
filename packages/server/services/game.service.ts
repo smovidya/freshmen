@@ -13,6 +13,7 @@ import { tables, type Db, type Tx } from "@vidyafreshmen/db";
 import type { groupPreferenceSchema } from "@vidyafreshmen/dto";
 import type z from "zod/v4";
 import { availableGroups, user } from "@vidyafreshmen/db/schemas";
+import { MAX_POP_PER_REQUEST } from "@vidyafreshmen/dto";
 import type { SimpleCache } from "../core";
 import { creditPoints, getBalance } from "./points.service";
 
@@ -171,6 +172,21 @@ export async function addPop(
     return { applied: 0, nextToken };
   }
 
+  // Clamp instead of rejecting outright (submitPopSchema has no upper bound
+  // on `pop` for exactly this reason) - a client that goes a long time
+  // between flushes (backgrounded tab, network drop) can legitimately batch
+  // past MAX_POP_PER_REQUEST before its next successful send, and a hard 400
+  // there would drop that whole batch to zero. The elapsed-time throttle
+  // below still bounds what's actually credited either way.
+  if (requestedAmount > MAX_POP_PER_REQUEST) {
+    await logAnomaly(db, {
+      userId,
+      type: "pop_request_oversized",
+      detail: { requestedAmount, clampedTo: MAX_POP_PER_REQUEST },
+    });
+  }
+  const clampedRequest = Math.min(requestedAmount, MAX_POP_PER_REQUEST);
+
   const now = new Date();
 
   const [existing] = await db
@@ -186,7 +202,7 @@ export async function addPop(
     0,
     Math.ceil((elapsedMs / 1000) * MAX_TAPS_PER_SECOND),
   );
-  const allowedAmount = Math.min(requestedAmount, maxAllowed);
+  const allowedAmount = Math.min(clampedRequest, maxAllowed);
 
   if (allowedAmount < requestedAmount) {
     await logAnomaly(db, {

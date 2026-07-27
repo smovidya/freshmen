@@ -8,12 +8,20 @@ import z from "zod/v4";
 // went up.
 export const POINTS_PER_POP = 100;
 
-// Ceiling on points reportable in a single /game/pop request. Scales with
-// POINTS_PER_POP - the real bot-guard is game.service.ts's elapsed-time
-// throttle (MAX_TAPS_PER_SECOND), which bounds *physical* tap plausibility;
-// this just needs enough headroom that legitimate flushes (many pops
-// batched over the ~10s client flush interval) never get clamped by request
-// size before the rate throttle even applies.
+// Sanity ceiling on points reportable in a single /game/pop request. Scales
+// with POINTS_PER_POP - the real bot-guard is game.service.ts's elapsed-time
+// throttle (MAX_TAPS_PER_SECOND), which bounds *physical* tap plausibility
+// regardless of what a request claims. This constant only needs enough
+// headroom that legitimate flushes (many pops batched over the ~10s client
+// flush interval) never get clamped by it before the rate throttle even
+// applies.
+//
+// Not enforced at the schema/validation level (see submitPopSchema below) -
+// a client that goes a long time between flushes (backgrounded tab, network
+// drop) can legitimately batch past this before its next successful send.
+// Rejecting that request outright would drop the whole batch to zero; instead
+// game.service.ts's addPop() clamps requestedAmount to this ceiling itself
+// and still credits whatever the elapsed-time throttle allows.
 export const MAX_POP_PER_REQUEST = 11_000;
 
 // The only credit sources the active-buff multiplier applies to. Everything
@@ -23,7 +31,7 @@ export const MAX_POP_PER_REQUEST = 11_000;
 export const BUFF_ELIGIBLE_SOURCES = ["shake_pop"] as const;
 
 export const submitPopSchema = z.object({
-  pop: z.number().int().min(1).max(MAX_POP_PER_REQUEST),
+  pop: z.number().int().min(1),
   token: z.string().uuid(),
 });
 
