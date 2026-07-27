@@ -64,28 +64,36 @@
 </svelte:head>
 
 {#snippet groupLeaderboard(group: WinnerGroup)}
-	<Card class="overflow-hidden border-amber-200/70 py-0 shadow-sm">
-		<CardHeader class="border-b border-amber-100 bg-amber-50/70 py-5">
+	<Card
+		class="overflow-hidden border-amber-200/70 py-0 shadow-sm print:break-inside-avoid print:rounded-none print:border-black print:shadow-none"
+	>
+		<CardHeader
+			class="border-b border-amber-100 bg-amber-50/70 py-5 print:border-black print:bg-white"
+		>
 			<div class="flex items-center justify-between gap-3">
 				<div class="min-w-0">
 					<p
-						class="mb-1 flex items-center gap-1.5 text-xs font-semibold tracking-wider text-amber-700 uppercase"
+						class="mb-1 flex items-center gap-1.5 text-xs font-semibold tracking-wider text-amber-700 uppercase print:text-black"
 					>
 						<Plane class="size-3.5" />
 						เที่ยวบิน {group.groupNumber.padStart(2, '0')}
 					</p>
 					<CardTitle class="truncate text-xl">{airlineName(group.groupNumber)}</CardTitle>
 				</div>
-				<Badge class="shrink-0 bg-amber-500 text-white hover:bg-amber-500">Top 10</Badge>
+				<Badge
+					class="shrink-0 bg-amber-500 text-white hover:bg-amber-500 print:border print:border-black print:bg-white print:text-black"
+				>
+					Top 10
+				</Badge>
 			</div>
 		</CardHeader>
 		<CardContent class="overflow-x-auto p-0">
 			{#if group.top10.length === 0}
 				<p class="text-muted-foreground p-5 text-sm">ยังไม่มีข้อมูลคะแนน</p>
 			{:else}
-				<Table>
+				<Table class="print:text-black">
 					<TableHeader>
-						<TableRow>
+						<TableRow class="print:border-black">
 							<TableHead class="w-10">#</TableHead>
 							<TableHead>ผู้เล่น</TableHead>
 							<TableHead>ภาควิชา</TableHead>
@@ -96,10 +104,13 @@
 					</TableHeader>
 					<TableBody>
 						{#each group.top10 as player, index (player.playerId)}
-							<TableRow class={index === 0 ? 'bg-amber-50' : undefined}>
+							<TableRow
+								class="print:border-black {index === 0 ? 'bg-amber-50 print:bg-white' : ''}"
+							>
 								<TableCell class="font-semibold">
 									{#if index === 0}
-										<Crown class="size-5 text-amber-500" aria-label="อันดับหนึ่ง" />
+										<Crown class="size-5 text-amber-500 print:hidden" aria-label="อันดับหนึ่ง" />
+										<span class="hidden print:inline">1</span>
 									{:else}
 										{index + 1}
 									{/if}
@@ -107,7 +118,9 @@
 								<TableCell>
 									<p class="font-medium">{player.nickname ?? player.playerName}</p>
 									{#if player.nickname}
-										<p class="text-muted-foreground text-xs">{player.playerName}</p>
+										<p class="text-muted-foreground text-xs print:text-black">
+											{player.playerName}
+										</p>
 									{/if}
 								</TableCell>
 								<TableCell>{player.department ?? '-'}</TableCell>
@@ -125,37 +138,49 @@
 	</Card>
 {/snippet}
 
-<div class="flex flex-col gap-6">
-	<section
-		class="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(135deg,#78350f,#b45309_58%,#f59e0b)] px-6 py-8 text-white shadow-lg"
-	>
-		<div class="absolute -top-12 -right-10 -z-10 size-44 rounded-full bg-white/10"></div>
-		<div
-			class="absolute -right-2 -bottom-16 -z-10 size-36 rounded-full border-[20px] border-white/[0.07]"
-		></div>
-		<Trophy class="mb-5 size-10 text-amber-200" />
-		<p class="text-xs font-bold tracking-[0.22em] text-amber-200 uppercase">Winner leaderboard</p>
-		<h1 class="mt-2 text-3xl font-black tracking-tight">อันดับผู้ชนะ Top 10</h1>
-		<p class="mt-2 max-w-md text-sm leading-6 text-amber-50/80">
-			ผู้ทำคะแนนสูงสุด 10 อันดับของแต่ละสายการบิน ตัดยอดเป็นภาพนิ่ง
-			คะแนนที่เกิดขึ้นภายหลังจะไม่เปลี่ยนผลหน้านี้
-		</p>
-		{#if leaderboard}
-			<p
-				class="mt-5 inline-flex rounded-full border border-white/15 bg-black/10 px-3 py-1.5 text-xs text-amber-50"
-			>
-				ตัดยอด ณ {formatCutoff(leaderboard.cutoffAt)}
+<!-- Breaks out of the /checkin layout's max-w-xl (built for the narrow
+     mobile scanner UI) so this page's tables get the full viewport width -
+     and print:-prefixed classes below make it usable as an actual printout,
+     since staff hand these results off on paper. -->
+<div
+	class="relative left-1/2 w-screen -translate-x-1/2 px-4 print:static print:w-full print:translate-x-0 print:px-0"
+>
+	<div class="mx-auto flex max-w-5xl flex-col gap-6 print:max-w-none print:gap-4">
+		<section
+			class="relative isolate overflow-hidden rounded-3xl bg-[linear-gradient(135deg,#78350f,#b45309_58%,#f59e0b)] px-6 py-8 text-white shadow-lg print:rounded-none print:border print:border-black print:bg-none print:text-black print:shadow-none"
+		>
+			<div
+				class="absolute -top-12 -right-10 -z-10 size-44 rounded-full bg-white/10 print:hidden"
+			></div>
+			<div
+				class="absolute -right-2 -bottom-16 -z-10 size-36 rounded-full border-[20px] border-white/[0.07] print:hidden"
+			></div>
+			<Trophy class="mb-5 size-10 text-amber-200 print:text-black" />
+			<p class="text-xs font-bold tracking-[0.22em] text-amber-200 uppercase print:text-black">
+				Winner leaderboard
 			</p>
-		{/if}
-	</section>
+			<h1 class="mt-2 text-3xl font-black tracking-tight">อันดับผู้ชนะ Top 10</h1>
+			<p class="mt-2 max-w-md text-sm leading-6 text-amber-50/80 print:text-black">
+				ผู้ทำคะแนนสูงสุด 10 อันดับของแต่ละสายการบิน ตัดยอดเป็นภาพนิ่ง
+				คะแนนที่เกิดขึ้นภายหลังจะไม่เปลี่ยนผลหน้านี้
+			</p>
+			{#if leaderboard}
+				<p
+					class="mt-5 inline-flex rounded-full border border-white/15 bg-black/10 px-3 py-1.5 text-xs text-amber-50 print:border-black print:bg-transparent print:text-black"
+				>
+					ตัดยอด ณ {formatCutoff(leaderboard.cutoffAt)}
+				</p>
+			{/if}
+		</section>
 
-	{#if loading}
-		<p class="text-muted-foreground py-10 text-center text-sm">กำลังโหลดผลผู้ชนะ...</p>
-	{:else if !leaderboard || leaderboard.groups.length === 0}
-		<p class="text-muted-foreground py-10 text-center text-sm">ยังไม่มีข้อมูลคะแนนผู้ชนะ</p>
-	{:else}
-		{#each leaderboard.groups as group (group.groupNumber)}
-			{@render groupLeaderboard(group)}
-		{/each}
-	{/if}
+		{#if loading}
+			<p class="text-muted-foreground py-10 text-center text-sm">กำลังโหลดผลผู้ชนะ...</p>
+		{:else if !leaderboard || leaderboard.groups.length === 0}
+			<p class="text-muted-foreground py-10 text-center text-sm">ยังไม่มีข้อมูลคะแนนผู้ชนะ</p>
+		{:else}
+			{#each leaderboard.groups as group (group.groupNumber)}
+				{@render groupLeaderboard(group)}
+			{/each}
+		{/if}
+	</div>
 </div>
