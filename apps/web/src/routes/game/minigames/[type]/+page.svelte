@@ -5,7 +5,6 @@
 	import { toast } from 'svelte-sonner';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import TurnstileWidget from '$lib/components/turnstile-widget.svelte';
-	import CrystalBall from '$lib/assets/game/crystal-ball.png';
 	import House from '@lucide/svelte/icons/house';
 	import Package from '@lucide/svelte/icons/package';
 	import Volume2 from '@lucide/svelte/icons/volume-2';
@@ -126,7 +125,7 @@
 		flappy_runner: 'Flappy Bird',
 		merge_2048: 'รวมเลข 2048',
 		memory_match: 'จับคู่ความจำ',
-		stack_tower: 'ต่อตึกให้สูง',
+		stack_tower: 'ต่อตึกมกุฎ',
 		color_switch: 'หลบสีให้ตรง',
 		slingshot_toss: 'สลิงช็อตเป้าเล็ง',
 		simon_says: 'จำได้อ้ะป่าว'
@@ -180,81 +179,6 @@
 				points: response.points
 			};
 			clearPlayToken(type);
-		} catch (error) {
-			toast.error(errorMessage(error, 'ส่งผลเกมไม่สำเร็จ กดอีกครั้งเพื่อรับผลเดิมได้'));
-		} finally {
-			submitting = false;
-		}
-	}
-
-	// --- alignment puzzle ---
-	let puzzleStarted = $state(false);
-	let puzzlePlayToken = $state('');
-	let range = $state(50);
-	let targetX = $state(0);
-	let targetY = $state(0);
-	let offsetX = $state(0);
-	let offsetY = $state(0);
-	let dragging = $state(false);
-	const puzzleDistance = $derived(Math.hypot(offsetX - targetX, offsetY - targetY));
-	const puzzleCloseness = $derived(Math.max(0, 1 - puzzleDistance / (Math.sqrt(2) * range)));
-
-	async function startPuzzle() {
-		if (submitting) return;
-		submitting = true;
-		puzzlePlayToken ||= getOrCreatePlayToken('puzzle');
-		try {
-			const response = await call(
-				client.minigame.puzzle.start.$post({ json: { playToken: puzzlePlayToken } })
-			);
-			range = response.range;
-			targetX = response.targetX;
-			targetY = response.targetY;
-			puzzleStarted = true;
-		} catch (error) {
-			toast.error(errorMessage(error, 'เริ่มเกมจัดแนวไม่สำเร็จ'));
-		} finally {
-			submitting = false;
-		}
-	}
-
-	function onPointerDown(event: PointerEvent) {
-		dragging = true;
-		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-	}
-
-	function onPointerMove(event: PointerEvent) {
-		if (!dragging) return;
-		offsetX = Math.max(-range, Math.min(range, offsetX + event.movementX));
-		offsetY = Math.max(-range, Math.min(range, offsetY + event.movementY));
-	}
-
-	function onPointerUp(event: PointerEvent) {
-		dragging = false;
-		const target = event.currentTarget as HTMLElement;
-		if (target.hasPointerCapture(event.pointerId)) target.releasePointerCapture(event.pointerId);
-	}
-
-	async function submitPuzzle() {
-		if (submitting) return;
-		submitting = true;
-		try {
-			const response = await callWithTurnstile(
-				(turnstileToken) =>
-					client.minigame.puzzle.submit.$post({
-						json: { playToken: puzzlePlayToken, x: offsetX, y: offsetY },
-						query: { turnstileToken }
-					}),
-				takeTurnstileToken
-			);
-			if (response.points > 0) celebrate();
-			result = {
-				title: `ตรงกัน ${response.accuracy.toFixed(1)}%`,
-				detail:
-					response.accuracy >= 90 ? 'จัดแนวได้เฉียบมาก!' : 'ยิ่งซ้อนเงาได้พอดี ยิ่งได้แต้มสูง',
-				points: response.points
-			};
-			clearPlayToken('puzzle');
 		} catch (error) {
 			toast.error(errorMessage(error, 'ส่งผลเกมไม่สำเร็จ กดอีกครั้งเพื่อรับผลเดิมได้'));
 		} finally {
@@ -565,15 +489,13 @@
 				Skybound arcade
 			</p>
 			<h1 class="text-xl font-black">
-				{gameType === 'puzzle'
-					? 'จัดแนวลูกแก้ว'
-					: gameType === 'precision'
-						? 'Beat Lock'
-						: gameType === 'wheel'
-							? 'Lucky Flight'
-							: gameType === 'mystery_box'
-								? 'Daily Cargo'
-								: (ARCADE_TITLES[gameType as ArcadeGameType] ?? 'มินิเกม')}
+				{gameType === 'precision'
+					? 'Beat Lock'
+					: gameType === 'wheel'
+						? 'Lucky Flight'
+						: gameType === 'mystery_box'
+							? 'Daily Cargo'
+							: (ARCADE_TITLES[gameType as ArcadeGameType] ?? 'มินิเกม')}
 			</h1>
 		</div>
 		<div class="size-10"></div>
@@ -614,60 +536,6 @@
 					</a>
 				</div>
 			</section>
-		{:else if gameType === 'puzzle'}
-			{#if !puzzleStarted}
-				<section class="intro-card">
-					<div class="intro-icon">◎</div>
-					<p class="eyebrow">ALIGNMENT TEST</p>
-					<p>ตำแหน่งเป้าหมายมองเห็นได้จริง คะแนนขึ้นกับระยะห่างตอนกดยืนยัน</p>
-					<button class="primary-button" disabled={submitting} onclick={startPuzzle}>
-						{submitting ? 'กำลังเตรียม...' : 'ใช้ตั๋วและเริ่มเกม'}
-					</button>
-				</section>
-			{:else}
-				<div
-					class="flex w-full items-center justify-between rounded-full border-2 border-black bg-white px-4 py-2 text-xs font-black"
-				>
-					<span>ALIGN SIGNAL</span>
-					<span>{Math.round(puzzleCloseness * 100)}% SYNC</span>
-				</div>
-				<div
-					class="puzzle-arena relative size-[min(78vw,310px)] touch-none overflow-hidden rounded-[2rem] border-[3px] border-black select-none"
-					style="--sync: {puzzleCloseness};"
-					onpointerdown={onPointerDown}
-					onpointermove={onPointerMove}
-					onpointerup={onPointerUp}
-					onpointercancel={onPointerUp}
-					role="application"
-					aria-label="ลากลูกแก้วทึบให้ซ้อนกับเงาลูกแก้ว"
-				>
-					<div class="grid-lines pointer-events-none absolute inset-0"></div>
-					<div
-						class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-25 grayscale"
-						style="transform: translate({targetX}px, {targetY}px);"
-						aria-hidden="true"
-					>
-						<img src={CrystalBall} alt="" class="size-28 object-contain" draggable="false" />
-					</div>
-					<div
-						class="absolute inset-0 flex items-center justify-center drop-shadow-xl"
-						style="transform: translate({offsetX}px, {offsetY}px) scale({dragging
-							? 1.12
-							: 1}); transition: {dragging ? 'none' : 'transform .12s ease-out'}; cursor: {dragging
-							? 'grabbing'
-							: 'grab'};"
-						aria-hidden="true"
-					>
-						<img src={CrystalBall} alt="" class="size-28 object-contain" draggable="false" />
-					</div>
-				</div>
-				<p class="text-center text-sm font-medium text-[#62748e]">
-					เงาจางคือเป้าหมาย · ลากตัวทึบให้ซ้อนสนิท
-				</p>
-				<button class="primary-button" disabled={submitting} onclick={submitPuzzle}>
-					{submitting ? 'กำลังตรวจ...' : 'ล็อกตำแหน่ง'}
-				</button>
-			{/if}
 		{:else if gameType === 'precision'}
 			{#if rhythmPhase === 'idle'}
 				<section class="intro-card rhythm-intro">
@@ -922,24 +790,6 @@
 	:global(.primary-button:disabled),
 	:global(.secondary-button:disabled) {
 		opacity: 0.45;
-	}
-
-	.puzzle-arena {
-		background:
-			radial-gradient(
-				circle at center,
-				rgba(253, 248, 134, calc(0.2 + var(--sync) * 0.65)),
-				transparent 42%
-			),
-			#dfe8f3;
-		box-shadow: 8px 9px 0 #111827;
-	}
-
-	.grid-lines {
-		background-image:
-			linear-gradient(rgba(17, 24, 39, 0.08) 1px, transparent 1px),
-			linear-gradient(90deg, rgba(17, 24, 39, 0.08) 1px, transparent 1px);
-		background-size: 28px 28px;
 	}
 
 	.beat-ring {

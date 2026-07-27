@@ -9,7 +9,6 @@
 	const points = new PointsStore();
 
 	const GAME_LABELS: Record<string, string> = {
-		puzzle: 'เลื่อนภาพให้ตรง',
 		precision: 'Beat Lock — แตะตามจังหวะ',
 		wheel: 'Lucky Flight — วงล้อรางวัล',
 		mystery_box: 'กล่องสุ่มของรางวัล'

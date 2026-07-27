@@ -12,6 +12,14 @@
 	const SPEED_START = 90; // px/s
 	const SPEED_MAX = 260;
 	const SPEED_RAMP_FLOORS = 20; // floors at which speed maxes out
+	// Play area now fills most of the screen instead of capping at 360px -
+	// bigger tap target, easier to hit under time pressure. Fixed px (not a
+	// viewport unit) so the JS camera-scroll math below stays exactly in
+	// sync with the CSS height applied to the same element.
+	const VISIBLE_HEIGHT = 520;
+	// Rows of headroom kept above the moving block once the camera starts
+	// scrolling, so there's still room to see it coming.
+	const CAMERA_MARGIN_ROWS = 3;
 
 	let {
 		durationMs,
@@ -29,6 +37,17 @@
 	let remainingMs = $state(durationMs);
 	let floors = $state(0);
 	let ended = false;
+
+	// Once the tower grows taller than the visible area, shift everything
+	// down so the moving block (and a few rows of headroom above it) stays
+	// on screen - older, lower floors scroll off the bottom instead of the
+	// newest ones getting clipped off the top.
+	const cameraOffset = $derived(
+		Math.max(
+			0,
+			(stack.length + 1) * BLOCK_HEIGHT + CAMERA_MARGIN_ROWS * BLOCK_HEIGHT - VISIBLE_HEIGHT
+		)
+	);
 
 	let rafId = 0;
 	let tickIntervalId: ReturnType<typeof setInterval> | undefined;
@@ -114,23 +133,22 @@
 		type="button"
 		onclick={drop}
 		class="relative overflow-hidden rounded-2xl border-2 border-black bg-[#eef2ff]"
-		style="width: {TRACK_WIDTH}px; height: {Math.min(
-			360,
-			40 + stack.length * BLOCK_HEIGHT + BLOCK_HEIGHT
-		)}px;"
+		style="width: {TRACK_WIDTH}px; height: {VISIBLE_HEIGHT}px;"
 	>
-		{#each stack as block, i (i)}
+		<div class="absolute inset-0" style="transform: translateY({cameraOffset}px);">
+			{#each stack as block, i (i)}
+				<div
+					class="absolute rounded-sm border border-black/60 bg-[#bde0fe]"
+					style="left: {block.left}px; width: {block.width}px; height: {BLOCK_HEIGHT -
+						2}px; bottom: {i * BLOCK_HEIGHT}px;"
+				></div>
+			{/each}
 			<div
-				class="absolute rounded-sm border border-black/60 bg-[#bde0fe]"
-				style="left: {block.left}px; width: {block.width}px; height: {BLOCK_HEIGHT -
-					2}px; bottom: {i * BLOCK_HEIGHT}px;"
+				class="absolute rounded-sm border border-black bg-[#ff7a59]"
+				style="left: {moving.left}px; width: {moving.width}px; height: {BLOCK_HEIGHT -
+					2}px; bottom: {stack.length * BLOCK_HEIGHT}px;"
 			></div>
-		{/each}
-		<div
-			class="absolute rounded-sm border border-black bg-[#ff7a59]"
-			style="left: {moving.left}px; width: {moving.width}px; height: {BLOCK_HEIGHT -
-				2}px; bottom: {stack.length * BLOCK_HEIGHT}px;"
-		></div>
+		</div>
 	</button>
 	<p class="text-xs text-[#62748e]">แตะเพื่อวางบล็อก</p>
 </div>

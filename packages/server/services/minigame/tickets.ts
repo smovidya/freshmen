@@ -155,14 +155,16 @@ export async function grantFreeTicket(
 
 export async function listUnusedTickets(userId: string, db: Db) {
   // Preserve the value of legacy quiz tickets now that the unfinished quiz is
-  // disabled. Puzzle is deterministic here so retries return a stable catalog.
+  // disabled, and of puzzle tickets now that puzzle itself was removed -
+  // both redirect to wheel (always valid, no per-ticket start state needed)
+  // so a player's unused ticket doesn't just silently vanish from this list.
   await db
     .update(tables.minigameTickets)
-    .set({ gameType: "puzzle" })
+    .set({ gameType: "wheel" })
     .where(
       and(
         eq(tables.minigameTickets.userId, userId),
-        eq(tables.minigameTickets.gameType, "quiz"),
+        inArray(tables.minigameTickets.gameType, ["quiz", "puzzle"]),
         eq(tables.minigameTickets.status, "unused"),
       ),
     );

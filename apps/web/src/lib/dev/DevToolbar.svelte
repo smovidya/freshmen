@@ -24,7 +24,6 @@
 	let overrides = $state(getFlagOverrides());
 
 	const MINIGAME_LABELS: Record<(typeof GAME_TYPES)[number], string> = {
-		puzzle: 'เลื่อนภาพให้ตรง',
 		precision: 'Beat Lock — แตะตามจังหวะ',
 		wheel: 'วงล้อสุ่ม',
 		mystery_box: 'กล่องสุ่มของรางวัล',
@@ -33,7 +32,7 @@
 		flappy_runner: 'Flappy Bird',
 		merge_2048: 'รวมเลข 2048',
 		memory_match: 'จับคู่ความจำ',
-		stack_tower: 'ต่อตึกให้สูง',
+		stack_tower: 'ต่อตึกมกุฎ',
 		color_switch: 'หลบสีให้ตรง',
 		slingshot_toss: 'สลิงช็อตเป้าเล็ง',
 		simon_says: 'จำได้อ้ะป่าว'

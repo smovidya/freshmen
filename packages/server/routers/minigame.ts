@@ -4,7 +4,6 @@ import {
   mysteryBoxOpenSchema,
   minigameStartSchema,
   precisionSubmitSchema,
-  puzzleSubmitSchema,
   TICKETED_GAME_TYPES,
   turnstileQuerySchema,
   wheelClaimSchema,
@@ -15,7 +14,6 @@ import { Hono } from "hono";
 import z from "zod/v4";
 import type { Variables } from "../core";
 import { requireGameOn } from "./game";
-import * as puzzle from "../services/minigame/puzzle";
 import * as precision from "../services/minigame/precision";
 import * as wheel from "../services/minigame/wheel";
 import * as mysteryBox from "../services/minigame/mystery-box";
@@ -56,37 +54,8 @@ export const minigameRouter = new Hono<{ Variables: Variables }>()
       return c.json({ ok: true });
     },
   )
-  .post(
-    "/puzzle/start",
-    requireGameOn,
-    zValidator("json", minigameStartSchema),
-    async (c) => {
-      const user = c.get("user")!;
-      const { playToken } = c.req.valid("json");
-      return c.json(
-        await puzzle.start({ userId: user.id, playToken }, c.get("db")),
-      );
-    },
-  )
   // requireTurnstile gates every credit-producing submit/claim/open below -
   // not the paired start/play calls, which award nothing on their own.
-  .post(
-    "/puzzle/submit",
-    requireGameOn,
-    zValidator("query", turnstileQuerySchema),
-    requireTurnstile,
-    zValidator("json", puzzleSubmitSchema),
-    async (c) => {
-      const user = c.get("user")!;
-      const body = c.req.valid("json");
-      return c.json(
-        await puzzle.submit(
-          { userId: user.id, ouid: user.ouid!, ...body },
-          c.get("db"),
-        ),
-      );
-    },
-  )
   .post(
     "/precision/start",
     requireGameOn,

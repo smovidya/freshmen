@@ -2,15 +2,13 @@ import z from "zod/v4";
 
 // Quiz is intentionally disabled until a reviewed question bank and content
 // management path exist. Keeping it out of this list also removes it from the
-// shop, milestone and QTE lotteries.
-export const CLASSIC_TICKETED_GAME_TYPES = [
-  "puzzle",
-  "precision",
-  "wheel",
-] as const;
+// shop, milestone and QTE lotteries. Puzzle (alignment/drag) was removed
+// entirely per product decision - packages/server/services/minigame/puzzle.ts
+// no longer exists.
+export const CLASSIC_TICKETED_GAME_TYPES = ["precision", "wheel"] as const;
 
 // Arcade games (fun-first batch): each is a self-contained client-side round
-// that reports one final raw score at game-over - unlike puzzle/precision/wheel,
+// that reports one final raw score at game-over - unlike precision/wheel,
 // there's no per-game grading logic on the server beyond mapping that number
 // through the shared reward ladder (see ARCADE_GAMES below), so they all share
 // one generic start/submit implementation (services/minigame/arcade.ts)
@@ -113,12 +111,6 @@ export const minigameStartSchema = z.object({
 export const arcadeSubmitSchema = z.object({
   playToken: z.string().uuid(),
   rawScore: z.number().finite().min(0).optional(),
-});
-
-export const puzzleSubmitSchema = z.object({
-  playToken: z.string().uuid(),
-  x: z.number(),
-  y: z.number(),
 });
 
 export const precisionSubmitSchema = z.object({
